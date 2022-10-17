@@ -1,0 +1,68 @@
+DECLARE
+  
+  CURSOR cr_crapcop IS 
+    SELECT cdcooper 
+      FROM crapcop
+     WHERE flgativo = 1;
+  rw_crapcop cr_crapcop%ROWTYPE;
+  
+  PROCEDURE carregarNovoGrupo(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+
+    CURSOR cr_grupo(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      SELECT g.nrdconta
+            ,g.idgrupo
+            ,a.nrcpfcgc
+        FROM tbcc_grupo_economico g
+            ,crapass a
+       WHERE g.cdcooper = pr_cdcooper
+         AND a.cdcooper = g.cdcooper
+         AND a.nrdconta = g.nrdconta
+         AND EXISTS (SELECT 1 FROM tbcc_grupo_economico_integ i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
+    rw_grupo cr_grupo%ROWTYPE;
+    
+    CURSOR cr_integrante(pr_idgrupo IN INTEGER) IS
+      SELECT i.nrcpfcgc
+            ,i.nrdconta
+        FROM tbcc_grupo_economico_integ i
+       WHERE i.idgrupo = pr_idgrupo
+         AND i.dtexclusao IS NULL;
+    rw_integrante cr_integrante%ROWTYPE;
+    
+  BEGIN
+    dbms_output.enable(NULL);
+    FOR rw_grupo IN cr_grupo(pr_cdcooper => pr_cdcooper) LOOP
+      BEGIN
+        INSERT INTO gestaoderisco.tbrisco_grupo_economico_integ(idgrupo_economico, cdcooper, nrdconta, nrcpfcgc, dhtransmissao)
+        VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_grupo.nrdconta, rw_grupo.nrcpfcgc, SYSDATE);
+      EXCEPTION
+        WHEN OTHERS THEN
+          dbms_output.put_line('Erro ao inserir conta: ' || rw_integrante.nrdconta || ' do grupo: ' || rw_grupo.idgrupo);
+      END;
+      FOR rw_integrante IN cr_integrante(pr_idgrupo => rw_grupo.idgrupo) LOOP
+        BEGIN
+          INSERT INTO gestaoderisco.tbrisco_grupo_economico_integ(idgrupo_economico, cdcooper, nrdconta, nrcpfcgc, dhtransmissao)
+          VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_integrante.nrdconta, rw_integrante.nrcpfcgc, SYSDATE);
+        EXCEPTION
+          WHEN OTHERS THEN
+            dbms_output.put_line('Erro ao inserir conta: ' || rw_integrante.nrdconta || ' do grupo: ' || rw_grupo.idgrupo || ' - ' || SQLERRM);
+        END;
+      END LOOP;
+    END LOOP;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ROLLBACK;
+      dbms_output.put_line(SQLERRM);
+  END carregarNovoGrupo;
+
+BEGIN
+
+  FOR rw_crapcop IN cr_crapcop LOOP
+    carregarNovoGrupo(pr_cdcooper => rw_crapcop.cdcooper);
+    COMMIT;
+  END LOOP;
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    dbms_output.put_line(SQLERRM);
+END;
