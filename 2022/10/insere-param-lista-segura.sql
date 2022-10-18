@@ -1,7 +1,6 @@
 begin
 
-  insert into CECRED.crapaca (
-     nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr)
+  insert into CECRED.crapaca (nmdeacao,nmpackag,nmproced,lstparam,nrseqrdr)
   values   
      ('CADA0006_ATUALIZA_LISTA_SEGURA','CADA0006','pc_atualiza_lista_segura','pr_cdcooper,pr_nrdconta,pr_lstlsdif,pr_inaddexc',1106);
 
