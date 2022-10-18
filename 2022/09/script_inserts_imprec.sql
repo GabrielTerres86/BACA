@@ -90,6 +90,19 @@ BEGIN
     ,'pr_nrregist,pr_nriniseq,pr_cdcooperativa,pr_nrconta_corrente,pr_nrcontrato'
     ,vr_nrseqrdr);
 
+  INSERT INTO cecred.crapaca
+		(nmdeacao
+		,nmpackag
+		,nmproced
+		,lstparam
+		,nrseqrdr)
+	VALUES
+		('OBTER_CONCILIACAO_URS'
+		,''
+		,'credito.obterConciliacaoURsWeb'
+		,'pr_dtinicial,pr_dtfinal,pr_instatus'
+		,vr_nrseqrdr);
+
   INSERT INTO cecred.craptel
     (nmdatela
     ,nrmodulo
@@ -110,13 +123,13 @@ BEGIN
     ,idambtel)
     (SELECT 'IMPREC'
            ,6
-           ,'I,L,E,D,X'
+           ,'I,L,E,D,X,C'
            ,'PROJETO CERC'
            ,'PROJETO CERC'
            ,0
            ,1
            ,' '
-           ,'IMP.SAS,IMP.MAN,EXCLUIR,DETALHES,IMP. MAN LIM'
+           ,'IMP.SAS,IMP.MAN,EXCLUIR,DETALHES,IMP. MAN LIM,CONCILIACAO'
            ,1
            ,cop.cdcooper
            ,1
