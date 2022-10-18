@@ -1,3 +1,4 @@
+DECLARE
 BEGIN
 
   insert into CECRED.crapaca (nmdeacao,
@@ -13,10 +14,9 @@ BEGIN
        1106);
 
   COMMIT;
+
 EXCEPTION
   WHEN OTHERS THEN
 	RAISE_application_error(-20500, SQLERRM);
     ROLLBACK;
 END;
-/
-
