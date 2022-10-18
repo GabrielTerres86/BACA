@@ -1,11 +1,9 @@
-DECLARE
 BEGIN
-
-  insert into CECRED.crapaca (nmdeacao,
-                              nmpackag,
-                              nmproced,
-                              lstparam,
-			      nrseqrdr)
+  insert into crapaca (nmdeacao,
+                       nmpackag,
+                       nmproced,
+                       lstparam,
+		       nrseqrdr)
   values   
      ('CADA0006_ATUALIZA_LISTA_SEGURA',
       'CADA0006',
@@ -20,3 +18,4 @@ EXCEPTION
 	RAISE_application_error(-20500, SQLERRM);
     ROLLBACK;
 END;
+/
