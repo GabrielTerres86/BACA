@@ -19,8 +19,8 @@ vr_dscritic	VARCHAR2(1000);
 
 cursor	c01 is
 select p.cdcooper,p.nrdconta,p.nrctrseg,p.nrctremp,p.nrproposta,p.tpregist,s.cdsitseg,s.tpseguro,s.dtcancel,p.dtrecusa, p.tprecusa, s.cdmotcan
- from crapseg s,
-      tbseg_prestamista p
+ from cecred.crapseg s,
+      cecred.tbseg_prestamista p
 where s.cdcooper = p.cdcooper
   and s.nrdconta = p.nrdconta
   and s.nrctrseg = p.nrctrseg
@@ -1028,8 +1028,8 @@ where s.cdcooper = p.cdcooper
 '770573607180')
 union 
 select p.cdcooper,p.nrdconta,p.nrctrseg,p.nrctremp,p.nrproposta,p.tpregist,s.cdsitseg,s.tpseguro,s.dtcancel,p.DTRECUSA, p.TPRECUSA,s.cdmotcan
- from crapseg s,
-      tbseg_prestamista p
+ from cecred.crapseg s,
+      cecred.tbseg_prestamista p
 where s.cdcooper = p.cdcooper
   and s.nrdconta = p.nrdconta
   and s.nrctrseg = p.nrctrseg
@@ -2039,8 +2039,8 @@ where s.cdcooper = p.cdcooper
 '770350470115')
 union 
 select p.cdcooper,p.nrdconta,p.nrctrseg,p.nrctremp,p.nrproposta,p.tpregist,s.cdsitseg,s.tpseguro,s.dtcancel,p.DTRECUSA, p.TPRECUSA,s.cdmotcan
- from crapseg s,
-      tbseg_prestamista p
+ from cecred.crapseg s,
+      cecred.tbseg_prestamista p
 where s.cdcooper = p.cdcooper
   and s.nrdconta = p.nrdconta
   and s.nrctrseg = p.nrctrseg
@@ -3050,8 +3050,8 @@ where s.cdcooper = p.cdcooper
 '770658177907')
 union 
 select p.cdcooper,p.nrdconta,p.nrctrseg,p.nrctremp,p.nrproposta,p.tpregist,s.cdsitseg,s.tpseguro,s.dtcancel,p.DTRECUSA, p.TPRECUSA,s.cdmotcan
- from crapseg s,
-      tbseg_prestamista p
+ from cecred.crapseg s,
+      cecred.tbseg_prestamista p
 where s.cdcooper = p.cdcooper
   and s.nrdconta = p.nrdconta
   and s.nrctrseg = p.nrctrseg
@@ -4061,8 +4061,8 @@ where s.cdcooper = p.cdcooper
 '770353118838')
 union 
 select p.cdcooper,p.nrdconta,p.nrctrseg,p.nrctremp,p.nrproposta,p.tpregist,s.cdsitseg,s.tpseguro,s.dtcancel,p.DTRECUSA, p.TPRECUSA,s.cdmotcan
- from crapseg s,
-      tbseg_prestamista p
+ from cecred.crapseg s,
+      cecred.tbseg_prestamista p
 where s.cdcooper = p.cdcooper
   and s.nrdconta = p.nrdconta
   and s.nrctrseg = p.nrctrseg
@@ -5070,8 +5070,8 @@ where s.cdcooper = p.cdcooper
 '770355328597')
 union 
 select p.cdcooper,p.nrdconta,p.nrctrseg,p.nrctremp,p.nrproposta,p.tpregist,s.cdsitseg,s.tpseguro,s.dtcancel,p.DTRECUSA, p.TPRECUSA,s.cdmotcan
- from crapseg s,
-      tbseg_prestamista p
+ from cecred.crapseg s,
+      cecred.tbseg_prestamista p
 where s.cdcooper = p.cdcooper
   and s.nrdconta = p.nrdconta
   and s.nrctrseg = p.nrctrseg
