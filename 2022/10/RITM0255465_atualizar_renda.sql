@@ -75,6 +75,8 @@ BEGIN
   vt_msgalt(3) := 'valor ren. 1.ttl,';
   vt_msgalt.EXTEND(1);
   vt_msgalt(4) := 'Confirmação da Rendasalario 1.ttl,';
+  vt_msgalt.EXTEND(1);
+  vt_msgalt(5) := 'Enriquecimento de base interna - base Setembro 2022,';
   
   
   vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/RITM0255465';
