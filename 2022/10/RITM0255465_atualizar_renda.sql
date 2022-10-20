@@ -50,7 +50,7 @@ DECLARE
   
   vr_dsaltera crapalt.dsaltera%TYPE;
   
-  TYPE           TP_ALT IS ARRAY(4) OF VARCHAR2(60);
+  TYPE           TP_ALT IS ARRAY(5) OF VARCHAR2(60);
   vt_msgalt      TP_ALT;
   vr_msgalt      VARCHAR2(150);
   
