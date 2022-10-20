@@ -314,7 +314,7 @@ BEGIN
        rw_crapttl.tpdrendi##3 = 6 OR 
        rw_crapttl.tpdrendi##4 = 6 OR 
        rw_crapttl.tpdrendi##5 = 6 OR 
-       rw_crapttl.tpdrendi##6 = 6 THEN
+       rw_crapttl.tpdrendi##6 = 6 THEN 
        
       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                       ,pr_nmdcampo => 'Justificativa Outras Rendas'
