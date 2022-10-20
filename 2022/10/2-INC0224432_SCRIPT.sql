@@ -30,7 +30,7 @@ DECLARE
        WHERE lct.idarquivo = arq.idarquivo
          AND ctz.idlancto = lct.idlancto
          AND pdv.idcentraliza = ctz.idcentraliza
-         AND arq.idarquivo IN (633475)
+         AND arq.idarquivo IN (635878)
        GROUP BY arq.idarquivo
                ,arq.nmarquivo_origem
                ,lct.nrcnpj_credenciador
@@ -70,7 +70,7 @@ DECLARE
          AND lct.idarquivo = arq.idarquivo
          AND ctz.idlancto = lct.idlancto
          AND pdv.tpforma_transf = pr_tpforma_transf
-         AND arq.idarquivo IN (633475)
+         AND arq.idarquivo IN (635878)
          AND NVL(pdv.cdocorrencia, '00') = '00'
          AND ctz.cdagencia_centraliza = cop.cdagectl
        ORDER BY ctz.cdagencia_centraliza
@@ -484,14 +484,14 @@ BEGIN
   BEGIN
     UPDATE CECRED.tbdomic_liqtrans_lancto
        SET insituacao = 1
-     WHERE idarquivo IN (633475);
+     WHERE idarquivo IN (635878);
   END;
 
   pc_efetiva_reg_pendentes(trunc(SYSDATE), vr_cdcritic, vr_dscritic);
 
   UPDATE CECRED.tbdomic_liqtrans_lancto
      SET insituacao = 2
-   WHERE idarquivo IN (633475);
+   WHERE idarquivo IN (635878);
 
   COMMIT;
 
