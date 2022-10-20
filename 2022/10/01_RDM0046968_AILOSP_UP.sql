@@ -1,0 +1,5 @@
+BEGIN
+UPDATE CECRED.TBGEN_NOTIF_MSG_CADASTRO C SET C.DSHTML_MENSAGEM = '#nomeresumido, <br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado e foi cancelado devido à falta de saldo/limite. <br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br>  O sistema não fará novas tentativas de processamento para este agendamento.' WHERE C.CDORIGEM_MENSAGEM = 13 AND C.CDMENSAGEM = 6624;
+UPDATE CECRED.TBGEN_NOTIF_MSG_CADASTRO C SET C.DSHTML_MENSAGEM = '#nomeresumido,<br><br> Seu pagamento Pix que estava agendado para hoje não foi realizado devido ao limite diário ou saldo insuficiente em sua conta corrente.<br><br> Beneficiário: #beneficiario <br> Valor: #valorpix <br><br> Evite pagamentos em duplicidade. O sistema fará novas tentativas de débito ao longo do dia e caso houver saldo em conta, o débito acontecerá normalmente.' WHERE C.CDORIGEM_MENSAGEM = 13 AND C.CDMENSAGEM = 6623;
+COMMIT;
+END;
