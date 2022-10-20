@@ -50,7 +50,7 @@ DECLARE
   
   vr_dsaltera crapalt.dsaltera%TYPE;
   
-  TYPE           TP_ALT IS ARRAY(4) OF VARCHAR2(50);
+  TYPE           TP_ALT IS ARRAY(5) OF VARCHAR2(60);
   vt_msgalt      TP_ALT;
   vr_msgalt      VARCHAR2(150);
   
@@ -75,6 +75,8 @@ BEGIN
   vt_msgalt(3) := 'valor ren. 1.ttl,';
   vt_msgalt.EXTEND(1);
   vt_msgalt(4) := 'Confirmação da Rendasalario 1.ttl,';
+  vt_msgalt.EXTEND(1);
+  vt_msgalt(5) := 'Enriquecimento de base interna - base Setembro 2022,';
   
   
   vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/RITM0255465';
@@ -219,7 +221,8 @@ BEGIN
           rw_crapttl.nrdconta
           , vr_dtmvtolt
           , '1'
-          , 'salario ' || rw_crapttl.idseqttl || '.ttl,tip.ren. ' || rw_crapttl.idseqttl || '.ttl,valor ren. ' || rw_crapttl.idseqttl || '.ttl,justificativa rend. ' || rw_crapttl.idseqttl || '.ttl,'
+          , 'salario ' || rw_crapttl.idseqttl || '.ttl,tip.ren. ' || rw_crapttl.idseqttl || '.ttl,valor ren. ' || rw_crapttl.idseqttl || 
+            '.ttl,justificativa rend. ' || rw_crapttl.idseqttl || '.ttl,Enriquecimento de base interna - base Setembro 2022,'
           , 1
           , vr_cdcooper
         );
@@ -311,7 +314,7 @@ BEGIN
        rw_crapttl.tpdrendi##3 = 6 OR 
        rw_crapttl.tpdrendi##4 = 6 OR 
        rw_crapttl.tpdrendi##5 = 6 OR 
-       rw_crapttl.tpdrendi##6 = 6 THEN
+       rw_crapttl.tpdrendi##6 = 6 THEN 
        
       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                       ,pr_nmdcampo => 'Justificativa Outras Rendas'
