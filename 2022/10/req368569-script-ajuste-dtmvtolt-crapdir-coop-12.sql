@@ -5,5 +5,5 @@ BEGIN
      AND T.DTMVTOLT = TO_DATE('02/01/2023', 'dd/MM/yyyy');
      
   COMMIT;
-END
+END;
 /
