@@ -1,0 +1,9 @@
+BEGIN
+  UPDATE CRAPDIR T
+     SET T.DTMVTOLT = TO_DATE('30/12/2022', 'dd/MM/yyyy')
+   WHERE T.CDCOOPER = 12
+     AND T.DTMVTOLT = TO_DATE('02/01/2023', 'dd/MM/yyyy');
+     
+  COMMIT;
+END
+/
