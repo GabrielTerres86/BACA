@@ -1,6 +1,6 @@
 BEGIN
 
-  DELETE FROM craplem a
+  DELETE FROM cecred.craplem a
    WHERE cdcooper = 9
      AND nrdconta = 168009
      AND nrctremp = 18383
