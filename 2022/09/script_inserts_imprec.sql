@@ -32,19 +32,6 @@ BEGIN
     ,lstparam
     ,nrseqrdr)
   VALUES
-    ('OBTER_LISTA_AGENDAS_ATIVAS_ARQUIVO'
-    ,''
-    ,'credito.obterListaAgendasAtivasArquivo'
-    ,'pr_nrregist,pr_nriniseq'
-    ,vr_nrseqrdr);
-
-  INSERT INTO cecred.crapaca
-    (nmdeacao
-    ,nmpackag
-    ,nmproced
-    ,lstparam
-    ,nrseqrdr)
-  VALUES
     ('OBTER_LISTA_CNPJSCPFS_TITULARES_URS'
     ,''
     ,'credito.obterListaCNPJsCPFsTitularesURs'
