@@ -32,19 +32,6 @@ BEGIN
     ,lstparam
     ,nrseqrdr)
   VALUES
-    ('OBTER_LISTA_AGENDAS_ATIVAS_ARQUIVO'
-    ,''
-    ,'credito.obterListaAgendasAtivasArquivo'
-    ,'pr_nrregist,pr_nriniseq'
-    ,vr_nrseqrdr);
-
-  INSERT INTO cecred.crapaca
-    (nmdeacao
-    ,nmpackag
-    ,nmproced
-    ,lstparam
-    ,nrseqrdr)
-  VALUES
     ('OBTER_LISTA_CNPJSCPFS_TITULARES_URS'
     ,''
     ,'credito.obterListaCNPJsCPFsTitularesURs'
@@ -91,17 +78,17 @@ BEGIN
     ,vr_nrseqrdr);
 
   INSERT INTO cecred.crapaca
-		(nmdeacao
-		,nmpackag
-		,nmproced
-		,lstparam
-		,nrseqrdr)
-	VALUES
-		('OBTER_CONCILIACAO_URS'
-		,''
-		,'credito.obterConciliacaoURsWeb'
-		,'pr_dtinicial,pr_dtfinal,pr_instatus'
-		,vr_nrseqrdr);
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('OBTER_CONCILIACAO_URS'
+    ,''
+    ,'credito.obterConciliacaoURsWeb'
+    ,'pr_dtinicial,pr_dtfinal,pr_instatus'
+    ,vr_nrseqrdr);
 
   INSERT INTO cecred.craptel
     (nmdatela
