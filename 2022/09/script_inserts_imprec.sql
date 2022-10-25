@@ -110,13 +110,13 @@ BEGIN
     ,idambtel)
     (SELECT 'IMPREC'
            ,6
-           ,'I,L,E,D,X,C'
+           ,'I,D,C'
            ,'PROJETO CERC'
            ,'PROJETO CERC'
            ,0
            ,1
            ,' '
-           ,'IMP.SAS,IMP.MAN,EXCLUIR,DETALHES,IMP. MAN LIM,CONCILIACAO'
+           ,'IMP. ARQ. CERC AGENDA AP005,DETALHES,CONCILIACAO'
            ,1
            ,cop.cdcooper
            ,1
@@ -164,6 +164,48 @@ BEGIN
            ,cop.cdcooper
            ,NULL
        FROM cecred.crapcop cop
+      WHERE cop.flgativo = 1);
+
+  INSERT INTO cecred.crapace
+    (NMDATELA
+    ,CDDOPCAO
+    ,CDOPERAD
+    ,NMROTINA
+    ,CDCOOPER
+    ,NRMODULO
+    ,IDEVENTO
+    ,IDAMBACE)
+    (SELECT 'IMPREC'
+           ,opc.cddopcao
+           ,ope.cdoperad
+           ,' '
+           ,cop.cdcooper
+           ,1
+           ,0
+           ,2
+       FROM cecred.crapcop cop
+      INNER JOIN (SELECT CASE LEVEL
+                          WHEN 1 THEN
+                           'I'
+                          WHEN 2 THEN
+                           'D'
+                          WHEN 3 THEN
+                           'C'
+                        END AS cddopcao
+                   FROM DUAL
+                 CONNECT BY LEVEL IN (1, 2, 3)) opc
+         ON 1 = 1
+      INNER JOIN (SELECT CASE LEVEL
+                          WHEN 1 THEN
+                           'f0033406'
+                          WHEN 2 THEN
+                           'f0033495'
+                          WHEN 3 THEN
+                           'f0033853'
+                        END AS cdoperad
+                   FROM DUAL
+                 CONNECT BY LEVEL IN (1, 2, 3)) ope
+         ON 1 = 1
       WHERE cop.flgativo = 1);
 
   COMMIT;
