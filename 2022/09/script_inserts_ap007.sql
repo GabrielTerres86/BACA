@@ -2,7 +2,7 @@ DECLARE
 
 BEGIN
 
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -10,12 +10,12 @@ BEGIN
     ,NRSEQRDR)
   VALUES
     ('GERA_ARQUIVO7AB'
-    ,null
+    ,NULL
     ,'credito.gerarArquivoCercAp007Web'
     ,'pr_cdcooper,pr_nrdconta,pr_nrctremp'
     ,1045);
 
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -23,12 +23,12 @@ BEGIN
     ,NRSEQRDR)
   VALUES
     ('IMPORTA_ARQUIVO7AB'
-    ,null
+    ,NULL
     ,'credito.liberarArquivoAp007AWeb'
     ,'pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_nmarquivo'
     ,1045);
 
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -36,7 +36,7 @@ BEGIN
     ,NRSEQRDR)
   VALUES
     ('OBTER_STATUS_GERACAO_CERC'
-    ,null
+    ,NULL
     ,'CREDITO.obterStatusGeracaoArqWeb'
     ,'pr_cdcooper,pr_nrdconta,pr_nrctremp'
     ,1045);
