@@ -54,7 +54,6 @@ BEGIN
   values (aux_cdpartar_add, 16, '');
   COMMIT;
 
--------------------------------------------------------------------------------
   OPEN cr_crapbat('NOVOIDPRODUTO_1');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -103,7 +102,7 @@ BEGIN
   values (aux_cdpartar_add, 16, '');
 
   COMMIT;
--------------------------------------------------------------------------------
+
   OPEN cr_crapbat('NOVOIDPRODUTO_2');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -152,7 +151,7 @@ BEGIN
   values (aux_cdpartar_add, 16, '');
 
   COMMIT;
--------------------------------------------------------------------------------
+
   OPEN cr_crapbat('NOVOIDPRODUTO_3');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -201,7 +200,7 @@ BEGIN
   values (aux_cdpartar_add, 16, '11');
 
   COMMIT;
--------------------------------------------------------------------------------
+
   OPEN cr_crapbat('NOVOIDPRODUTO_4');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -250,7 +249,7 @@ BEGIN
   values (aux_cdpartar_add, 16, '');
 
   COMMIT;
--------------------------------------------------------------------------------
+
   OPEN cr_crapbat('NOVOIDPRODUTO_5');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -299,7 +298,6 @@ BEGIN
   values (aux_cdpartar_add, 16, '');
 
   COMMIT;
--------------------------------------------------------------------------------
 
   OPEN cr_crapbat('NOVOIDPRODUTO_6');
   FETCH cr_crapbat INTO rw_crapbat;
@@ -349,6 +347,6 @@ BEGIN
   values (aux_cdpartar_add, 16, '');
 
   COMMIT;
--------------------------------------------------------------------------------
+
 
 END;
