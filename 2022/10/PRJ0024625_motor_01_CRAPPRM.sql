@@ -5,7 +5,6 @@ BEGIN
                      FROM crapcop cop
                     WHERE cop.flgativo = 1
                     ORDER BY cop.cdcooper) LOOP
-------------------
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
                   VALUES ('CRED',rw_coop.cdcooper, 'REGRA_PJ_MOTOR_0', 'Nome da politica PJ de Emprestimo no Motor de Credito NEUROTECH ','Polit_Neuro_Emprestimo_PJ');
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
@@ -20,7 +19,7 @@ BEGIN
                   VALUES ('CRED',rw_coop.cdcooper, 'REGRA_PJ_MOTOR_5', 'Nome da politica PJ de Desc.Cheque Limite no Motor de Credito NEUROTECH ','Polit_Neuro_DescChqLim_PJ');
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
                   VALUES ('CRED',rw_coop.cdcooper, 'REGRA_PJ_MOTOR_6', 'Nome da politica PJ de Desc.Cheque Borderô no Motor de Credito NEUROTECH ','Polit_Neuro_DescChqBord_PJ');
-------------------
+
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
                   VALUES ('CRED',rw_coop.cdcooper, 'REGRA_PF_MOTOR_0', 'Nome da politica PF de Emprestimo no Motor de Credito NEUROTECH ','Polit_Neuro_Emprestimo_PF');
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
@@ -35,7 +34,7 @@ BEGIN
                   VALUES ('CRED',rw_coop.cdcooper, 'REGRA_PF_MOTOR_5', 'Nome da politica PF de Desc.Cheque Limite no Motor de Credito NEUROTECH ','Polit_Neuro_DescChqLim_PF');
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
                   VALUES ('CRED',rw_coop.cdcooper, 'REGRA_PF_MOTOR_6', 'Nome da politica PF de Desc.Cheque Borderô no Motor de Credito NEUROTECH ','Polit_Neuro_DescChqBord_PF');
-------------------
+
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',rw_coop.cdcooper, 'MOTOR_0', 'EMPR - DETERMINAR QUAL MOTOR VAI SER ACIONADO, NEUROTECH(0) OU IBRATAN(1) ',1);
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',rw_coop.cdcooper, 'MOTOR_1', 'DESCTIT - DETERMINAR QUAL MOTOR VAI SER ACIONADO, NEUROTECH(0) OU IBRATAN(1) ',1);
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',rw_coop.cdcooper, 'MOTOR_2', 'SIMUL - DETERMINAR QUAL MOTOR VAI SER ACIONADO, NEUROTECH(0) OU IBRATAN(1) ',1);
@@ -43,10 +42,10 @@ BEGIN
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',rw_coop.cdcooper, 'MOTOR_4', 'CCRED - DETERMINAR QUAL MOTOR VAI SER ACIONADO, NEUROTECH(0) OU IBRATAN(1) ',1);
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',rw_coop.cdcooper, 'MOTOR_5', 'DSCCHQLIM - DETERMINAR QUAL MOTOR VAI SER ACIONADO, NEUROTECH(0) OU IBRATAN(1) ',1);
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',rw_coop.cdcooper, 'MOTOR_6', 'DSCCHQBORD - DETERMINAR QUAL MOTOR VAI SER ACIONADO, NEUROTECH(0) OU IBRATAN(1) ',1);
-------------------
+
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
       VALUES ('CRED',rw_coop.cdcooper, 'CALC_NVLRISCO_TAXA_NOVO', 'Calcular Nível de Risco (Taxa) 1-Sim 0-Nao ',0);
-------------------
+
       IF rw_coop.cdcooper = 11 THEN
         vr_datacorte := TO_DATE('13/11/2022');
       END IF;
@@ -56,7 +55,6 @@ BEGIN
       INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
       VALUES ('CRED',rw_coop.cdcooper, 'DT_CORTE_MOTOR_LIMITE_PJ', 'Data de Corte, para poder diferenciar entre Produto Ibratan e Produto Neurotech. ',vr_datacorte);
       vr_datacorte := TO_DATE('31/12/2099');
-------------------
 
   END LOOP;
 

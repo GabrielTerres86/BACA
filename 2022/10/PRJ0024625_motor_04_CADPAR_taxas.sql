@@ -32,8 +32,6 @@ BEGIN
 
   COMMIT;
 
--------------------------------------------------
-
   OPEN cr_crapbat('CALCULARTAXA_1');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -58,8 +56,6 @@ BEGIN
   values (aux_cdpartar_add, 3,  '0');
 
   COMMIT;
-
--------------------------------------------------
 
   OPEN cr_crapbat('CALCULARTAXA_2');
   FETCH cr_crapbat INTO rw_crapbat;
@@ -86,8 +82,6 @@ BEGIN
 
   COMMIT;
 
--------------------------------------------------
-
   OPEN cr_crapbat('CALCULARTAXA_3');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -112,8 +106,6 @@ BEGIN
   values (aux_cdpartar_add, 3,  '0');
 
   COMMIT;
-
--------------------------------------------------
 
   OPEN cr_crapbat('CALCULARTAXA_4');
   FETCH cr_crapbat INTO rw_crapbat;
@@ -140,7 +132,6 @@ BEGIN
 
   COMMIT;
 
--------------------------------------------------
 
   OPEN cr_crapbat('CALCULARTAXA_5');
   FETCH cr_crapbat INTO rw_crapbat;
@@ -166,8 +157,6 @@ BEGIN
   values (aux_cdpartar_add, 3,  '0');
 
   COMMIT;
-
--------------------------------------------------
 
   OPEN cr_crapbat('CALCULARTAXA_6');
   FETCH cr_crapbat INTO rw_crapbat;

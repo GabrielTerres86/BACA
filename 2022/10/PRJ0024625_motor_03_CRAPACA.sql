@@ -12,7 +12,6 @@ BEGIN
   FETCH CR_PARAM INTO RW_PARAM;
   CLOSE CR_PARAM;
 
-  -- ALTERAÇÃO DA MENSAGERIA
   IF (RW_PARAM.VALUE = 0) THEN
     BEGIN
       UPDATE CRAPACA SET LSTPARAM = LSTPARAM||',pr_neurotechpf,pr_neurotechpj,pr_motorfornecedor' WHERE NMDEACAO = 'PAREST_ALTERA_PARAM';
@@ -26,7 +25,6 @@ BEGIN
   END IF;
 
 
-  -- INCLUSÃO DE NOVA MENSAGERIA
   BEGIN
     INSERT INTO crapaca ( NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
                  VALUES ('PAREST_CONS_PARAM_NEUROTECH', 'TELA_PAREST', 'pc_consulta_parametros_neurotech_web', 'pr_tlcooper', 362);
