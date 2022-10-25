@@ -6,12 +6,12 @@ DECLARE
 vr_cdcritic           PLS_INTEGER;
 vr_dscritic           VARCHAR2(4000);
 vr_exc_erro           EXCEPTION;  
-vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
+vr_idprglog 		  CECRED.tbgen_prglog.idprglog%TYPE := 0;
 
 BEGIN
 
    cecred.pc_integra_recusa_contributario(pr_cdcritic => vr_cdcritic,
-                        pr_dscritic => vr_dscritic);
+										  pr_dscritic => vr_dscritic);
 
 
 
