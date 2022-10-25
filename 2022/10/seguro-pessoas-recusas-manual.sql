@@ -18,7 +18,8 @@ BEGIN
   IF NVL(vr_cdcritic,0) <> 0 AND TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
-
+  COMMIT;
+  
 EXCEPTION
     WHEN vr_exc_erro THEN
       CECRED.pc_log_programa(pr_dstiplog => 'O'
