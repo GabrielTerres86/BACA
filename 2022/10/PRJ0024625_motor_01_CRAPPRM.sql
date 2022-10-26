@@ -59,8 +59,8 @@ BEGIN
   END LOOP;
 
   INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_HOST_WEBSRV' , 'URLs de acesso ao Mulesoft AILOS - Saída Motor de Credito Neurotech','https://integra.ailos.coop.br');
-  INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_URI_WEBSRV'  , 'URI de acesso aos Recursos Mulesoft AILOS - Saída Motor de Credito.','papi-ailosmais-motorcredito/v1/aimaro/enviar');
-  INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_URI_WSAYLLOS', 'URI de acesso aos Recursos Mulesoft AILOS - WSAYLLOS.','papi-ailosmais-motorcredito/v1/aimaro/webservice');
+  INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_URI_WEBSRV'  , 'URI de acesso aos Recursos Mulesoft AILOS - Saída Motor de Credito.','eapi-ailosmais-motorcredito/v1/aimaro/enviar');
+  INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_URI_WSAYLLOS', 'URI de acesso aos Recursos Mulesoft AILOS - WSAYLLOS.','eapi-ailosmais-motorcredito/v1/aimaro/webservice');
   INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_ID_MULE'     , 'Client ID - Acesso Mulesoft AILOS','ab2aa7ad118e4042b82c27793456db8d');
   INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_SECRET_MULE' , 'Client Secret - Acesso Mulesoft AILOS','3030C3225cEf4FdcbbDCD9A1A2B5eC42');
   INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) VALUES ('CRED',0, 'NOVOMOTOR_DATARAW_MULE', 'Data Raw - Conteudo padrão Motor Mulesoft AILOS ','{"cooperado": {"identificador": #cooperado#},"contaCorrente": {"numero": "#conta#"},"contrato": {"numero": "#proposta#"},"cooperativa": {"codigo": #cdcooper#}}');
