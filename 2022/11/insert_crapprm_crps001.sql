@@ -10,7 +10,7 @@ BEGIN
        '25/10/2022');
   END LOOP;
   
-  INSERT INTO CECRED.tbgen_batch_param (idparametro, qtparalelo, qtreg_transacao, cdcooper, cdprograma) VALUES(104,20,0,8,'CRPS001');
+  INSERT INTO CECRED.tbgen_batch_param (idparametro, qtparalelo, qtreg_transacao, cdcooper, cdprograma) VALUES(104,20,0,1,'CRPS001');
   
   COMMIT;
 END;
