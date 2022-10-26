@@ -305,8 +305,8 @@ BEGIN
     v_dados(v_dados.last()).vr_cdcooper := 10;
     v_dados(v_dados.last()).vr_nrdconta := 179566;
     v_dados(v_dados.last()).vr_nrctremp := 39528;
-    v_dados(v_dados.last()).vr_vllanmto := 36.42;
-    v_dados(v_dados.last()).vr_cdhistor := 3883;
+    v_dados(v_dados.last()).vr_vllanmto := 31.22;
+    v_dados(v_dados.last()).vr_cdhistor := 3918;
 
     v_dados.extend();
     v_dados(v_dados.last()).vr_cdcooper := 10;
