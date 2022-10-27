@@ -52,7 +52,7 @@ DECLARE
   
   TYPE           TP_ALT IS ARRAY(5) OF VARCHAR2(200);
   vt_msgalt      TP_ALT;
-  vr_msgalt      VARCHAR2(150);
+  vr_msgalt      VARCHAR2(2000);
   
   vr_nrdrowid    ROWID;
   vr_crapttl     CECRED.crapttl%ROWTYPE;
