@@ -32,7 +32,7 @@ DECLARE
     dbms_output.enable(NULL);
     FOR rw_grupo IN cr_grupo(pr_cdcooper => pr_cdcooper) LOOP
       BEGIN
-        INSERT INTO gestaoderisco.tbrisco_grupo_economico_integ(idgrupo_economico, cdcooper, nrdconta, nrcpfcgc, dhtransmissao)
+        INSERT INTO gestaoderisco.tbrisco_grupo_economico_integrante(cdgrupo_economico, cdcooper, nrdconta, nrcpfcnpj, dhregistro)
         VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_grupo.nrdconta, rw_grupo.nrcpfcgc, SYSDATE);
       EXCEPTION
         WHEN OTHERS THEN
@@ -41,7 +41,7 @@ DECLARE
       END;
       FOR rw_integ IN cr_integ(pr_idgrupo => rw_grupo.idgrupo) LOOP
         BEGIN
-          INSERT INTO gestaoderisco.tbrisco_grupo_economico_integ(idgrupo_economico, cdcooper, nrdconta, nrcpfcgc, dhtransmissao)
+          INSERT INTO gestaoderisco.tbrisco_grupo_economico_integrante(cdgrupo_economico, cdcooper, nrdconta, nrcpfcnpj, dhregistro)
           VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_integ.nrdconta, rw_integ.nrcpfcgc, SYSDATE);
         EXCEPTION
           WHEN OTHERS THEN
