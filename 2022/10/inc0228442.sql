@@ -708,7 +708,7 @@ BEGIN
 
   pc_correcao_prejuizo(pr_cdcooper => 16
                       ,pr_nrdconta => 187763
-                      ,pr_vllanmto => 250783
+                      ,pr_vllanmto => 250783.36
                       ,pr_cdhistor => 2721
                       ,pr_flgpreju => 0
                       ,pr_flgconta => 0
