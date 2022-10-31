@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapaca 
+  INSERT INTO cecred.crapaca 
     (NRSEQACA, 
      NMDEACAO, 
      NMPACKAG, 
@@ -14,7 +14,7 @@ BEGIN
      'pr_cdcooper, pr_nrdconta',
      71);
   
-  INSERT INTO crapaca 
+  INSERT INTO cecred.crapaca 
     (NRSEQACA, 
      NMDEACAO, 
      NMPACKAG, 
