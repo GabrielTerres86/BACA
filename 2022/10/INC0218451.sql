@@ -852,6 +852,35 @@ BEGIN
     dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
   END IF;
   CLOSE cr_crapass;
+  
+  
+
+  vr_cdcooper := 11;
+  vr_progress := 1324105;
+  vr_vllanmto := 6.94;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+  
   COMMIT;
 
   dbms_output.put_line(' ');
