@@ -1,0 +1,4 @@
+BEGIN
+UPDATE cecred.crapprm SET dsvlrprm = 25 WHERE PROGRESS_RECID = 245488;
+COMMIT;
+END;
