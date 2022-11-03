@@ -67,22 +67,19 @@ BEGIN
     END LOOP;
   END LOOP;
   
-  -- Adiciona TAG de commit rollback
   gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'COMMIT;'||chr(13), FALSE);
-  -- Fecha o arquivo rollback
   gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, chr(13), TRUE); 
              
-  -- Grava o arquivo de rollback
-  GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3                             --> Cooperativa conectada
-                                     ,pr_cdprogra  => 'ATENDA'                      --> Programa chamador - utilizamos apenas um existente 
-                                     ,pr_dtmvtolt  => trunc(SYSDATE)                --> Data do movimento atual
-                                     ,pr_dsxml     => vr_dados_rollback             --> Arquivo XML de dados
-                                     ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqbkp --> Path/Nome do arquivo PDF gerado
-                                     ,pr_flg_impri => 'N'                           --> Chamar a impressão (Imprim.p)
-                                     ,pr_flg_gerar => 'S'                           --> Gerar o arquivo na hora
-                                     ,pr_flgremarq => 'N'                           --> remover arquivo apos geracao
-                                     ,pr_nrcopias  => 1                             --> Número de cópias para impressão
-                                     ,pr_des_erro  => vr_dscritic);                 --> Retorno de Erro
+  GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3                             
+                                     ,pr_cdprogra  => 'ATENDA'                      
+                                     ,pr_dtmvtolt  => trunc(SYSDATE)                
+                                     ,pr_dsxml     => vr_dados_rollback             
+                                     ,pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqbkp 
+                                     ,pr_flg_impri => 'N'                           
+                                     ,pr_flg_gerar => 'S'                           
+                                     ,pr_flgremarq => 'N'                           
+                                     ,pr_nrcopias  => 1                             
+                                     ,pr_des_erro  => vr_dscritic);                 
         
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
@@ -96,7 +93,7 @@ BEGIN
 EXCEPTION
   WHEN vr_exc_erro THEN
     ROLLBACK;
-    raise_application_error(-20100, 'Erro - ' || vr_dscritic);
+    raise_application_error(-20100, 'Erro: ' || vr_dscritic);
   WHEN OTHERS THEN
     ROLLBACK;
     raise_application_error(-20100, SQLERRM);
