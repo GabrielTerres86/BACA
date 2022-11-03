@@ -14,7 +14,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '15642844';
   ELSE
-    vr_nrdcontaAdm := '7239530';  
+    vr_nrdcontaAdm := '84357096';  
   END IF;
   
   INSERT INTO CECRED.CRAPPRM P
@@ -33,7 +33,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '860000';
   ELSE
-    vr_nrdcontaAdm := '820024';  
+    vr_nrdcontaAdm := '92760406';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -52,7 +52,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '366668';
   ELSE
-    vr_nrdcontaAdm := '50008';  
+    vr_nrdcontaAdm := '99149931';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -71,7 +71,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '269948';
   ELSE
-    vr_nrdcontaAdm := '850004';  
+    vr_nrdcontaAdm := '99729997';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -90,7 +90,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '457450';
   ELSE
-    vr_nrdcontaAdm := '40002';  
+    vr_nrdcontaAdm := '99959933';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -109,7 +109,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '64548';
   ELSE
-    vr_nrdcontaAdm := '7239530';  
+    vr_nrdcontaAdm := '99969874';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -128,7 +128,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '4006';
   ELSE
-    vr_nrdcontaAdm := '4006';  
+    vr_nrdcontaAdm := '99995930';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -147,7 +147,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '243086';
   ELSE
-    vr_nrdcontaAdm := '9008';  
+    vr_nrdcontaAdm := '99990938';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -166,7 +166,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '535745';
   ELSE
-    vr_nrdcontaAdm := '9148';  
+    vr_nrdcontaAdm := '99501120';  
   END IF;
     
   INSERT INTO CECRED.CRAPPRM P
@@ -185,7 +185,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '212040';
   ELSE
-    vr_nrdcontaAdm := '850012';  
+    vr_nrdcontaAdm := '99787890';  
   END IF;
 
   INSERT INTO CECRED.CRAPPRM P
@@ -204,7 +204,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '750298';
   ELSE
-    vr_nrdcontaAdm := '7239530';  
+    vr_nrdcontaAdm := '99357593';  
   END IF;
 
   INSERT INTO CECRED.CRAPPRM P
@@ -223,7 +223,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '408905';
   ELSE
-    vr_nrdcontaAdm := '59650';  
+    vr_nrdcontaAdm := '99852179';  
   END IF;
 
   INSERT INTO CECRED.CRAPPRM P
@@ -242,7 +242,7 @@ BEGIN
   IF vr_globalname = vc_bdprod THEN
     vr_nrdcontaAdm := '1057804';
   ELSE
-    vr_nrdcontaAdm := '830003';  
+    vr_nrdcontaAdm := '99179911';  
   END IF;
 
   INSERT INTO CECRED.CRAPPRM P
