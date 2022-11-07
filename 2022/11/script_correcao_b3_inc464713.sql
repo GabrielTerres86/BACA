@@ -1,7 +1,7 @@
 DECLARE
 
    vr_aux_ambiente    INTEGER       := 3;             
-   vr_aux_diretor     VARCHAR2(100) := 'INC464713';     
+   vr_aux_diretor     VARCHAR2(100) := 'INC0228851';     
    vr_aux_arquivo     VARCHAR2(100) := 'registros_imob'; 
    vr_handle          UTL_FILE.FILE_TYPE; 
    vr_handle_log      UTL_FILE.FILE_TYPE;
