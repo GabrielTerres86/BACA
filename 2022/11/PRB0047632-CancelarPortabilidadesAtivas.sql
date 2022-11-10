@@ -43,6 +43,7 @@ DECLARE
   vr_ind_arquiv    UTL_FILE.FILE_TYPE;
   vr_ind_arqlog    UTL_FILE.FILE_TYPE;
   vr_exception     EXCEPTION;
+  vr_qtdcommit     NUMBER := 0; 
   
 BEGIN
 
@@ -118,6 +119,13 @@ BEGIN
       gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'Portabilidade: '||to_char(portab.nrnu_portabilidade)||', da coop/conta: '||conta.cdcooper||'/'||conta.nrdconta||', cancelada.');
       
     END LOOP;
+    
+    vr_qtdcommit := NVL(vr_qtdcommit,0) + 1;
+    
+    IF vr_qtdcommit >= 100 THEN
+      COMMIT;
+      vr_qtdcommit := 0;
+    END IF;
     
   END LOOP;
 
