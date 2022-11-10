@@ -196,5 +196,5 @@ BEGIN
 
   dbms_lob.close(vr_dados_rollback);
   dbms_lob.freetemporary(vr_dados_rollback);
-  COMMIT;
+  COMMIT ;
 END ;
