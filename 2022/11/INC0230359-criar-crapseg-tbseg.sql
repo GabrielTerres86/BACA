@@ -313,7 +313,7 @@ for r01 in c01 loop
   
   vr_nrsequen := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
   
-   cecred.segu0003.pc_parametros_segpre(pr_cdcooper        => r01.cdcooper
+   cecred.segu0003.pc_parametros_segpre( pr_cdcooper        => r01.cdcooper
                                         ,pr_nrdconta        => r01.nrdconta
                                         ,pr_nrctremp        => r01.nrctrato
                                         ,pr_nrctrseg        => r01.nrctrseg
