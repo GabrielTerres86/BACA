@@ -72,7 +72,7 @@ ds_saida_v  varchar2(1000);
    
 begin
 
-  if  (gene0001.fn_exis_diretorio(ds_nome_diretorio_p)) then
+  if (cecred.gene0001.fn_exis_diretorio(ds_nome_diretorio_p)) then
 
     ds_critica_p  := null;
 
@@ -135,7 +135,7 @@ if  (upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.
 
 else
 
-  ds_nome_diretorio_v := gene0001.fn_diretorio( pr_tpdireto => 'C',
+  ds_nome_diretorio_v := cecred.gene0001.fn_diretorio( pr_tpdireto => 'C',
                 pr_cdcooper => 3);
 
   ds_nome_diretorio_v := ds_nome_diretorio_v || '/INC0230359/rollback';
@@ -313,13 +313,13 @@ for r01 in c01 loop
   
   vr_nrsequen := fn_sequence('TBSEG_PRESTAMISTA', 'SEQCERTIFICADO', 0);
   
-   segu0003.pc_parametros_segpre(pr_cdcooper        => r01.cdcooper
-                                ,pr_nrdconta        => r01.nrdconta
-                                ,pr_nrctremp        => r01.nrctrato
-                                ,pr_nrctrseg        => r01.nrctrseg
-                                ,pr_parametros_prst => rw_tbseg_parametros_prst
-                                ,pr_cdcritic        => vr_cdcritic
-                                ,pr_dscritic        => vr_dscritic);
+   cecred.segu0003.pc_parametros_segpre(pr_cdcooper        => r01.cdcooper
+                                        ,pr_nrdconta        => r01.nrdconta
+                                        ,pr_nrctremp        => r01.nrctrato
+                                        ,pr_nrctrseg        => r01.nrctrseg
+                                        ,pr_parametros_prst => rw_tbseg_parametros_prst
+                                        ,pr_cdcritic        => vr_cdcritic
+                                        ,pr_dscritic        => vr_dscritic);
   
    vr_vlpercmo := segu0003.fn_retorna_prst_perc_morte(pr_cdcooper => r01.cdcooper,
                                                      pr_tppessoa => rw_tbseg_parametros_prst.tppessoa,
@@ -332,13 +332,13 @@ for r01 in c01 loop
      RAISE vr_exc_saida;
    END IF;
        
-   vr_vlpercin := segu0003.fn_retorna_prst_perc_invalidez(pr_cdcooper => r01.cdcooper,
-                                                 pr_tppessoa => rw_tbseg_parametros_prst.tppessoa,
-                                                 pr_cdsegura => rw_tbseg_parametros_prst.cdsegura,
-                                                 pr_tpcustei => rw_tbseg_parametros_prst.tpcustei,
-                                                 pr_dtnasc   => r01.dtnascsg,
-                                                 pr_cdcritic => vr_cdcritic,
-                                                 pr_dscritic => vr_dscritic);
+   vr_vlpercin := cecred.segu0003.fn_retorna_prst_perc_invalidez(pr_cdcooper => r01.cdcooper,
+                                                                 pr_tppessoa => rw_tbseg_parametros_prst.tppessoa,
+                                                                 pr_cdsegura => rw_tbseg_parametros_prst.cdsegura,
+                                                                 pr_tpcustei => rw_tbseg_parametros_prst.tpcustei,
+                                                                 pr_dtnasc   => r01.dtnascsg,
+                                                                 pr_cdcritic => vr_cdcritic,
+                                                                 pr_dscritic => vr_dscritic);
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
     END IF;
