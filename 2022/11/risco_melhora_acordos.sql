@@ -73,7 +73,6 @@ BEGIN
   vr_nmarqbkp := 'ROLLBACK_MELHORA_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
   vr_nmarquiv := 'RISCO_MELHORA_ACORDO.csv';
 
-  --Abrir arquivo
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
                           ,pr_nmarquiv => vr_nmarquiv  
                           ,pr_tipabert => 'R'          
@@ -97,7 +96,6 @@ BEGIN
         gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv
                                     ,pr_des_text => vr_dslinha);
 
-        --CDCOOPERATIVA;NRCC;NRCONTRATO;NRCPFCNPJ;NUMERO_ACORDO;RISCO_MELHORA
         vr_vet_dados := gene0002.fn_quebra_string(pr_string => vr_dslinha, pr_delimit => ';');
         
         OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_vet_dados(1));
