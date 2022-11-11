@@ -121,7 +121,7 @@ BEGIN
         CLOSE cr_crapris;
           
         vr_inrisco_atraso_original := cecred.risc0004.fn_traduz_nivel_risco(cecred.RISC0004.fn_calcula_risco_atraso(rw_crapris.qtdiaatr));
-        vr_inrisco_atraso_novo     := cecred.risc0004.fn_traduz_nivel_risco(vr_vet_dados(6));
+        vr_inrisco_atraso_novo     := cecred.risc0004.fn_traduz_nivel_risco(REPLACE(TRIM(vr_vet_dados(6)), CHR(13), ''));
         
         vr_inrisco_atraso := greatest(vr_inrisco_atraso_original, vr_inrisco_atraso_novo);
         
