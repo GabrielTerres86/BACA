@@ -321,13 +321,13 @@ for r01 in c01 loop
                                         ,pr_cdcritic        => vr_cdcritic
                                         ,pr_dscritic        => vr_dscritic);
   
-   vr_vlpercmo := segu0003.fn_retorna_prst_perc_morte(pr_cdcooper => r01.cdcooper,
-                                                     pr_tppessoa => rw_tbseg_parametros_prst.tppessoa,
-                                                     pr_cdsegura => rw_tbseg_parametros_prst.cdsegura,
-                                                     pr_tpcustei => rw_tbseg_parametros_prst.tpcustei,
-                                                     pr_dtnasc   => r01.dtnascsg,
-                                                     pr_cdcritic => vr_cdcritic,
-                                                     pr_dscritic => vr_dscritic);
+   vr_vlpercmo := cecred.segu0003.fn_retorna_prst_perc_morte(pr_cdcooper => r01.cdcooper,
+															 pr_tppessoa => rw_tbseg_parametros_prst.tppessoa,
+															 pr_cdsegura => rw_tbseg_parametros_prst.cdsegura,
+															 pr_tpcustei => rw_tbseg_parametros_prst.tpcustei,
+															 pr_dtnasc   => r01.dtnascsg,
+															 pr_cdcritic => vr_cdcritic,
+															 pr_dscritic => vr_dscritic);
    IF vr_dscritic IS NOT NULL THEN
      RAISE vr_exc_saida;
    END IF;
