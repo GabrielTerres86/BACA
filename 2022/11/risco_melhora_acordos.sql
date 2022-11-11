@@ -206,18 +206,6 @@ BEGIN
                                 '   AND o.nrctremp = ' || vr_vet_dados(3) || 
                                 ';' ||chr(13)||chr(13), FALSE); 
         
-        dbms_output.put_line('Cooperativa: ' || vr_vet_dados(1) || ' ' ||
-                             'Conta: '       || vr_vet_dados(2) || ' ' ||
-                             'Conta HIG: '   || vr_nrdconta     || ' ' ||
-                             'Contrato: '    || vr_vet_dados(3) || ' ' ||
-                             'Documento: '   || vr_vet_dados(4) || ' ' ||
-                             'Acordo: '      || vr_vet_dados(5) || ' ' ||
-                             'Risco: '       || vr_vet_dados(6) || ' ' ||
-                             'Original: '    || vr_inrisco_atraso_original || ' ' ||
-                             'Novo: '        || vr_inrisco_atraso_novo
-                             );
-           
-
         END IF;        
       END LOOP;
 
