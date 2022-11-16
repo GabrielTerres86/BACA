@@ -4,7 +4,7 @@ DECLARE
   CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE
                       ,pr_nrdconta crapass.nrdconta%TYPE) IS
    SELECT ass.cdcooper, ass.nrdconta, ass.nrdctitg, ass.flgctitg, dat.dtmvtolt
-    FROM   CRAPASS ass, crapdat dat
+    FROM   CECRED.CRAPASS ass, CECRED.crapdat dat
     WHERE ass.Cdcooper=dat.cdcooper
     AND ass.cdcooper = pr_cdcooper
     AND    ass.nrdconta = pr_nrdconta;
@@ -14,7 +14,7 @@ DECLARE
                     ,pr_nrdconta crapalt.nrdconta%TYPE
                     ,pr_dtaltera crapalt.dtaltera%TYPE ) IS
     SELECT cdcooper, nrdconta, dsaltera, dtaltera
-      FROM crapalt
+      FROM CECRED.crapalt
      WHERE cdcooper = pr_cdcooper
        AND nrdconta = pr_nrdconta
        AND trunc(dtaltera) = trunc(pr_dtaltera);
@@ -63,13 +63,13 @@ DECLARE
   PROCEDURE pc_escreve_xml_rollback(pr_des_dados IN VARCHAR2,
                                     pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
   BEGIN
-    gene0002.pc_escreve_xml(vr_des_rollback_xml, vr_texto_rb_completo, pr_des_dados, pr_fecha_xml);
+    CECRED.gene0002.pc_escreve_xml(vr_des_rollback_xml, vr_texto_rb_completo, pr_des_dados, pr_fecha_xml);
   END;
 
   PROCEDURE pc_escreve_xml_critica(pr_des_dados IN VARCHAR2,
                                    pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
   BEGIN
-    gene0002.pc_escreve_xml(vr_des_critic_xml, vr_texto_cri_completo, pr_des_dados, pr_fecha_xml);
+    CECRED.gene0002.pc_escreve_xml(vr_des_critic_xml, vr_texto_cri_completo, pr_des_dados, pr_fecha_xml);
   END;
   
 
@@ -91,7 +91,7 @@ BEGIN
   vr_hrtransa    := GENE0002.fn_busca_time;
   
   -- Efetuar abertura do arquivo para processamento
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_arq_path   --> Diretorio do arquivo
+  CECRED.gene0001.pc_abre_arquivo(pr_nmdireto => vr_arq_path   --> Diretorio do arquivo
                           ,pr_nmarquiv => vr_nmarquiv   --> Nome do arquivo
                           ,pr_tipabert => 'R'           --> Modo de abertura (R,W,A)
                           ,pr_utlfileh => vr_hutlfile   --> Handle do arquivo aberto
@@ -112,7 +112,7 @@ BEGIN
         vr_nrdconta := 0;
 
         -- Leitura da linha x
-        gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_hutlfile --> Handle do arquivo aberto
+        CECRED.gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_hutlfile --> Handle do arquivo aberto
                                     ,pr_des_text => vr_dstxtlid); --> Texto lido
        
         -- Ignorar linhas vazias
@@ -147,7 +147,7 @@ BEGIN
           BEGIN
              -- Verifica se pode incluir o registro na nova data, se não, atualiza o que já existe na nova data
             IF (cr_crapalt%NOTFOUND) THEN
-              INSERT INTO crapalt 
+              INSERT INTO CECRED.crapalt 
                 (nrdconta
                 ,dtaltera
                 ,cdoperad
@@ -178,7 +178,7 @@ BEGIN
                        '   AND dtaltera = ''' || to_char(rw_crapass.dtmvtolt, 'DD/MM/YYYY') || 
                        ''';'||chr(10));  
             
-              UPDATE crapalt
+              UPDATE CECRED.crapalt
                  SET dsaltera = rw_crapalt.dsaltera || ',exclusao conta-itg('||rw_crapass.nrdctitg||')- ope.1,',
                      flgctitg = 0,
                      tpaltera = 2
@@ -187,7 +187,7 @@ BEGIN
                  AND dtaltera = trunc(rw_crapass.dtmvtolt);
                
             END IF; -- (cr_crapalt%NOTFOUND)
-            GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+            CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
                                  pr_cdoperad => vr_cdoperad,
                                  pr_dscritic => vr_dscritic,
                                  pr_dsorigem => 'AIMARO',
@@ -200,7 +200,7 @@ BEGIN
                                  pr_nrdconta => vr_nrdconta,
                                  pr_nrdrowid => vr_nrdrowid);
   
-       GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                  pr_nmdcampo => 'crapass.flgctitg',
                                  pr_dsdadant => rw_crapass.flgctitg,
                                  pr_dsdadatu => 3);
@@ -253,10 +253,10 @@ BEGIN
         pc_escreve_xml_rollback(' ',TRUE);
         
         -- fechar arquivo
-        gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
+        CECRED.gene0001.pc_fecha_arquivo(pr_utlfileh => vr_hutlfile);
         
         -- Tansforma em arquivo de bkp
-        GENE0002.pc_clob_para_arquivo(pr_clob     => vr_des_rollback_xml,
+        CECRED.GENE0002.pc_clob_para_arquivo(pr_clob     => vr_des_rollback_xml,
                                       pr_caminho  => vr_arq_path,
                                       pr_arquivo  => vr_nmarqbkp,
                                       --pr_flappend => 'S',
@@ -268,7 +268,7 @@ BEGIN
           RAISE vr_exc_clob;
         END IF;
         
-        GENE0002.pc_clob_para_arquivo(pr_clob     => vr_des_critic_xml,
+        CECRED.GENE0002.pc_clob_para_arquivo(pr_clob     => vr_des_critic_xml,
                                       pr_caminho  => vr_arq_path,
                                       pr_arquivo  => vr_nmarqcri,
                                       --pr_flappend => 'S',
