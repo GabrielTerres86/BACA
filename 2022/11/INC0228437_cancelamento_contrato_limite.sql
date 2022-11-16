@@ -1,8 +1,8 @@
 DECLARE
   vr_cdcooper  craplim.cdcooper%TYPE := 5;
-  vr_nrdconta  craplim.nrdconta%TYPE := 99729601; -- 270334
+  vr_nrdconta  craplim.nrdconta%TYPE := 270334;
   vr_nrctrlim  craplim.nrctrlim%TYPE := 104819;
-  vr_nrcpf     crapass.nrcpfcgc%TYPE := '18645070000162'; -- 7952606000176
+  vr_nrcpf     crapass.nrcpfcgc%TYPE := '7952606000176';
   vr_tpctrlim  craplim.tpctrlim%TYPE := 1;
   vr_cdoperad  craplim.cdopecan%TYPE := 1;
   vr_cdagenci  crawlim.cdagenci%TYPE := 0;
