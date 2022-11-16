@@ -85,7 +85,7 @@ BEGIN
                           ,pr_des_erro => vr_dscritic); 
                           
   IF vr_dscritic IS NOT NULL THEN
-    vr_dscritic := 'Erro na leitura do arquivo --> '||vr_dscritic;
+    vr_dscritic := 'Erro na leitura do arquivo -> '||vr_dscritic;
     pc_escreve_xml_critica(vr_dscritic || chr(10));
     RAISE vr_exc_erro;
   END IF; 
@@ -208,7 +208,7 @@ BEGIN
         END LOOP;
         
         IF NOT vr_flagfind THEN
-          pc_escreve_xml_critica('>>>> Erro ao processar registro da coop: ' || vr_cdcooper || ', conta: ' || vr_nrdconta || ' -- Conta não encontrada.' ||chr(10));
+          pc_escreve_xml_critica('>>>> Erro ao processar registro da coop: ' || vr_cdcooper || ', conta: ' || vr_nrdconta || ' - Conta não encontrada.' ||chr(10));
         END IF;
         
         IF mod(vr_qtdctatt,100) = 0 THEN
