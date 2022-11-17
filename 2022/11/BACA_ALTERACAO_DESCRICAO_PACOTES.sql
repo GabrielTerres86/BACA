@@ -13,6 +13,7 @@ BEGIN
   update CECRED.TBTARIF_PACOTES t set t.dspacote = 'PACOTE DE SERVICOS PJ XV' where t.cdpacote = 113;
   update CECRED.TBTARIF_PACOTES t set t.dspacote = 'PACOTE DE SERVICOS PJ XVI' where t.cdpacote = 114;
   update CECRED.TBTARIF_PACOTES t set t.dspacote = 'PACOTE DE SERVICOS PJ XVII' where t.cdpacote = 115;
+  COMMIT;
 END;
 
 
