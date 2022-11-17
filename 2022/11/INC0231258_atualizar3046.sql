@@ -3,7 +3,7 @@ declare
   pr_stprogra NUMBER;
   pr_infimsol NUMBER;
   pr_cdcritic NUMBER;
-  pr_dscritic VARCHAR2;
+  pr_dscritic VARCHAR2(2000);
 
 begin
 
