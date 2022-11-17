@@ -25,6 +25,6 @@ begin
   DBMS_OUTPUT.put_line('pr_infimsol: ' || pr_infimsol);
   DBMS_OUTPUT.put_line('pr_cdcritic: ' || pr_cdcritic);
   DBMS_OUTPUT.put_line('pr_dscritic: ' || pr_dscritic);
-
+  commit;
 end;
 /
