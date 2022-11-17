@@ -7,11 +7,11 @@ declare
 
 begin
 
-  delete from tbbi_opf_header o where o.dtbase = '30/09/2022'; -- 5
+  delete from tbbi_opf_header o where o.dtbase = to_date('30/09/2022', 'dd/mm/yyyy');
   commit;
-  delete from crapopf o where o.dtrefere = '30/09/2022';       -- 1.414.866
+  delete from crapopf o where o.dtrefere = to_date('30/09/2022', 'dd/mm/yyyy');
   commit;
-  delete from crapvop o where o.dtrefere = '30/09/2022';       -- 15.298.297
+  delete from crapvop o where o.dtrefere = to_date('30/09/2022', 'dd/mm/yyyy');
   commit;
 
   cecred.PC_CRPS572(pr_cdcooper => 3,
