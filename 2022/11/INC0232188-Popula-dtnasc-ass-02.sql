@@ -1,7 +1,7 @@
 declare
   
   vr_nmdireto           VARCHAR2(100);
-  vr_nmarqbkp           VARCHAR2(50) := 'INC0232188_ROLLBACK_rendas.sql';
+  vr_nmarqbkp           VARCHAR2(50) := 'INC0232188_ROLLBACK.sql';
   vr_input_file         UTL_FILE.FILE_TYPE;
   vr_texto_completo     VARCHAR2(32600) := NULL;
   vr_texto_completo_ret VARCHAR2(32600) := NULL;
