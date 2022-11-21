@@ -134,8 +134,7 @@ DECLARE
         AND p.tpregist NOT IN (0)
         AND p.tpcustei = 0
         AND p.dtrefcob = '31/10/2022'
-        AND p.nrproposta NOT IN ('770655718460',
-                                 '770629373667',
+        AND p.nrproposta NOT IN ('770629373667',
                                  '770628746532',
                                  '770629003355',
                                  '770629082190',

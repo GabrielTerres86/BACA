@@ -20,8 +20,7 @@ DECLARE
        AND p.cdcooper = s.cdcooper
        AND p.nrdconta = s.nrdconta
        AND p.nrctrseg = s.nrctrseg
-       AND p.nrproposta IN ('770655718460',
-                            '770629373667',
+       AND p.nrproposta IN ('770629373667',
                             '770628746532',
                             '770629003355',
                             '770629082190',
