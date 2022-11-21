@@ -75,8 +75,8 @@ declare
       vr_typ_saida VARCHAR2(3);
       vr_des_saida VARCHAR2(1000);
     BEGIN
-      IF NOT gene0001.fn_exis_diretorio(pr_nmdireto) THEN
-        gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' ||
+      IF NOT cecred.gene0001.fn_exis_diretorio(pr_nmdireto) THEN
+        cecred.gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' ||
                                                       pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
@@ -86,7 +86,7 @@ declare
                          vr_des_saida;
           RAISE vr_exc_erro;
         END IF;
-        gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' ||
+        cecred.gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' ||
                                                       pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
@@ -104,7 +104,7 @@ declare
   END;
 
 BEGIN
-  vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
+  vr_rootmicros     := cecred.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto       := vr_rootmicros|| 'cpd/bacas';
   pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0231613',
                    pr_dscritic => vr_dscritic);
@@ -119,12 +119,12 @@ BEGIN
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);
 
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           '-- Programa para rollback das informacoes' ||
                           chr(13),
                           FALSE);
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           'BEGIN' || chr(13),
                           FALSE);
@@ -132,7 +132,7 @@ BEGIN
   vr_nmarqbkp := 'ROLLBACK_INC0231613_CONT' || to_char(sysdate, 'hh24miss') ||
                  '.sql';
     for rw_segprestnaocont in cr_segprestnaocont loop
-          UPDATE crapseg p
+          UPDATE cecred.crapseg p
              SET p.dtfimvig = rw_segprestnaocont.dtfimvig,
                  p.dtcancel = rw_segprestnaocont.dtmvtolt,
                  p.cdsitseg = 5,
@@ -144,7 +144,7 @@ BEGIN
              AND p.nrdconta = rw_segprestnaocont.nrdconta
              AND p.nrctrseg = rw_segprestnaocont.nrctrseg
              AND p.tpseguro = rw_segprestnaocont.tpseguro;
-      gene0002.pc_escreve_xml(vr_dados_rollback,
+      cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                               vr_texto_rollback,
                               'UPDATE crapseg    ' || chr(13) ||
                               '   SET dtfimvig            = ' || '''' ||rw_segprestnaocont.dtfimvig  || '''' ||
@@ -163,21 +163,21 @@ BEGIN
                               FALSE);
 
     end loop;
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           'COMMIT;' || chr(13),
                           FALSE);
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           'END;' || chr(13),
                           FALSE);
 
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           chr(13),
                           TRUE);
 
-  GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3
+  cecred.GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3
                                      ,
                                       pr_cdprogra  => 'ATENDA'
                                      ,
