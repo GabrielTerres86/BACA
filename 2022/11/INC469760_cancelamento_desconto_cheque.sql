@@ -1,6 +1,6 @@
 DECLARE
   vr_cdcooper  craplim.cdcooper%TYPE := 1;
-  vr_nrdconta  craplim.nrdconta%TYPE := 97866776; -- conta original 2133164 
+  vr_nrdconta  craplim.nrdconta%TYPE := 2133164;
   vr_nrctrlim  craplim.nrctrlim%TYPE := 28006;
   vr_tpctrlim  craplim.tpctrlim%TYPE := 2;
   vr_cdoperad  craplim.cdopecan%TYPE := 1;
