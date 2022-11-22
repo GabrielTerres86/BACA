@@ -218,7 +218,7 @@ DECLARE
        FROM CECRED.crapcop c,
             CECRED.crapdat d
       WHERE c.flgativo = 1
-        AND c.cdcooper IN (9,11,13)
+        AND c.cdcooper IN (9,11,13,14)
         AND c.cdcooper <> 3
         AND c.cdcooper = d.cdcooper;
 
