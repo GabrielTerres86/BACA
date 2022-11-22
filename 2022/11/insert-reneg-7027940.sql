@@ -1,14 +1,3 @@
-select *
-  from tbepr_renegociacao_contrato a
- where cdcooper = 1 and nrdconta = 92971997
- and nrctremp = 6287061
- --FOR UPDATE
-
-
-select * from tbepr_renegociacao_craplem
- where cdcooper = 1 and nrdconta = 92971997
- 
-
 BEGIN
 
   UPDATE tbepr_renegociacao_contrato
@@ -21,6 +10,3 @@ EXCEPTION
     RAISE_application_error(-20500, SQLERRM);
     ROLLBACK;
 END;
-
- 
- 
