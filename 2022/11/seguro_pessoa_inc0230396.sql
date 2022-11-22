@@ -55,7 +55,7 @@ DECLARE
    vr_nmarq          VARCHAR2(100)  := 'ROLLBACK_INC0230396.sql';
    vr_ind_arq        utl_file.file_type;
    
-   CURSOR cr_prestamista(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+   CURSOR cr_prestamista(pr_cdcooper IN CECRED.crapcop.cdcooper%TYPE) IS
      SELECT p.idseqtra
            ,p.cdcooper
            ,p.nrdconta
@@ -89,8 +89,8 @@ DECLARE
            ,p.dtfimvig
            ,c.inliquid
            ,c.dtmvtolt data_emp
-           ,c.qtpreemp
-           ,c.vlpreemp
+           ,w.qtpreemp
+           ,w.vlpreemp
            ,p.nrproposta
            ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
            ,LPAD(DECODE(p.cdcooper,1,'0101',2,'0102',5,'0104',6,'0105',7,'0106',8,'0107',9,'0108',10,'0110',11,'0109',12,'0111',13,'0112',14,'0113',16,'0115'),4,0) nr_agencia
@@ -113,11 +113,11 @@ DECLARE
            ,w.nrctrliq##8
            ,w.nrctrliq##9
            ,w.nrctrliq##10
-       FROM tbseg_prestamista p
-           ,crapepr c
-           ,crapseg s
-           ,crawepr w
-           ,crapass a
+       FROM CECRED.tbseg_prestamista p
+           ,CECRED.crapepr c
+           ,CECRED.crapseg s
+           ,CECRED.crawepr w
+           ,CECRED.crapass a
       WHERE p.cdcooper = pr_cdcooper
         AND c.cdcooper = p.cdcooper
         AND c.nrdconta = p.nrdconta
@@ -182,8 +182,8 @@ DECLARE
         ORDER BY p.nrcpfcgc ASC , p.cdapolic;
    rw_prestamista cr_prestamista%ROWTYPE;
 
-   CURSOR cr_seg_parametro_prst(pr_cdcooper IN tbseg_prestamista.cdcooper%TYPE
-                               ,pr_tpcustei IN tbseg_parametros_prst.tpcustei%TYPE) IS
+   CURSOR cr_seg_parametro_prst(pr_cdcooper IN CECRED.tbseg_prestamista.cdcooper%TYPE
+                               ,pr_tpcustei IN CECRED.tbseg_parametros_prst.tpcustei%TYPE) IS
      SELECT pp.idseqpar,
             pp.seqarqu,
             pp.enderftp,
@@ -192,19 +192,19 @@ DECLARE
             pp.nrapolic,
             pp.pielimit,
             pp.ifttlimi
-       FROM tbseg_parametros_prst pp
+       FROM CECRED.tbseg_parametros_prst pp
       WHERE pp.cdcooper = pr_cdcooper
         AND pp.tppessoa = 1
         AND pp.cdsegura = segu0001.busca_seguradora
         AND pp.tpcustei = pr_tpcustei;
    rw_seg_parametro_prst cr_seg_parametro_prst%ROWTYPE;
 
-   CURSOR cr_crawseg(pr_cdcooper crawseg.cdcooper%TYPE,
-                     pr_nrdconta crawseg.nrdconta%TYPE,
-                     pr_nrctrseg crawseg.nrctrseg%TYPE,
-                     pr_nrctrato crawseg.nrctrato%TYPE) IS
+   CURSOR cr_crawseg(pr_cdcooper CECRED.crawseg.cdcooper%TYPE,
+                     pr_nrdconta CECRED.crawseg.nrdconta%TYPE,
+                     pr_nrctrseg CECRED.crawseg.nrctrseg%TYPE,
+                     pr_nrctrato CECRED.crawseg.nrctrato%TYPE) IS
      SELECT c.flggarad, c.nrendres
-       FROM crawseg c
+       FROM CECRED.crawseg c
       WHERE c.cdcooper = pr_cdcooper
         AND c.nrdconta = pr_nrdconta
         AND c.nrctrseg = pr_nrctrseg
@@ -532,10 +532,10 @@ DECLARE
       CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo);
 
       
-      GENE0003.pc_converte_arquivo(pr_cdcooper => vr_cdcooper
-                                  ,pr_nmarquiv => vr_nmdircop || '/arq/'||vr_nmarquiv
-                                  ,pr_nmarqenv => vr_nmarquiv
-                                  ,pr_des_erro => vr_dscritic);
+      CECRED.GENE0003.pc_converte_arquivo(pr_cdcooper => vr_cdcooper
+                                         ,pr_nmarquiv => vr_nmdircop || '/arq/'||vr_nmarquiv
+                                         ,pr_nmarqenv => vr_nmarquiv
+                                         ,pr_des_erro => vr_dscritic);
 
        IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_erro;
@@ -545,15 +545,15 @@ DECLARE
                                                         ' > '||vr_nmdircop||'/arq/'||vr_nmarquivFinal);
 
         
-       SEGU0003.pc_processa_arq_ftp_prest(pr_nmarquiv => vr_nmarquivFinal,
-                                          pr_idoperac => 'E',
-                                          pr_nmdireto => vr_nmdircop || '/arq/',
-                                          pr_idenvseg => 'S',
-                                          pr_ftp_site => vr_endereco,
-                                          pr_ftp_user => vr_login,
-                                          pr_ftp_pass => vr_senha,
-                                          pr_ftp_path => 'Envio',
-                                          pr_dscritic => vr_dscritic);
+       CECRED.SEGU0003.pc_processa_arq_ftp_prest(pr_nmarquiv => vr_nmarquivFinal,
+                                                 pr_idoperac => 'E',
+                                                 pr_nmdireto => vr_nmdircop || '/arq/',
+                                                 pr_idenvseg => 'S',
+                                                 pr_ftp_site => vr_endereco,
+                                                 pr_ftp_user => vr_login,
+                                                 pr_ftp_pass => vr_senha,
+                                                 pr_ftp_path => 'Envio',
+                                                 pr_dscritic => vr_dscritic);
 
        IF vr_dscritic IS NOT NULL THEN
          vr_dscritic := 'Erro ao processar arquivo via FTP - Cooperativa: ' || vr_cdcooper || ' - ' || vr_dscritic;
