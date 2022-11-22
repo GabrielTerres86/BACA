@@ -6,7 +6,7 @@ BEGIN
         ,vlprejuz = 246.13
         ,vlsprjat = 246.13
         ,vlsdprej = 246.13
-   WHERE cdcooper = 1 AND nrdconta = 89182391 AND nrctremp = 2221610;
+   WHERE cdcooper = 1 AND nrdconta = 10817549 AND nrctremp = 2221610;
 
   COMMIT;
 EXCEPTION
