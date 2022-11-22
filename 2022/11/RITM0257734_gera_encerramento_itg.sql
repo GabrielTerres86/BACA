@@ -19,7 +19,7 @@ DECLARE
   vr_arq_path  VARCHAR2(1000):= gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/ritm0257734'; 
 
 
-  vr_nmarquiv  VARCHAR2(100) := 'Contas_ITG_individual.txt';
+  vr_nmarquiv  VARCHAR2(100) := 'Contas_ITG.txt';
   vr_nmarqbkp  VARCHAR2(100) := 'ROLLBACK_Contas_ITG.txt';
   vr_nmarqcri  VARCHAR2(100) := 'CRITICAS_Contas_ITG.txt';  
 
