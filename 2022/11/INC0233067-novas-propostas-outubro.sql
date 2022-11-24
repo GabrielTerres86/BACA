@@ -16,7 +16,7 @@ BEGIN
             
   CURSOR cr_cria_propostas(pr_cdcooper  IN CECRED.crawseg.cdcooper%TYPE) IS
    SELECT w.cdcooper, w.nrdconta, w.nrctrato, w.nrproposta 
-     FROM crawseg w 
+     FROM cecred.crawseg w 
     WHERE w.cdcooper = pr_cdcooper
       AND (w.nrctrato, w.nrproposta) IN 
          ((2827963,'770351890630'),
@@ -29,8 +29,8 @@ BEGIN
     
   CURSOR cr_lista_propostas_criadas IS  
     SELECT listagg('''' || t.nrproposta || '''',',')  nrproposta
-      FROM tbseg_prestamista t,
-           crapseg s
+      FROM cecred.tbseg_prestamista t,
+           cecred.crapseg s
       WHERE t.cdcooper = s.cdcooper
         AND t.nrdconta = s.nrdconta
         AND t.nrctrseg = s.nrctrseg
@@ -85,7 +85,7 @@ BEGIN
                                               
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo_backup,vr_linha);
                            
-      vr_linha :=  'DELETE CECRED.crapseg WHERE nrctrseg IN (SELECT nrctrseg FROM tbseg_prestamista WHERE nrproposta IN (' || vr_lista_propostas || '));'; 
+      vr_linha :=  'DELETE CECRED.crapseg WHERE nrctrseg IN (SELECT nrctrseg FROM cecred.tbseg_prestamista WHERE nrproposta IN (' || vr_lista_propostas || '));'; 
                                               
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo_backup,vr_linha);
              
