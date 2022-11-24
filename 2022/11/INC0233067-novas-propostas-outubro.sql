@@ -63,7 +63,6 @@ BEGIN
                                              pr_cdoperad => 1,
                                              pr_nmdatela => 'ATENDA',
                                              pr_idorigem => 5,
-                                             pr_versaldo => 'S',
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
       
