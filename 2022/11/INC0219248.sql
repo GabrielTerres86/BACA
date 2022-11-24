@@ -670,7 +670,7 @@ BEGIN
       vr_cdcooper := vr_reg_conta(1);
       vr_progress := vr_reg_conta(2);
       vr_cdhistor := vr_reg_conta(3);
-      vr_vllanmto := to_number(vr_reg_conta(4));
+      vr_vllanmto := cecred.GENE0002.fn_char_para_number(pr_dsnumtex => vr_reg_conta(4));
       vr_flgpreju := vr_reg_conta(5);
       vr_flgconta := vr_reg_conta(6);
     
