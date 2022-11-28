@@ -23,7 +23,8 @@ DECLARE
   
   vc_nrdolote_cota                CONSTANT cecred.craplct.nrdolote%type := 600040;
   vc_tpdevCotas                   CONSTANT NUMBER := 3;
-  vc_cdhistCotas                  CONSTANT NUMBER := 2518;
+  vc_cdhistCotasPF                CONSTANT NUMBER := 2518;
+  vc_cdhistCotasPJ                CONSTANT NUMBER := 2519;  
   vc_dstransaStatusCC             CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0234213';
   vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Alteração de Cotas e devolução - INC0234213';
   vc_inpessoaPF                   CONSTANT NUMBER := 1;
@@ -190,8 +191,14 @@ BEGIN
                                                                   vc_nrdolote_cota);
     
 
-      vr_cdhistor := vc_cdhistCotas;
-      
+      case rg_crapass.inpessoa
+        when vc_inpessoaPF then
+          vr_cdhistor := vc_cdhistCotasPF;
+        when vc_inpessoaPJ then
+          vr_cdhistor := vc_cdhistCotasPJ;
+        else
+          raise vr_inpessoa_invalido;
+      end case;      
       INSERT INTO CECRED.craplct
         (cdcooper,
          cdagenci,
