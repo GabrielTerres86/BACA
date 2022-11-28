@@ -1,5 +1,5 @@
 BEGIN
-INSERT INTO crapprm
+INSERT INTO cecred.crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
   VALUES
     ('CRED',
@@ -7,7 +7,7 @@ INSERT INTO crapprm
      'CNPJ_FAMPE',
      'CNPJ do fundo garantidor FAMPE',
      '00330845000650');
-INSERT INTO crapprm
+INSERT INTO cecred.crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
   VALUES
     ('CRED',
