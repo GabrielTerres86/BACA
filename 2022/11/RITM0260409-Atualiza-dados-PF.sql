@@ -119,6 +119,8 @@ DECLARE
   vr_celu03      CECRED.CRAPTFC.NRTELEFO%TYPE;
   vr_email       CECRED.CRAPCEM.DSDEMAIL%TYPE;
   
+  vr_ramal       NUMBER(5);
+  
   vr_dscritic    VARCHAR2(2000);
   vr_exception   EXCEPTION;
   vr_exception2  EXCEPTION;
@@ -177,31 +179,74 @@ DECLARE
         FETCH cr_craptfc_MAX INTO vr_cdseqtfc;
         CLOSE cr_craptfc_MAX;
           
-        INSERT INTO CECRED.CRAPTFC (
-          cdcooper
-          , nrdconta
-          , idseqttl
-          , nrdddtfc
-          , nrtelefo
-          , cdseqtfc
-          , tptelefo
-          , idsittfc
-          , idorigem
-          , dtinsori
-          , inprincipal
-        ) VALUES (
-          rw_crapttl.cdcooper
-          , rw_crapttl.nrdconta
-          , rw_crapttl.idseqttl
-          , NVL(pr_nrdddtfc, 0)
-          , NVL(pr_nrtelefo, 0)
-          , vr_cdseqtfc
-          , pr_tptelefo
-          , 1
-          , 4
-          , SYSDATE
-          , 0
-        );
+        BEGIN
+          
+          INSERT INTO CECRED.CRAPTFC (
+            cdcooper
+            , nrdconta
+            , idseqttl
+            , nrdddtfc
+            , nrtelefo
+            , cdseqtfc
+            , tptelefo
+            , idsittfc
+            , idorigem
+            , dtinsori
+            , inprincipal
+          ) VALUES (
+            rw_crapttl.cdcooper
+            , rw_crapttl.nrdconta
+            , rw_crapttl.idseqttl
+            , NVL(pr_nrdddtfc, 0)
+            , NVL(pr_nrtelefo, 0)
+            , vr_cdseqtfc
+            , pr_tptelefo
+            , 1
+            , 4
+            , SYSDATE
+            , 0
+          );
+          
+        EXCEPTION
+          WHEN DUP_VAL_ON_INDEX THEN
+            
+            INSERT INTO CECRED.CRAPTFC (
+              cdcooper
+              , nrdconta
+              , idseqttl
+              , nrdddtfc
+              , nrtelefo
+              , cdseqtfc
+              , tptelefo
+              , idsittfc
+              , idorigem
+              , dtinsori
+              , inprincipal
+              , nrdramal
+            ) VALUES (
+              rw_crapttl.cdcooper
+              , rw_crapttl.nrdconta
+              , rw_crapttl.idseqttl
+              , NVL(pr_nrdddtfc, 0)
+              , NVL(pr_nrtelefo, 0)
+              , vr_cdseqtfc
+              , pr_tptelefo
+              , 1
+              , 4
+              , SYSDATE
+              , 0
+              , vr_ramal
+            );
+            
+            vr_ramal := vr_ramal -1;
+            
+            gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, vr_nrcpfcgc || ' - Telefone repetido (' || NVL(pr_nrdddtfc, 0) || ').' || NVL(pr_nrtelefo, 0));
+            
+          WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20000, 'Erro ao inserir telefone (' || NVL(pr_nrdddtfc, 0) || ').' || NVL(pr_nrtelefo, 0) || sqlerrm);
+            
+        END;
         
         gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, '    DELETE CECRED.CRAPTFC '
                                                       || ' WHERE nrdconta = ' || rw_crapttl.nrdconta
@@ -287,6 +332,7 @@ BEGIN
     vr_nrdrowid := NULL;
     vr_msgalt   := NULL;
     vr_setlinha := REPLACE( REPLACE( vr_setlinha, CHR(10) ), CHR(13) );
+    vr_ramal    := 99999;
     
     vr_nrcpfcgc := CECRED.gene0002.fn_char_para_number( TRIM( gene0002.fn_busca_entrada(2,vr_setlinha,';') ) );
     vr_ddd01    := CECRED.gene0002.fn_char_para_number( TRIM( gene0002.fn_busca_entrada(3,vr_setlinha,';') ) );
@@ -367,7 +413,7 @@ BEGIN
         
         WHEN OTHERS THEN
           
-          vr_dscritic := 'Erro ao atualizar a conta ' || rw_crapttl.nrdconta || ' referente ao CPF ' || vr_nrcpfcgc;
+          vr_dscritic := 'Erro ao atualizar a conta ' || rw_crapttl.nrdconta || ' referente ao CPF ' || vr_nrcpfcgc || ' - ' || sqlerrm;
           RAISE vr_exception;
           
       END;
@@ -481,7 +527,7 @@ BEGIN
           CLOSE cr_craptfc;
         END IF;
           
-        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_ddd01 || ') ' || vr_fone01;
+        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_ddd01 || ') ' || vr_fone01 || ' - ' || sqlerrm;
         RAISE vr_exception;
             
     END;
@@ -501,7 +547,7 @@ BEGIN
           CLOSE cr_craptfc;
         END IF;
           
-        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_ddd02 || ') ' || vr_fone02;
+        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_ddd02 || ') ' || vr_fone02 || ' - ' || sqlerrm;
         RAISE vr_exception;
             
     END;
@@ -521,7 +567,7 @@ BEGIN
           CLOSE cr_craptfc;
         END IF;
           
-        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_ddd03 || ') ' || vr_fone03;
+        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_ddd03 || ') ' || vr_fone03 || ' - ' || sqlerrm;
         RAISE vr_exception;
             
     END;
@@ -541,7 +587,7 @@ BEGIN
           CLOSE cr_craptfc;
         END IF;
           
-        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_dddcel01 || ') ' || vr_celu01;
+        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_dddcel01 || ') ' || vr_celu01 || ' - ' || sqlerrm;
         RAISE vr_exception;
             
     END;
@@ -561,7 +607,7 @@ BEGIN
           CLOSE cr_craptfc;
         END IF;
           
-        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_dddcel02 || ') ' || vr_celu02;
+        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_dddcel02 || ') ' || vr_celu02 || ' - ' || sqlerrm;
         RAISE vr_exception;
             
     END;
@@ -581,7 +627,7 @@ BEGIN
           CLOSE cr_craptfc;
         END IF;
           
-        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_dddcel03 || ') ' || vr_celu03;
+        vr_dscritic := vr_nrcpfcgc || ' - Erro ao cadastrar telefone (' || vr_dddcel03 || ') ' || vr_celu03 || ' - ' || sqlerrm;
         RAISE vr_exception;
             
     END;
@@ -639,7 +685,7 @@ BEGIN
           WHEN OTHERS THEN
             
             CLOSE cr_crapcem;
-            vr_dscritic := 'Erro ao cadastrar o e-mail: ' || vr_email;
+            vr_dscritic := 'Erro ao cadastrar o e-mail: ' || vr_email || ' - ' || sqlerrm;
             
         END;
         

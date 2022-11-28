@@ -174,6 +174,7 @@ DECLARE
   vr_mes         NUMBER(2);
   vr_ano         NUMBER(4);
   
+  vr_ramal       NUMBER(5);
   
   vr_dscritic    VARCHAR2(2000);
   vr_exception   EXCEPTION;
@@ -232,32 +233,75 @@ DECLARE
                            );
         FETCH cr_craptfc_MAX INTO vr_cdseqtfc;
         CLOSE cr_craptfc_MAX;
+        
+        BEGIN
           
-        INSERT INTO CECRED.CRAPTFC (
-          cdcooper
-          , nrdconta
-          , idseqttl
-          , nrdddtfc
-          , nrtelefo
-          , cdseqtfc
-          , tptelefo
-          , idsittfc
-          , idorigem
-          , dtinsori
-          , inprincipal
-        ) VALUES (
-          rw_crapjur.cdcooper
-          , rw_crapjur.nrdconta
-          , 1
-          , NVL(pr_nrdddtfc, 0)
-          , NVL(pr_nrtelefo, 0)
-          , vr_cdseqtfc
-          , pr_tptelefo
-          , 1
-          , 4
-          , SYSDATE
-          , 0
-        );
+          INSERT INTO CECRED.CRAPTFC (
+            cdcooper
+            , nrdconta
+            , idseqttl
+            , nrdddtfc
+            , nrtelefo
+            , cdseqtfc
+            , tptelefo
+            , idsittfc
+            , idorigem
+            , dtinsori
+            , inprincipal
+          ) VALUES (
+            rw_crapjur.cdcooper
+            , rw_crapjur.nrdconta
+            , 1
+            , NVL(pr_nrdddtfc, 0)
+            , NVL(pr_nrtelefo, 0)
+            , vr_cdseqtfc
+            , pr_tptelefo
+            , 1
+            , 4
+            , SYSDATE
+            , 0
+          );
+          
+        EXCEPTION
+          WHEN DUP_VAL_ON_INDEX THEN
+            
+            INSERT INTO CECRED.CRAPTFC (
+              cdcooper
+              , nrdconta
+              , idseqttl
+              , nrdddtfc
+              , nrtelefo
+              , cdseqtfc
+              , tptelefo
+              , idsittfc
+              , idorigem
+              , dtinsori
+              , inprincipal
+              , nrdramal
+            ) VALUES (
+              rw_crapjur.cdcooper
+              , rw_crapjur.nrdconta
+              , 1
+              , NVL(pr_nrdddtfc, 0)
+              , NVL(pr_nrtelefo, 0)
+              , vr_cdseqtfc
+              , pr_tptelefo
+              , 1
+              , 4
+              , SYSDATE
+              , 0
+              , vr_ramal
+            );
+            
+            vr_ramal := vr_ramal -1;
+            
+            gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, vr_nrcpfcgc || ' - Telefone repetido (' || NVL(pr_nrdddtfc, 0) || ').' || NVL(pr_nrtelefo, 0));
+            
+          WHEN OTHERS THEN
+            
+            RAISE_APPLICATION_ERROR(-20000, 'Erro ao inserir telefone (' || NVL(pr_nrdddtfc, 0) || ').' || NVL(pr_nrtelefo, 0) || sqlerrm);
+            
+        END;
         
         gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, '    DELETE CECRED.CRAPTFC '
                                                       || ' WHERE nrdconta = ' || rw_crapjur.nrdconta
@@ -343,6 +387,7 @@ BEGIN
     vr_nrdrowid := NULL;
     vr_msgalt   := NULL;
     vr_setlinha := REPLACE( REPLACE( vr_setlinha, CHR(10) ), CHR(13) );
+    vr_ramal    := 99999;
     
     vr_nrcpfcgc := CECRED.gene0002.fn_char_para_number( TRIM( gene0002.fn_busca_entrada(2,vr_setlinha,';') ) );
     
