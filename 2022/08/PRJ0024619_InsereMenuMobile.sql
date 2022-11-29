@@ -1,41 +1,7 @@
 BEGIN
-  INSERT INTO cecred.menumobile
-    (menumobileid
-    ,menupaiid
-    ,nome
-    ,sequencia
-    ,habilitado
-    ,autorizacao
-    ,versaominimaapp
-    ,versaomaximaapp)
-  VALUES
-    (1045
-    ,1018
-    ,'Simular Renegociação de Contratos'
-    ,1
-    ,1
-    ,1
-    ,'2.16.0'
-    ,NULL);
-
-  INSERT INTO cecred.menumobile
-    (menumobileid
-    ,menupaiid
-    ,nome
-    ,sequencia
-    ,habilitado
-    ,autorizacao
-    ,versaominimaapp
-    ,versaomaximaapp)
-  VALUES
-    (1046
-    ,1018
-    ,'Contratos Renegociados'
-    ,2
-    ,1
-    ,1
-    ,'2.16.0'
-    ,NULL);
+  DELETE 
+    FROM cecred.menumobile
+   WHERE menumobileid IN (1047, 1048);
 
   INSERT INTO cecred.menumobile
     (menumobileid
