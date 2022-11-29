@@ -418,7 +418,7 @@ select 5654915  contrato, 1554.49  valor from dual
               --
               -- Selecionar Valor Moeda
               OPEN cr_crapmfx (pr_cdcooper => vr_cdcooper
-                              ,pr_dtmvtolt => '31/10/2022'--rw_crapdat.dtmvtolt
+                              ,pr_dtmvtolt => to_date('31/10/2022','dd/mm/yyyy')
                               ,pr_tpmoefix => 2);
               FETCH cr_crapmfx INTO rw_crapmfx;
               --Se nao encontrou
