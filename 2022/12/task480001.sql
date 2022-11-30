@@ -26,8 +26,8 @@ DECLARE
         ,e.nrctremp
         ,e.qtprepag
         ,COUNT(p.nrparepr) qtpagpep
-    FROM crapepr e
-    JOIN crappep p
+    FROM cecred.crapepr e
+    JOIN cecred.crappep p
       ON (e.cdcooper = p.cdcooper AND e.nrdconta = p.nrdconta AND
         e.nrctremp = p.nrctremp AND p.inliquid = 1)
   WHERE e.inliquid = 0
