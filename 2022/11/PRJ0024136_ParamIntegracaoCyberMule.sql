@@ -43,6 +43,16 @@ BEGIN
   vr_tab_param(2).cdcooper := 3;
   vr_tab_param(2).dsconteu := '/usr/sistemas/recuperacao/cyber/recebe';
 
+  vr_tab_param(3).nmpartar := 'Integração Arquivo Distrib Cyber Vs Mulesoft';
+  vr_tab_param(3).tpdedado := 2;
+  vr_tab_param(3).cdprodut := 12;
+  vr_tab_param(3).cdbattar := 'FLINTDISCYBMULE';
+  vr_tab_param(3).nmidenti := 'Integração Arquivo Distrib Cyber Vs Mulesoft Ativada';
+  vr_tab_param(3).cdprogra := ' ';
+  vr_tab_param(3).tpcadast := 2;
+  vr_tab_param(3).cdcooper := 3;
+  vr_tab_param(3).dsconteu := '0';
+  
   FOR idx IN vr_tab_param.first .. vr_tab_param.last LOOP
     FOR rw_crapbat IN cr_crapbat(pr_cdbattar => vr_tab_param(idx).cdbattar) LOOP
       DELETE 
