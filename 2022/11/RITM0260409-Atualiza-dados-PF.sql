@@ -119,8 +119,6 @@ DECLARE
   vr_celu03      CECRED.CRAPTFC.NRTELEFO%TYPE;
   vr_email       CECRED.CRAPCEM.DSDEMAIL%TYPE;
   
-  vr_ramal       NUMBER(5);
-  
   vr_dscritic    VARCHAR2(2000);
   vr_exception   EXCEPTION;
   vr_exception2  EXCEPTION;
@@ -210,37 +208,8 @@ DECLARE
         EXCEPTION
           WHEN DUP_VAL_ON_INDEX THEN
             
-            INSERT INTO CECRED.CRAPTFC (
-              cdcooper
-              , nrdconta
-              , idseqttl
-              , nrdddtfc
-              , nrtelefo
-              , cdseqtfc
-              , tptelefo
-              , idsittfc
-              , idorigem
-              , dtinsori
-              , inprincipal
-              , nrdramal
-            ) VALUES (
-              rw_crapttl.cdcooper
-              , rw_crapttl.nrdconta
-              , rw_crapttl.idseqttl
-              , NVL(pr_nrdddtfc, 0)
-              , NVL(pr_nrtelefo, 0)
-              , vr_cdseqtfc
-              , pr_tptelefo
-              , 1
-              , 4
-              , SYSDATE
-              , 0
-              , vr_ramal
-            );
-            
-            vr_ramal := vr_ramal -1;
-            
-            gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, vr_nrcpfcgc || ' - Telefone repetido (' || NVL(pr_nrdddtfc, 0) || ').' || NVL(pr_nrtelefo, 0));
+            gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, '  ???? ' || vr_nrcpfcgc || '[' || rw_crapttl.cdcooper || '] ' || rw_crapttl.nrdconta 
+                                                          || ' - Telefone repetido (' || NVL(pr_nrdddtfc, 0) || ') ' || NVL(pr_nrtelefo, 0) || ' - ' || sqlerrm );
             
           WHEN OTHERS THEN
             
@@ -332,7 +301,6 @@ BEGIN
     vr_nrdrowid := NULL;
     vr_msgalt   := NULL;
     vr_setlinha := REPLACE( REPLACE( vr_setlinha, CHR(10) ), CHR(13) );
-    vr_ramal    := 99999;
     
     vr_nrcpfcgc := CECRED.gene0002.fn_char_para_number( TRIM( gene0002.fn_busca_entrada(2,vr_setlinha,';') ) );
     vr_ddd01    := CECRED.gene0002.fn_char_para_number( TRIM( gene0002.fn_busca_entrada(3,vr_setlinha,';') ) );
