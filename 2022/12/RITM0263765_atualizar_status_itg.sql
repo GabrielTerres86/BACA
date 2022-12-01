@@ -92,7 +92,7 @@ BEGIN
       FETCH cr_crapass INTO rg_crapass;
       CLOSE cr_crapass;
       
-      UPDATE cecred.crapass ass 
+      UPDATE CECRED.crapass ass 
          SET ass.flgctitg = 3 
        WHERE ass.cdcooper = vr_cdcooper
          AND ass.nrdconta = vr_nrdconta;
@@ -147,7 +147,7 @@ BEGIN
       FETCH cr_crapass INTO rg_crapass;
       CLOSE cr_crapass;
     
-      UPDATE crapass ass 
+      UPDATE CECRED.crapass ass 
          SET ass.flgctitg = 2
        WHERE ass.cdcooper = vr_cdcooper
          AND ass.nrdconta = vr_nrdconta;
