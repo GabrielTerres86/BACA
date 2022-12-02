@@ -1651,6 +1651,370 @@ BEGIN
     dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
   END IF;
   CLOSE cr_crapass;
+  
+    vr_cdcooper := 16;
+  vr_progress := 1317378;
+  vr_vllanmto := 7.37;
+  vr_cdhistor := 2721;  
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+  
+  vr_cdcooper := 16;
+  vr_progress := 1374849;
+  vr_vllanmto := 0.50;
+  vr_cdhistor := 2721;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 526585;
+  vr_vllanmto := 100;
+  vr_cdhistor := 2721;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 831195;
+  vr_vllanmto := 151.64;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 871737;
+  vr_vllanmto := 0.99;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 997147;
+  vr_vllanmto := 16.64;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1133522;
+  vr_vllanmto := 4.30;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1177992;
+  vr_vllanmto := 2.63;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1457804;
+  vr_vllanmto := 0.41;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1465914;
+  vr_vllanmto := 65.21;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1491908;
+  vr_vllanmto := 0.46;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1519985;
+  vr_vllanmto := 23.75;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1522671;
+  vr_vllanmto := 24.27;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+
+  vr_cdcooper := 16;
+  vr_progress := 1551841;
+  vr_vllanmto := 6.82;
+  vr_cdhistor := 2408;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    pc_correcao_prejuizo(pr_cdcooper => vr_cdcooper
+                        ,pr_nrdconta => rw_crapass.nrdconta
+                        ,pr_vllanmto => vr_vllanmto
+                        ,pr_cdhistor => vr_cdhistor
+                        ,pr_flgpreju => 0
+                        ,pr_flgconta => 0
+                        ,pr_cdcritic => vr_cdcritic
+                        ,pr_dscritic => vr_dscritic);
+    
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
 
   COMMIT;
 
