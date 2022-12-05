@@ -27,7 +27,7 @@ DECLARE
   
   vr_indebcre  cecred.craphis.indebcre%TYPE;
   vr_found     BOOLEAN;
-
+  vr_dtmvtolt    cecred.craplcm.dtmvtolt%TYPE;
   vr_incidente VARCHAR2(15);
   vr_progress  cecred.crapass.progress_recid%TYPE;
   vr_cdcooper  cecred.crapcop.cdcooper%TYPE;
@@ -2015,7 +2015,43 @@ BEGIN
     dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
   END IF;
   CLOSE cr_crapass;
-
+  
+  vr_cdcooper := 12;
+  vr_progress := 787453;
+  vr_vllanmto := 249.85;
+  
+  BEGIN
+    SELECT dtmvtolt
+    INTO   vr_dtmvtolt
+    FROM   cecred.crapdat
+    WHERE  cdcooper = vr_cdcooper;
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic := 'Erro ao Buscar Data da Cooperativa. Erro: '||SubStr(SQLERRM,1,255);
+      RAISE vr_excerro; 
+  END;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    cecred.prej0003.pc_gera_debt_cta_prj(pr_cdcooper => vr_cdcooper,
+                                         pr_nrdconta => rw_crapass.nrdconta,
+                                         pr_vlrlanc  => vr_vllanmto,
+                                         pr_dtmvtolt => vr_dtmvtolt,
+                                         pr_dsoperac => 'Ajuste Contabil - ' || To_Char(SYSDATE,'dd/mm/yyyy hh24:mi:ss'),
+                                         pr_cdcritic => vr_dscritic,
+                                         pr_dscritic => vr_cdcritic);
+  
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;
+  
+  
   COMMIT;
 
   dbms_output.put_line(' ');
