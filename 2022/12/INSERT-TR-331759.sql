@@ -1,0 +1,35 @@
+DECLARE
+
+  vr_nrctremp NUMBER;
+  vr_cdcritic VARCHAR2(500);
+  vr_dscritic VARCHAR2(500);
+  vr_exc_saida EXCEPTION;
+
+BEGIN
+
+  CECRED.empr0017.pc_busca_nrcontrato(13, 331759, vr_nrctremp, vr_cdcritic, vr_dscritic);
+  IF vr_cdcritic IS NOT NULL
+     OR vr_dscritic IS NOT NULL
+  THEN
+    RAISE vr_exc_saida;
+  END IF;
+
+  INSERT INTO CECRED.tbepr_renegociacao
+    (CDCOOPER, NRDCONTA, NRCTREMP, FLGDOCJE, IDFINIOF, DTDPAGTO, QTPREEMP, VLEMPRST, VLPREEMP, DTLIBERA, IDFINTAR)
+  VALUES
+    (13, 331759, vr_nrctremp, 0, 1, to_date('10/12/2022', 'dd/mm/yyyy'), 48, 2488.27, 76.89, to_date('01/12/2022', 'dd/mm/yyyy'), 0);
+  INSERT INTO CECRED.tbepr_renegociacao_contrato
+    (CDCOOPER, NRDCONTA, NRCTREMP, NRCTREPR, NRVERSAO, VLSDEVED, VLNVSDDE, VLNVPRES, TPEMPRST, NRCTROTR, CDFINEMP, CDLCREMP, DTDPAGTO, IDCARENC, DTCARENC, VLPRECAR, VLIOFEPR, VLTAREPR, IDQUALOP, NRDIAATR, CDLCREMP_ORIGEM, CDFINEMP_ORIGEM, VLEMPRST, VLFINANC, VLIOFADC, VLIOFPRI, PERCETOP, FLGIMUNE, TPCONTRATO_LIQUIDADO, INCANCELAR_PRODUTO, NRCTREMP_NOVO)
+  VALUES
+    (13, 331759, vr_nrctremp, 252068, 1, 2488.27, 2488.27, 312.57, 1, 0, 62, 996, to_date('10/12/2022', 'dd/mm/yyyy'), 0, NULL, 0, 0, 0, 3, 27, 996, 62, 2488.27, 2488.27, 0, 0, 23.86, 0, 0, 0, 0);
+
+  COMMIT;
+
+EXCEPTION
+  WHEN vr_exc_saida THEN
+    ROLLBACK;
+    raise_application_error(-20010, SQLERRM);
+  WHEN OTHERS THEN
+    ROLLBACK;
+    raise_application_error(-20010, SQLERRM);
+END;
