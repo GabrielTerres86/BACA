@@ -5,7 +5,7 @@ BEGIN
      WHERE prm.nmsistem = 'CRED'
        AND prm.cdcooper = 0
        AND prm.cdacesso = 'TRANSLATE_CHR_ESPACO'
-       AND prm.dsvlrprm NOT LIKE '%;9%';
+       AND prm.dsvlrprm NOT LIKE '%;9';
   EXCEPTION 
     WHEN OTHERS THEN 
       rollback;
