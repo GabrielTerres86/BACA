@@ -232,11 +232,11 @@ BEGIN
   for rw_recusa in cr_recusaContr loop
 -- update
     UPDATE crapseg
-             SET crapseg.dtcancel = rw_recusa.dtmvtolt,  -- Data de cancelamento
+             SET crapseg.dtcancel = TO_DATE(rw_recusa.dtmvtolt, 'dd/mm/yyyy'),  -- Data de cancelamento
                  crapseg.cdsitseg = 5, -- Recusado
                  crapseg.cdopeexc = 1,
                  crapseg.cdageexc = 1,
-                 crapseg.dtinsexc = rw_recusa.dtmvtolt,
+                 crapseg.dtinsexc = TO_DATE(rw_recusa.dtmvtolt, 'dd/mm/yyyy'),
                  crapseg.cdopecnl = 1
            WHERE crapseg.nrctrseg = rw_recusa.nrctrseg
              AND crapseg.nrdconta = rw_recusa.nrdconta
@@ -315,4 +315,5 @@ BEGIN
   -- Efetuamos a transação
   COMMIT;
 END;
+COMMIT;
 end;
