@@ -201,12 +201,12 @@ END pc_efetuar_estorno;
 BEGIN
   vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto       := vr_rootmicros|| 'cpd/bacas';
-  pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0235580R',
+  pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0235888',
                    pr_dscritic => vr_dscritic);
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
-  vr_nmdireto := vr_nmdireto || '/INC0235580R';
+  vr_nmdireto := vr_nmdireto || '/INC0235888';
   vr_dados_rollback := NULL;
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);
@@ -219,7 +219,7 @@ BEGIN
                           vr_texto_rollback,
                           'BEGIN' || chr(13),
                           FALSE);
-  vr_nmarqbkp := 'ROLLBACK_INC0235580R' || to_char(sysdate, 'hh24miss') ||
+  vr_nmarqbkp := 'ROLLBACK_INC0235888' || to_char(sysdate, 'hh24miss') ||
                  '.sql';
   for rw_recusa in cr_recusaContr loop
     UPDATE crapseg
