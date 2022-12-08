@@ -251,11 +251,11 @@ BEGIN
                                              ,pr_vllanmto    => vr_vlrTransfPF
                                              ,pr_nrdconta    => vc_nrdcontaAdm
                                              ,pr_hrtransa    => gene0002.fn_busca_time
-                                             ,pr_inprolot    => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                             ,pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
-                                             ,pr_incrineg    => vr_incrineg      -- OUT Indicador de cr?tica de neg?cio
-                                             ,pr_cdcritic    => vr_cdcritic      -- OUT
-                                             ,pr_dscritic    => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lan?amento (CRAPLCM, conta transit?ria, etc)
+                                             ,pr_inprolot    => 1 
+                                             ,pr_tab_retorno => vr_tab_retorno 
+                                             ,pr_incrineg    => vr_incrineg      
+                                             ,pr_cdcritic    => vr_cdcritic      
+                                             ,pr_dscritic    => vr_dscritic);    
 
       IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         dbms_output.put_line('Falha ao lancar valor PF na Conta Administrativa (Lanc0001.pc_gerar_lancamento_conta): ' || vr_dscritic);
@@ -274,11 +274,11 @@ BEGIN
                                                ,pr_vllanmto    => vr_vlrTransfPF
                                                ,pr_nrdconta    => vc_nrdcontaAdm
                                                ,pr_hrtransa    => gene0002.fn_busca_time
-                                               ,pr_inprolot    => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                               ,pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
-                                               ,pr_incrineg    => vr_incrineg      -- OUT Indicador de cr?tica de neg?cio
-                                               ,pr_cdcritic    => vr_cdcritic      -- OUT
-                                               ,pr_dscritic    => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lan?amento (CRAPLCM, conta transit?ria, etc)
+                                               ,pr_inprolot    => 1 
+                                               ,pr_tab_retorno => vr_tab_retorno 
+                                               ,pr_incrineg    => vr_incrineg      
+                                               ,pr_cdcritic    => vr_cdcritic      
+                                               ,pr_dscritic    => vr_dscritic);    
 
       IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         dbms_output.put_line('Falha ao lancar valor PF na Conta Administrativa (Lanc0001.pc_gerar_lancamento_conta): ' || vr_dscritic);
@@ -299,11 +299,11 @@ BEGIN
                                               ,pr_vllanmto    => vr_vlrTransfPJ
                                               ,pr_nrdconta    => vc_nrdcontaAdm
                                               ,pr_hrtransa    => gene0002.fn_busca_time
-                                              ,pr_inprolot    => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                              ,pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
-                                              ,pr_incrineg    => vr_incrineg      -- OUT Indicador de cr?tica de neg?cio
-                                              ,pr_cdcritic    => vr_cdcritic      -- OUT
-                                              ,pr_dscritic    => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lan?amento (CRAPLCM, conta transit?ria, etc)
+                                              ,pr_inprolot    => 1 
+                                              ,pr_tab_retorno => vr_tab_retorno 
+                                              ,pr_incrineg    => vr_incrineg      
+                                              ,pr_cdcritic    => vr_cdcritic      
+                                              ,pr_dscritic    => vr_dscritic);    
 
      IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
        dbms_output.put_line('Falha ao lancar valor PF na Conta Administrativa (Lanc0001.pc_gerar_lancamento_conta): ' || vr_dscritic);
@@ -322,11 +322,11 @@ BEGIN
                                               ,pr_vllanmto    => vr_vlrTransfPJ
                                               ,pr_nrdconta    => vc_nrdcontaAdm
                                               ,pr_hrtransa    => gene0002.fn_busca_time
-                                              ,pr_inprolot    => 1 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                              ,pr_tab_retorno => vr_tab_retorno -- OUT Record com dados retornados pela procedure
-                                              ,pr_incrineg    => vr_incrineg      -- OUT Indicador de cr?tica de neg?cio
-                                              ,pr_cdcritic    => vr_cdcritic      -- OUT
-                                              ,pr_dscritic    => vr_dscritic);    -- OUT Nome da tabela onde foi realizado o lan?amento (CRAPLCM, conta transit?ria, etc)
+                                              ,pr_inprolot    => 1 
+                                              ,pr_tab_retorno => vr_tab_retorno 
+                                              ,pr_incrineg    => vr_incrineg      
+                                              ,pr_cdcritic    => vr_cdcritic      
+                                              ,pr_dscritic    => vr_dscritic);    
 
      IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
        dbms_output.put_line('Falha ao lancar valor PF na Conta Administrativa (Lanc0001.pc_gerar_lancamento_conta): ' || vr_dscritic);
