@@ -544,7 +544,7 @@
   BEGIN
    
     BEGIN
-      DELETE tbfin_fluxo_contas_sysphera 
+      DELETE cecred.tbfin_fluxo_contas_sysphera 
        WHERE cdcooper = pr_cdcooper
          AND cdconta  = 25;
     EXCEPTION
@@ -567,7 +567,7 @@
     IF cr_craplot%NOTFOUND THEN
       CLOSE cr_craplot;
       BEGIN
-        INSERT INTO craplot(cdcooper
+        INSERT INTO cecred.craplot(cdcooper
                            ,dtmvtolt
                            ,cdagenci
                            ,cdbccxlt
@@ -827,7 +827,7 @@
           
             IF vr_tab_craprda_bulk(i).tpaplrdc = 1 THEN
             vr_dtfimper := rw_crapdat.dtinimes;
-            APLI0001.pc_provisao_rdc_pre(pr_cdcooper  => pr_cdcooper        
+            cecred.APLI0001.pc_provisao_rdc_pre(pr_cdcooper  => pr_cdcooper        
                                           ,pr_nrdconta  => vr_tab_craprda_bulk(i).nrdconta
                                           ,pr_nraplica  => vr_tab_craprda_bulk(i).nraplica
                                         ,pr_dtiniper  => vr_dtiniper      
@@ -869,7 +869,7 @@
 
             ELSIF vr_tab_craprda_bulk(i).tpaplrdc = 2  THEN
 
-            APLI0001.pc_provisao_rdc_pos(pr_cdcooper  => pr_cdcooper      
+            cecred.APLI0001.pc_provisao_rdc_pos(pr_cdcooper  => pr_cdcooper      
                                         ,pr_cdagenci  => 1                
                                         ,pr_nrdcaixa  => 999              
                                           ,pr_nrctaapl  => vr_tab_craprda_bulk(i).nrdconta 
@@ -907,7 +907,7 @@
               vr_vlrendmm := vr_vllanmto;
             END IF;
 
-            APLI0001.pc_provisao_rdc_pos(pr_cdcooper  => pr_cdcooper
+            cecred.APLI0001.pc_provisao_rdc_pos(pr_cdcooper  => pr_cdcooper
                                         ,pr_cdagenci  => 1          
                                         ,pr_nrdcaixa  => 999        
                                           ,pr_nrctaapl  => vr_tab_craprda_bulk(i).nrdconta
@@ -956,7 +956,7 @@
 
           IF vr_vllanmto > 0 THEN
          
-            apli0001.pc_gera_craplap_rdc(pr_cdcooper => pr_cdcooper
+            cecred.apli0001.pc_gera_craplap_rdc(pr_cdcooper => pr_cdcooper
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                         ,pr_cdagenci => rw_craplot.cdagenci
                                         ,pr_nrdcaixa => 999
@@ -1020,7 +1020,7 @@
           END;
                 
           BEGIN
-            UPDATE craprda rda
+            UPDATE cecred.craprda rda
                SET rda.vlslfmea = ROUND(vr_vlsldrdc,2)
                     ,rda.dtsdfmea = vr_tab_craprda_bulk(i).dtsdfmes
                     ,rda.vlsdextr = vr_tab_craprda_bulk(i).vlsdextr
@@ -1105,7 +1105,7 @@
 
         BEGIN
 
-          UPDATE crapprb
+          UPDATE cecred.crapprb
              SET vlretorn = NVL(vlretorn,0) + vr_tab_cta_bndes(vr_des_chave_bndes).vlaplica
            WHERE cdcooper = pr_cdcooper        
              AND dtmvtolt = rw_crapdat.dtmvtolt
@@ -1116,7 +1116,7 @@
           IF SQL%ROWCOUNT = 0 THEN
             BEGIN
 
-            INSERT INTO crapprb
+            INSERT INTO cecred.crapprb
                        (cdcooper
                        ,dtmvtolt
                        ,nrdconta
@@ -1169,7 +1169,7 @@
     END IF;
 
 
-    DELETE FROM TBGEN_BATCH_RELATORIO_WRK W
+    DELETE FROM cecred.TBGEN_BATCH_RELATORIO_WRK W
      WHERE W.CDCOOPER = pr_cdcooper
        AND W.CDPROGRAMA = vr_cdprogra
        AND W.DTMVTOLT = rw_crapdat.dtmvtolt;
