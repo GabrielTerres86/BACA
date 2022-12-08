@@ -1,6 +1,6 @@
 BEGIN
 
-  UPDATE craprda 
+  UPDATE cecred.craprda 
      SET insaqtot = 1,
          vlsdrdca = 0
    WHERE cdcooper = 1 
