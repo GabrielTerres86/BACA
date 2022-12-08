@@ -1,0 +1,11 @@
+BEGIN  
+  UPDATE cecred.craptab SET DSTEXTAB = '500,00' WHERE CDACESSO = 'SAQMAXCASH' AND CDCOOPER = 13;   
+  COMMIT;
+
+  EXCEPTION
+    
+    WHEN OTHERS THEN
+      RAISE_application_error(-20500, SQLERRM);
+      ROLLBACK;
+  
+END;
