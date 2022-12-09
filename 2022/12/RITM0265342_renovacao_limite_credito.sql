@@ -75,7 +75,7 @@ DECLARE
              craplim.dtfimvig dtfimvig_rollback,
              craplim.cdoperad,
              craplim.cdopelib                         
-        FROM craplim
+        FROM cecred.craplim
        WHERE craplim.cdcooper = pr_cdcooper
          AND craplim.nrdconta = pr_nrdconta
          AND craplim.nrctrlim = pr_nrctrlim
@@ -86,7 +86,7 @@ DECLARE
     CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE,
                        pr_cddlinha IN craplrt.cddlinha%TYPE) IS
       SELECT craplrt.flgstlcr
-        FROM craplrt
+        FROM cecred.craplrt
        WHERE craplrt.cdcooper = pr_cdcooper AND
              craplrt.cddlinha = pr_cddlinha;
     rw_craplrt cr_craplrt%ROWTYPE;
@@ -94,7 +94,7 @@ DECLARE
     CURSOR cr_craprli (pr_cdcooper IN craprli.cdcooper%TYPE,
                        pr_inpessoa IN craprli.inpessoa%TYPE) IS
       SELECT qtmaxren
-        FROM craprli
+        FROM cecred.craprli
        WHERE craprli.cdcooper = pr_cdcooper AND
              craprli.inpessoa = DECODE(pr_inpessoa,3,2,pr_inpessoa)
              AND craprli.tplimite = 1; 
@@ -107,7 +107,7 @@ DECLARE
              flgctitg,
              nrcpfcnpj_base,
              cdagenci
-        FROM crapass
+        FROM cecred.crapass
        WHERE crapass.cdcooper = pr_cdcooper AND
              crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
@@ -119,7 +119,7 @@ DECLARE
              crapalt.rowid,
              crapalt.cdoperad,
              crapalt.flgctitg
-        FROM crapalt
+        FROM cecred.crapalt
        WHERE crapalt.cdcooper = pr_cdcooper
          AND crapalt.nrdconta = pr_nrdconta
          AND crapalt.dtaltera = pr_dtmvtolt;
@@ -128,7 +128,7 @@ DECLARE
     CURSOR cr_tbrisco_operacoes(pr_cdcooper IN craplim.cdcooper%TYPE    
                                ,pr_nrdconta IN craplim.nrdconta%TYPE    
                                ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS 
-    SELECT 1 FROM tbrisco_operacoes o
+    SELECT 1 FROM cecred.tbrisco_operacoes o
                  WHERE o.cdcooper = pr_cdcooper
                    AND o.nrdconta = pr_nrdconta
                    AND o.nrctremp = pr_nrctrlim
@@ -235,7 +235,7 @@ DECLARE
               
               IF cr_tbrisco_operacoes%NOTFOUND THEN
                 BEGIN 
-                  UPDATE tbrisco_operacoes o
+                  UPDATE cecred.tbrisco_operacoes o
                      SET o.flintegrar_sas = 1
                    WHERE o.cdcooper = pr_cdcooper
                      AND o.nrdconta = pr_nrdconta
@@ -271,7 +271,7 @@ DECLARE
                 END IF;
                 
                 gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                              ,pr_des_text => 'UPDATE tbrisco_operacoes SET '
+                                              ,pr_des_text => 'UPDATE cecred.tbrisco_operacoes SET '
                                                                   ||' flintegrar_sas = 0 '
                                                             ||' WHERE cdcooper = '||pr_cdcooper
                                                             ||'   AND nrdconta = '||pr_nrdconta
@@ -279,7 +279,7 @@ DECLARE
                                                              ||'  AND tpctrato = 1;');        
 
                  gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                         ,pr_des_text => 'Delete tbrating_historicos '
+                         ,pr_des_text => 'Delete cecred.tbrating_historicos '
                                        ||' WHERE cdcooper = '||pr_cdcooper           
                                        ||'   AND nrdconta = '||pr_nrdconta                                 
                                        ||'   AND nrctremp = '||pr_nrctrlim                                 
@@ -356,7 +356,7 @@ DECLARE
  
 
     BEGIN
-      UPDATE craplim SET
+      UPDATE cecred.craplim SET
              dtrenova = pr_dtmvtolt,
              tprenova = 'M',
              dsnrenov = '',
@@ -375,7 +375,7 @@ DECLARE
     END;
        
     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                  ,pr_des_text => 'UPDATE craplim SET '
+                                  ,pr_des_text => 'UPDATE cecred.craplim SET '
                                                       ||' dtrenova = '||''''||to_char(rw_craplim.dtrenova,'dd/mm/rrrr')||''''
                                                       ||' ,tprenova = '||''''||rw_craplim.tprenova||''''
                                                       ||' ,dsnrenov = '||''''||rw_craplim.dsnrenov||''''                
@@ -405,14 +405,14 @@ DECLARE
       CLOSE cr_crapalt;
 
       BEGIN
-        UPDATE crapalt SET
+        UPDATE cecred.crapalt SET
                crapalt.dsaltera = rw_crapalt.dsaltera || vr_dsaltera,
                crapalt.cdoperad = pr_cdoperad,
                crapalt.flgctitg = vr_flgctitg
          WHERE crapalt.rowid = rw_crapalt.rowid;
          
          gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                  ,pr_des_text => 'UPDATE crapalt SET '
+                                  ,pr_des_text => 'UPDATE cecred.crapalt SET '
                                                           ||' dsaltera = '||''''||to_char(rw_craplim.dtrenova,'dd/mm/rrrr')||''''
                                                           ||' ,cdoperad = '||''''||rw_craplim.cdoperad||''''
                                                           ||' ,flgctitg = '||''''||rw_craplim.cdoperad||''''
@@ -428,7 +428,7 @@ DECLARE
       CLOSE cr_crapalt;
 
       BEGIN
-        INSERT INTO crapalt
+        INSERT INTO cecred.crapalt
           (crapalt.nrdconta
           ,crapalt.dtaltera
           ,crapalt.tpaltera
@@ -446,7 +446,7 @@ DECLARE
           ,pr_cdoperad);
 
           gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                        ,pr_des_text => 'delete crapalt '
+                                        ,pr_des_text => 'delete cecred.crapalt '
                                                       ||' WHERE cdcooper = '||pr_cdcooper
                                                       ||' and nrdconta = '||pr_nrdconta
                                                       ||' and tpaltera = 2'
