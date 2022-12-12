@@ -25,7 +25,7 @@ DECLARE
 
   CURSOR contas_total IS
     SELECT t.cdcooper, t.nrdconta, SUM(t.vllanmto) vllanmto
-      FROM craplcm t
+      FROM CECRED.craplcm t
      WHERE t.cdcooper = 1
        AND t.dtmvtolt = to_date('06/12/2022','dd/mm/yyyy')
        AND t.cdhistor = 1545
@@ -34,7 +34,7 @@ DECLARE
 
   CURSOR conta_lancamentos(pr_nrdconta NUMBER) IS
     SELECT t.*
-      FROM craplcm t
+      FROM CECRED.craplcm t
      WHERE t.cdcooper = 1
        AND t.dtmvtolt = to_date('06/12/2022','dd/mm/yyyy')
        AND t.cdhistor = 1545
@@ -92,7 +92,7 @@ BEGIN
     
     SELECT t.vllimcre
       INTO vr_vllimite
-      FROM crapass t
+      FROM CECRED.crapass t
      WHERE t.cdcooper = reg.cdcooper
        AND t.nrdconta = reg.nrdconta;
 
