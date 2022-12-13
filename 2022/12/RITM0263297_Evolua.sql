@@ -27,10 +27,10 @@ DECLARE
   vr_dscritic               cecred.crapcri.dscritic%type;
   vr_des_erro               VARCHAR2(4000);
 
-  vc_cdcooper               CONSTANT cecred.crapcop.cdcooper%type := 1;
-  vc_nrdcontaAdm            CONSTANT cecred.crapass.nrdconta%type := 99149931;
-  vr_nmarqbkp               VARCHAR2(100) := 'ROLLBACK_RITM0263297_Viacredi.sql';
-  vr_nmarqcri               VARCHAR2(100) := 'ArquivoRetorno_Viacredi.csv';  
+  vc_cdcooper               CONSTANT cecred.crapcop.cdcooper%type := 14;
+  vc_nrdcontaAdm            CONSTANT cecred.crapass.nrdconta%type := 92760406;
+  vr_nmarqbkp               VARCHAR2(100) := 'ROLLBACK_RITM0263297_Evolua.sql';
+  vr_nmarqcri               VARCHAR2(100) := 'ArquivoRetorno_Evolua.csv';  
   vr_arq_path               VARCHAR2(1000):= gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/ritm0263297'; 
   vr_nmarquiv               VARCHAR2(100) := 'Contas.csv'; 
     
