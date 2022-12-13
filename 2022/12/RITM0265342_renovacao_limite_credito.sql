@@ -21,15 +21,24 @@ DECLARE
    vr_cont_commit     NUMBER(6) := 0;
    vr_cdcritic        crapcri.cdcritic%TYPE;
    vr_dscritic        crapcri.dscritic%TYPE;
-   vr_exc_erro        EXCEPTION;    
+   vr_exc_erro        EXCEPTION;
+   vr_conta_ambiente  NUMBER;  
    
    
    TYPE typ_reg_carga IS RECORD(cdcooper  craplim.cdcooper%TYPE
-                              ,nrdconta  craplim.nrdconta%TYPE
-                              ,nrctrlim  craplim.nrctrlim%TYPE);
+                               ,nrdconta  craplim.nrdconta%TYPE
+                               ,nrctrlim  craplim.nrctrlim%TYPE);
   TYPE typ_tab_carga IS TABLE OF typ_reg_carga INDEX BY PLS_INTEGER;
   vr_tab_carga typ_tab_carga;
-
+  
+  CURSOR cr_conta_embaralhada (pr_cdcooper IN craplim.cdcooper%TYPE
+                              ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS
+    SELECT lim.nrdconta AS nrdconta_embaralhada 
+      FROM craplim lim
+     WHERE lim.cdcooper = pr_cdcooper
+       AND lim.nrctrlim = pr_nrctrlim
+       AND lim.tpctrlim = 1;
+  rw_conta_embaralhada cr_conta_embaralhada%ROWTYPE;
   
   PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE  
                                          ,pr_cdoperad IN crapope.cdoperad%TYPE  
@@ -586,18 +595,39 @@ BEGIN
 
     FOR vr_idx1 IN vr_tab_carga.first .. vr_tab_carga.last LOOP
         IF vr_tab_carga.exists(vr_idx1) THEN
-            
-        vr_cont_commit  := vr_cont_commit + 1;
+         
+         vr_conta_ambiente := '';   
+         vr_cont_commit  := vr_cont_commit + 1;
               
          OPEN BTCH0001.cr_crapdat(pr_cdcooper =>  vr_tab_carga(vr_idx1).cdcooper);
          FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
          CLOSE BTCH0001.cr_crapdat;
+         
+         
+         IF vr_aux_ambiente IN (1,2) THEN
+           
+             OPEN cr_conta_embaralhada (pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
+                                       ,pr_nrctrlim => vr_tab_carga(vr_idx1).nrctrlim);
+             FETCH cr_conta_embaralhada INTO rw_conta_embaralhada;
+             IF cr_conta_embaralhada%NOTFOUND THEN
+                CLOSE cr_conta_embaralhada;
+                gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
+                                              ,pr_des_text => 'Conta nao encontrada: ' || vr_tab_carga(vr_idx1).nrdconta);
+                CONTINUE;
+             END IF;
+             CLOSE cr_conta_embaralhada;
+             
+             vr_conta_ambiente := rw_conta_embaralhada.nrdconta_embaralhada;
+           
+         ELSE
+             vr_conta_ambiente := vr_tab_carga(vr_idx1).nrdconta;
+         END IF;
 
          pc_renovar_limite_cred_manual(pr_cdcooper => vr_tab_carga(vr_idx1).cdcooper
                                       ,pr_cdoperad => '1'
                                       ,pr_nmdatela => 'ATENDA'
                                       ,pr_idorigem => 5
-                                      ,pr_nrdconta => vr_tab_carga(vr_idx1).nrdconta
+                                      ,pr_nrdconta => vr_conta_ambiente
                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                       ,pr_nrctrlim => vr_tab_carga(vr_idx1).nrctrlim
                                       ,pr_cdcritic => vr_cdcritic
@@ -605,7 +635,7 @@ BEGIN
          IF vr_dscritic IS NOT NULL THEN
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                           ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
-                                                          vr_tab_carga(vr_idx1).nrdconta || ';' || 
+                                                          vr_conta_ambiente || ';' || 
                                                           vr_tab_carga(vr_idx1).nrctrlim || ';' || 
                                                           vr_dscritic);
                                                                             
