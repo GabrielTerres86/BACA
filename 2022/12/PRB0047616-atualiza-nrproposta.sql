@@ -67,7 +67,6 @@ BEGIN
 
   CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
 
-  --loop propostas duplicadas tbseg_prestamista
   FOR rw_tbseg IN cr_tbseg_prestamista LOOP
     vr_nrproposta := 0;
     vr_seq := 0;
@@ -76,23 +75,23 @@ BEGIN
     
     FOR rw_duplicados_tbseg IN cr_duplicados_tbseg(pr_nrproposta => rw_tbseg.nrproposta) LOOP
       vr_linha := '';
-      IF vr_nrproposta = 0 THEN -- o mais antigo
+      IF vr_nrproposta = 0 THEN 
         vr_nrproposta := rw_duplicados_tbseg.nrproposta;
         
-        IF rw_duplicados_tbseg.tpregist IN (1,3) THEN -- se a mais antiga esta ativa, mantém como está 
+        IF rw_duplicados_tbseg.tpregist IN (1,3) THEN 
           
           vr_ativa := TRUE;
           CONTINUE;
-        ELSE    --verifica no proximo registro, se atualiza o mais antigo
+        ELSE    
           vr_idseqtra := rw_duplicados_tbseg.idseqtra;
           CONTINUE;
         END IF;          
-      ELSIF vr_nrproposta = rw_duplicados_tbseg.nrproposta THEN --segundo em diante registros duplicados
+      ELSIF vr_nrproposta = rw_duplicados_tbseg.nrproposta THEN 
        
         vr_seq := vr_seq + 1;
         vr_str_seq := lpad(vr_seq,2,0);
       
-        IF vr_ativa = TRUE THEN --se o primeiro estava ativo, todos os proximos deverão ser atualizados
+        IF vr_ativa = TRUE THEN 
           
           vr_linha := 'UPDATE CECRED.tbseg_prestamista SET nrproposta = ''' || rw_duplicados_tbseg.nrproposta || ''' WHERE idseqtra = ' || rw_duplicados_tbseg.idseqtra || ';';
                   
@@ -142,7 +141,7 @@ BEGIN
   
   CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
   
-  --loop propostas duplicadas crawseg
+  
   FOR rw_crawseg IN cr_crawseg LOOP
     vr_nrproposta := 0;
     vr_seq := 0;
@@ -158,7 +157,7 @@ BEGIN
         IF rw_duplicados_crawseg.cdsitseg = 1 THEN
           vr_ativa := TRUE;
           CONTINUE;
-        ELSE    --verifica no proximo registro, se atualiza o mais antigo
+        ELSE    
           IF rw_duplicados_crawseg.cdsitseg IS NULL THEN  
             vr_sitnull := TRUE;    
           END IF;
@@ -169,7 +168,7 @@ BEGIN
         vr_seq := vr_seq + 1;
         vr_str_seq := lpad(vr_seq,2,0);
         
-        IF vr_ativa = TRUE THEN --se o primeiro estava ativo, todos os proximos deverão ser atualizados
+        IF vr_ativa = TRUE THEN 
             
           vr_linha := 'UPDATE CECRED.crawseg SET nrproposta = ''' || rw_duplicados_crawseg.nrproposta || ''' WHERE progress_recid = ' || rw_duplicados_crawseg.progress_recid || ';';
         
