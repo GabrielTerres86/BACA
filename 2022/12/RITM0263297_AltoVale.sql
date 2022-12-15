@@ -15,10 +15,10 @@ DECLARE
   vc_dstransa               CONSTANT VARCHAR2(4000) := 'Reversao ao fundo de Reserva de Valores a Devolver por script - RITM0263297';  
   vc_tpDevolucaoDepVista    CONSTANT cecred.tbcotas_devolucao.tpdevolucao%type := 4;
   vc_tpDevolucaoCotaCapital CONSTANT cecred.tbcotas_devolucao.tpdevolucao%type := 3;
-  vc_cdHistorPF             CONSTANT cecred.craphis.cdhistor%type := 4058;
-  vc_cdHistorPJ             CONSTANT cecred.craphis.cdhistor%type := 4062;
-  vc_cdHistorEstornoPF      CONSTANT cecred.craphis.cdhistor%type := 4059;
-  vc_cdHistorEstornoPJ      CONSTANT cecred.craphis.cdhistor%type := 4061;
+  vc_cdHistorPF             CONSTANT cecred.craphis.cdhistor%type := 4136;
+  vc_cdHistorPJ             CONSTANT cecred.craphis.cdhistor%type := 4138;
+  vc_cdHistorEstornoPF      CONSTANT cecred.craphis.cdhistor%type := 4137;
+  vc_cdHistorEstornoPJ      CONSTANT cecred.craphis.cdhistor%type := 4139;
 
   vr_exc_erro               EXCEPTION;
   vr_exc_clob               EXCEPTION;
@@ -28,7 +28,7 @@ DECLARE
   vr_des_erro               VARCHAR2(4000);
 
   vc_cdcooper               CONSTANT cecred.crapcop.cdcooper%type := 16;
-  vc_nrdcontaAdm            CONSTANT cecred.crapass.nrdconta%type := 98938606;
+  vc_nrdcontaAdm            CONSTANT cecred.crapass.nrdconta%type := 850004;
   vr_nmarqbkp               VARCHAR2(100) := 'ROLLBACK_RITM0263297_AltoVale.sql';
   vr_nmarqcri               VARCHAR2(100) := 'ArquivoRetorno_AltoVale.csv';  
   vr_arq_path               VARCHAR2(1000):= gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/ritm0263297'; 
