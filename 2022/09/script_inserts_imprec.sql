@@ -32,10 +32,49 @@ BEGIN
     ,lstparam
     ,nrseqrdr)
   VALUES
-    ('LISTA_AGENDAS_ATIVAS_ARQUIVO'
-    ,'credito.tela_imprec'
-    ,'pc_lista_agendas_ativas_arquivo'
-    ,'pr_nrregist,pr_nriniseq'
+    ('OBTER_LISTA_CNPJSCPFS_TITULARES_URS'
+    ,''
+    ,'credito.obterListaCNPJsCPFsTitularesURs'
+    ,''
+    ,vr_nrseqrdr);
+
+  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('OBTER_LISTA_AGENDA_CERC'
+    ,''
+    ,'credito.obterListaAgendaCERC'
+    ,'pr_nrregist,pr_nriniseq,pr_nrcnpjcpf_titular'
+    ,vr_nrseqrdr);
+
+  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('OBTER_LISTA_CONTRATOS_VINCS_URS'
+    ,''
+    ,'credito.obterListaContratosVincsURs'
+    ,'pr_cdcooperativa,pr_nrconta_corrente'
+    ,vr_nrseqrdr);
+
+  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('OBTER_LISTA_URS_VINCS_CONTRATOS'
+    ,''
+    ,'credito.obterListaURsVincsContratos'
+    ,'pr_nrregist,pr_nriniseq,pr_cdcooperativa,pr_nrconta_corrente,pr_nrcontrato'
     ,vr_nrseqrdr);
 
   INSERT INTO cecred.craptel
