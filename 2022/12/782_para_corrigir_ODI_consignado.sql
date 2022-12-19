@@ -258,6 +258,7 @@ BEGIN
     vr_vlmovimento        craplem.vllanmto%TYPE;
     vr_contrato_liquidado number(1);
     vr_maior_dtmvtolt     craplem.dtmvtolt%type;
+    rw_crapdat            BTCH0001.cr_crapdat%ROWTYPE;
 
     FUNCTION fn_busca_hist_estorno (pr_cdcooper IN craphis.cdcooper%TYPE,
                                     pr_cdhistor IN craphis.cdhistor%TYPE) RETURN NUMBER IS
@@ -286,10 +287,15 @@ BEGIN
     vr_tab_pagto_ctr.DELETE;
     vr_tab_pagto.DELETE;
     
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH BTCH0001.cr_crapdat
+      INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+    
     vr_dtmvtoan:= to_date('13/12/2022', 'DD/MM/YYYY');
     vr_dtmvtolt:= to_date('14/12/2022', 'DD/MM/YYYY');
     vr_dtmvtopr:= to_date('15/12/2022', 'DD/MM/YYYY');
-    vr_dtmvtolt_lanc:= to_date(to_char(trunc(sysdate)),'DD/MM/YYYY');
+    vr_dtmvtolt_lanc:= rw_crapdat.dtmvtol;
     vr_dtmvtctr:= vr_dtmvtolt;
 
     IF vr_inproces > 1 THEN
