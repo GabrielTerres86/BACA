@@ -5,7 +5,7 @@ DECLARE
   vr_cpf_titular NUMBER(20);
 BEGIN
   vr_cooperativa := 1;  
-  vr_conta := 19515430;
+  vr_conta := 93288620;
   vr_cartao := 5158940000199642; 
   
   FOR cartao IN (select distinct a.nrcpftit
