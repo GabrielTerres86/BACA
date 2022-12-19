@@ -295,7 +295,7 @@ BEGIN
     vr_dtmvtoan:= to_date('13/12/2022', 'DD/MM/YYYY');
     vr_dtmvtolt:= to_date('14/12/2022', 'DD/MM/YYYY');
     vr_dtmvtopr:= to_date('15/12/2022', 'DD/MM/YYYY');
-    vr_dtmvtolt_lanc:= rw_crapdat.dtmvtol;
+    vr_dtmvtolt_lanc:= rw_crapdat.dtmvtolt;
     vr_dtmvtctr:= vr_dtmvtolt;
 
     IF vr_inproces > 1 THEN
