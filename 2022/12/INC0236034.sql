@@ -7,7 +7,7 @@ DECLARE
          , t.vliofmes
          , t.cdcooper
          , t.nrdconta
-      FROM crapsld t
+      FROM cecred.crapsld t
      WHERE t.cdcooper = 7
        AND t.nrdconta = 99756420;
   rg_crapsld   cr_crapsld%ROWTYPE;
@@ -27,7 +27,7 @@ BEGIN
   CLOSE cr_crapsld;
 
 
-  UPDATE crapsld  t
+  UPDATE cecred.crapsld  t
      SET t.vlsmnmes = 0
        , t.vlsmnesp = 0
        , t.vljuresp = 0
