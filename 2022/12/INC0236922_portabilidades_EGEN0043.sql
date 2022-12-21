@@ -1,6 +1,6 @@
 DECLARE 
   
-  CURSOR cr_portab(pr_nrnuportab  NUMBER) IS
+  CURSOR cr_portab(pr_nrnuportab  cecred.tbcc_portabilidade_envia.nrnu_portabilidade%TYPE) IS
     SELECT t.cdcooper
          , t.nrdconta
          , t.idsituacao
@@ -77,13 +77,22 @@ BEGIN
       EXCEPTION
         WHEN no_data_found THEN
           EXIT;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao ler linha do arquivo: '||SQLERRM;
+          RAISE vr_exc_erro;
       END;
        
       IF LENGTH(vr_dsdlinha) <= 1 THEN 
         CONTINUE;
       END IF;
         
-      vr_nrnuport := TRIM(vr_dsdlinha);
+      BEGIN
+        vr_nrnuport := to_number(TRIM(vr_dsdlinha));
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao converter NUPortabilidade ('||TRIM(vr_dsdlinha)||'): '||SQLERRM;
+          RAISE vr_exc_erro;
+      END;
         
       OPEN  cr_portab(vr_nrnuport);
       FETCH cr_portab INTO rg_portab;
@@ -92,13 +101,15 @@ BEGIN
         CLOSE cr_portab;
         
         CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqlog
-                                         ,pr_des_text => 'ERRO: Portabilidade '||vr_nrnuport||' nao encontrada.');
+                                         ,pr_des_text => 'ERRO: Portabilidade '||to_char(vr_nrnuport)||' nao encontrada.');
         CONTINUE;
       END IF;
         
       CLOSE cr_portab;
         
-      IF rg_portab.idsituacao = 5 AND NVL(rg_portab.dsdominio_motivo,'@') = 'MOTVCANCELTPORTDDCTSALR' AND NVL(rg_portab.cdmotivo,0) IN (1,2) THEN
+      IF rg_portab.idsituacao = 5 AND 
+         NVL(rg_portab.dsdominio_motivo,'@') = 'MOTVCANCELTPORTDDCTSALR' AND 
+         NVL(rg_portab.cdmotivo,'0') IN ('1','2') THEN
         CONTINUE;
         
       ELSIF NVL(rg_portab.dsdominio_motivo,'@') = 'MOTVREPRVCPORTDDCTSALR' THEN
@@ -110,42 +121,42 @@ BEGIN
                
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar situação da portabilidade '||vr_nrnuport||' para reprovada.';
+            vr_dscritic := 'Erro ao atualizar situação da portabilidade '||to_char(vr_nrnuport)||' para reprovada.';
             RAISE vr_exc_erro;
         END;
           
         CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol
-                                             ,pr_des_text => 'UPDATE cecred.tbcc_portabilidade_envia t SET t.idsituacao = '||rg_portab.idsituacao||' WHERE t.nrnu_portabilidade = '||vr_nrnuport||';');
+                                             ,pr_des_text => 'UPDATE cecred.tbcc_portabilidade_envia t SET t.idsituacao = '||rg_portab.idsituacao||' WHERE t.nrnu_portabilidade = '||to_char(vr_nrnuport)||';');
           
         CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqlog
-                                             ,pr_des_text => 'Portabilidade '||vr_nrnuport||' da coop/conta '||rg_portab.cdcooper||'/'||rg_portab.nrdconta||' alterada para reprovada.');
+                                             ,pr_des_text => 'Portabilidade '||to_char(vr_nrnuport)||' da coop/conta '||to_char(rg_portab.cdcooper)||'/'||to_char(rg_portab.nrdconta)||' alterada para reprovada.');
           
       ELSIF rg_portab.idsituacao = 5 THEN
           
         BEGIN
           UPDATE cecred.tbcc_portabilidade_envia t
              SET t.dsdominio_motivo   = 'MOTVCANCELTPORTDDCTSALR'
-               , t.cdmotivo           = 2
+               , t.cdmotivo           = '2'
            WHERE t.nrnu_portabilidade = vr_nrnuport;
                
         EXCEPTION
           WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar situação da portabilidade '||vr_nrnuport||' para reprovada.';
+            vr_dscritic := 'Erro ao atualizar situação da portabilidade '||to_char(vr_nrnuport)||' para reprovada.';
             RAISE vr_exc_erro;
         END;
           
         IF rg_portab.dsdominio_motivo IS NULL THEN
            CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol
                                              ,pr_des_text => 'UPDATE cecred.tbcc_portabilidade_envia t SET t.dsdominio_motivo = NULL'
-                                                           ||' , t.cdmotivo = NULL WHERE t.nrnu_portabilidade = '||vr_nrnuport||';');
+                                                           ||' , t.cdmotivo = NULL WHERE t.nrnu_portabilidade = '||to_char(vr_nrnuport)||';');
         ELSE 
           CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol
                                                ,pr_des_text => 'UPDATE cecred.tbcc_portabilidade_envia t SET t.dsdominio_motivo = '''||rg_portab.dsdominio_motivo
-                                                             ||''' , t.cdmotivo = '||NVL(rg_portab.cdmotivo,'NULL')||' WHERE t.nrnu_portabilidade = '||vr_nrnuport||';');
+                                                             ||''' , t.cdmotivo = '''||rg_portab.cdmotivo||''' WHERE t.nrnu_portabilidade = '||to_char(vr_nrnuport)||';');
         END IF;
                
         CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqlog
-                                             ,pr_des_text => 'Motivo de cancelamento da portabilidade '||vr_nrnuport||' da coop/conta '||rg_portab.cdcooper||'/'||rg_portab.nrdconta||' ajustada.');
+                                             ,pr_des_text => 'Motivo de cancelamento da portabilidade '||to_char(vr_nrnuport)||' da coop/conta '||to_char(rg_portab.cdcooper)||'/'||to_char(rg_portab.nrdconta)||' ajustada.');
                                   
       END IF; 
          
