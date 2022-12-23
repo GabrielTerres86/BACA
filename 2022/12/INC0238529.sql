@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crapcrb
+  UPDATE cecred.crapcrb
      SET crapcrb.Dtcancel = NULL
         ,crapcrb.Cdopecan = NULL
         ,crapcrb.Dsmotcan = NULL
