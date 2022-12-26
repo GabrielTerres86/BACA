@@ -9,7 +9,7 @@ BEGIN
   
     FOR rw_crapfsf_cidade IN cr_crapfsf_cidade LOOP        
       BEGIN      
-        INSERT INTO crapfsf (
+        INSERT INTO CECRED.crapfsf (
                     cdcidade,
                     dtferiad,
                     tpferiad,
@@ -35,6 +35,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
-    pr_dscritic := 'Erro ao fazer insert na CRAPFSF. ' || SQLERRM;
     raise_application_error(-20100, SQLERRM);
 END;
