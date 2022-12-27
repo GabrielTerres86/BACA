@@ -17,9 +17,9 @@ BEGIN
                     dtdbaixa)
         VALUES (
                 rw_crapfsf_cidade.cdcidade,
-                '30/12/2022',
+                TO_DATE('30/12/2022', 'DD/MM/YYYY'),
                 0,
-                trunc(sysdate),
+                TO_DATE('27/12/2022', 'DD/MM/YYYY'),
                 null
                 );
             
