@@ -5,7 +5,7 @@ BEGIN
                    ,cddominio
                    ,dscodigo)
             VALUES ('TPREGIME_TRIBUTACAO'
-                   ,6
+                   ,'6'
                    ,'Isento');
 
   COMMIT;
