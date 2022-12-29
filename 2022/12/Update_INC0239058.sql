@@ -1,6 +1,6 @@
 BEGIN
   BEGIN
-      UPDATE crappro pro
+      UPDATE cecred.crappro pro
          SET pro.dsprotoc = 'CC77.1D4C.ECCD.B190.CA6A.C9A7.13CF.CEE9'
        WHERE pro.cdcooper = 1
          AND UPPER(pro.dsprotoc) = 'CC77.1D4C.ECCD.B190.CA6A.C9A7.13CF.CEE9 **ESTORNADO(25/08/22-20:00:01)';
@@ -11,7 +11,7 @@ BEGIN
   END;
 
   BEGIN
-      UPDATE tbconv_registro_remessa_pagfor reg
+      UPDATE cecred.tbconv_registro_remessa_pagfor reg
          SET reg.dhretorno_processamento = to_date('25-08-2022 13:10:01', 'dd-mm-yyyy hh24:mi:ss'), reg.nmarquivo_retorno = '1QTH250813048441.RET'
        WHERE reg.idsicredi = 6167417;    
       
@@ -21,7 +21,7 @@ BEGIN
   END;
 
   BEGIN
-      UPDATE tbconv_registro_remessa_pagfor reg
+      UPDATE cecred.tbconv_registro_remessa_pagfor reg
          SET reg.cdstatus_processamento = 3, reg.dsprocessamento = 'Aceito para processamento - 341000000009704852508202201042400322923',
              reg.dhretorno_processamento = to_date('25-08-2022 13:10:01', 'dd-mm-yyyy hh24:mi:ss'), reg.nmarquivo_retorno = '1QTH250813048441.RET'
        WHERE reg.idsicredi = 6167418;    
@@ -32,7 +32,7 @@ BEGIN
   END;
 
   BEGIN
-      UPDATE tbconv_registro_remessa_pagfor reg
+      UPDATE cecred.tbconv_registro_remessa_pagfor reg
          SET reg.dhretorno_processamento = to_date('25-08-2022 13:10:01', 'dd-mm-yyyy hh24:mi:ss'), reg.nmarquivo_retorno = '1QTH250813048441.RET'
        WHERE reg.idsicredi = 6167419;    
       
