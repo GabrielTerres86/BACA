@@ -1,7 +1,7 @@
 BEGIN
   UPDATE cecred.craplau l
      SET l.insitlau = 3, 
-         l.dtdebito = l.dtmvtopg, --to_date(l.dtmvtolt, 'dd/mm/yyyy'),
+         l.dtdebito = l.dtmvtopg,
          l.cdcritic = 717,
          l.dscritic = '717 - Nao ha saldo suficiente para a operacao (INC0235700).'
      WHERE l.cdcooper = 1
