@@ -1,6 +1,6 @@
 BEGIN
   BEGIN
-    UPDATE tbdomic_liqtrans_arquivo a
+    UPDATE cecred.tbdomic_liqtrans_arquivo a
        SET a.nmarquivo_gerado  = NULL
           ,a.dharquivo_gerado  = NULL
           ,a.nmarquivo_retorno = NULL
@@ -164,7 +164,7 @@ BEGIN
   END;
   
   BEGIN
-    UPDATE tbdomic_liqtrans_lancto l
+    UPDATE cecred.tbdomic_liqtrans_lancto l
        SET l.insituacao = 1
      WHERE idarquivo IN (665724,
                          665748,
@@ -325,14 +325,14 @@ BEGIN
   END;
   
   BEGIN
-    UPDATE tbdomic_liqtrans_pdv p
+    UPDATE cecred.tbdomic_liqtrans_pdv p
        SET p.cdocorrencia         = NULL
           ,p.dhretorno            = NULL
           ,p.cdocorrencia_retorno = NULL
           ,p.dsocorrencia_retorno = NULL
      WHERE p.idcentraliza IN (SELECT c.idcentraliza
-                                FROM tbdomic_liqtrans_centraliza c
-                                    ,tbdomic_liqtrans_lancto     l
+                                FROM cecred.tbdomic_liqtrans_centraliza c
+                                    ,cecred.tbdomic_liqtrans_lancto     l
                                WHERE l.idlancto = c.idlancto
                                  AND l.idarquivo IN (665724,
                                                      665748,
