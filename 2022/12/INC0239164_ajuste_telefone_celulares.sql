@@ -70,7 +70,7 @@ DECLARE
 
   vr_nmarqrol    VARCHAR2(100);
   vr_nmarqlog    VARCHAR2(100) := 'INC0239164_telefones_processados.csv';  
-  vr_nmarqcyb    VARCHAR2(100) := 'INC0239164_atualizar_cyber.csv';  
+  vr_nmarqcyb    VARCHAR2(100) := 'INC0239164_atualizar_cyber.sql';  
 
   vr_flarqrol    utl_file.file_type;
   vr_flarqlog    utl_file.file_type;
