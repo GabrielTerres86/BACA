@@ -9,7 +9,7 @@ DECLARE
    
   CURSOR cr_crapdir IS
   SELECT  dir.cdcooper, dir.nrdconta, dir.VLCAPMES##2
-    FROM cecred.crapdir dir, cecred.crapass ass
+    FROM crapdir dir, crapass ass
    WHERE ass.cdcooper = dir.cdcooper
      AND ass.nrdconta = dir.nrdconta
      AND (ass.dtdemiss >= '01/03/2022' or ass.dtdemiss is null)
@@ -23,7 +23,7 @@ DECLARE
   CURSOR cr_craplct(pr_cdcooper IN craprda.cdcooper%TYPE
                    ,pr_nrdconta IN craprda.nrdconta%TYPE)IS
   SELECT nvl(SUM(decode(his.indebcre,'C',1,-1) * lct.vllanmto),0) vllanmto
-    FROM cecred.craplct lct, cecred.craphis his
+    FROM craplct lct, craphis his
    WHERE lct.cdcooper = his.cdcooper
      AND lct.cdhistor = his.cdhistor
      AND lct.cdcooper = pr_cdcooper
@@ -47,23 +47,8 @@ BEGIN
                    ,pr_nrdconta => rw_crapdir.nrdconta);
 
     FETCH cr_craplct INTO rw_craplct;
-
-    IF rw_craplct.vllanmto > 0 THEN
       CLOSE cr_craplct;                    
-    ELSE
-      CLOSE cr_craplct;   
-      vr_dslog := 'nao encontrou registro na craplct Conta: ' || rw_crapdir.nrdconta;   
-      CECRED.pc_log_programa(pr_dstiplog      => 'O'
-                            ,pr_tpocorrencia  => 4 
-                            ,pr_cdcriticidade => 0 
-                            ,pr_tpexecucao    => 3 
-                            ,pr_dsmensagem    => vr_dslog
-                            ,pr_cdmensagem    => 222
-                            ,pr_cdprograma    => 'INC0239547'
-                            ,pr_cdcooper      => 3 
-                            ,pr_idprglog      => vr_idprglog);
-     CONTINUE;
-    END IF;                      
+                       
      vr_dslog := 'UPDATE cecred.crapdir SET VLCAPMES##3 = 0 WHERE CDCOOPER = '||rw_crapdir.cdcooper ||
                   ' AND NRDCONTA = '|| rw_crapdir.nrdconta ||
                   ' AND DTMVTOLT = TO_DATE(''30/12/2022'',''DD/MM/YYYY'');'; 
