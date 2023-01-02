@@ -1,3 +1,4 @@
+
 DECLARE
 
   vr_dscritic crapcri.dscritic%TYPE;
@@ -21,10 +22,12 @@ DECLARE
 
   CURSOR cr_craplct(pr_cdcooper IN craprda.cdcooper%TYPE
                    ,pr_nrdconta IN craprda.nrdconta%TYPE)IS
-  SELECT SUM(decode(his.indebcre,'C',1,-1) * lct.vllanmto) vllanmto
+  SELECT nvl(SUM(decode(his.indebcre,'C',1,-1) * lct.vllanmto),0) vllanmto
     FROM craplct lct, craphis his
    WHERE lct.cdcooper = his.cdcooper
      AND lct.cdhistor = his.cdhistor
+     AND lct.cdcooper = pr_cdcooper
+     AND lct.nrdconta = pr_nrdconta
      AND lct.dtmvtolt between to_date('01/03/2022','dd/mm/yyyy') and to_date('31/03/2022','dd/mm/yyyy');
      rw_craplct cr_craplct%ROWTYPE;
     
@@ -39,13 +42,13 @@ BEGIN
                         ,pr_cdcooper      => 3 
                         ,pr_idprglog      => vr_idprglog);
   FOR rw_crapdir IN cr_crapdir LOOP           
-       
+     
     OPEN cr_craplct(pr_cdcooper => rw_crapdir.cdcooper
                    ,pr_nrdconta => rw_crapdir.nrdconta);
 
     FETCH cr_craplct INTO rw_craplct;
 
-    IF cr_craplct%FOUND THEN
+    IF rw_craplct.vllanmto > 0 THEN
       CLOSE cr_craplct;                    
     ELSE
       CLOSE cr_craplct;   
@@ -61,7 +64,18 @@ BEGIN
                             ,pr_idprglog      => vr_idprglog);
      CONTINUE;
     END IF;                      
-
+     vr_dslog := 'UPDATE cecred.crapdir SET VLCAPMES##3 = 0 WHERE CDCOOPER = '||rw_crapdir.cdcooper ||
+                  ' AND NRDCONTA = '|| rw_crapdir.nrdconta ||
+                  ' AND DTMVTOLT = TO_DATE(''30/12/2022'',''DD/MM/YYYY'');'; 
+     CECRED.pc_log_programa(pr_dstiplog      => 'O'
+                            ,pr_tpocorrencia  => 4 
+                            ,pr_cdcriticidade => 0 
+                            ,pr_tpexecucao    => 3 
+                            ,pr_dsmensagem    => vr_dslog
+                            ,pr_cdmensagem    => 333
+                            ,pr_cdprograma    => 'INC0239547'
+                            ,pr_cdcooper      => 3 
+                            ,pr_idprglog      => vr_idprglog);             
     BEGIN
       UPDATE cecred.crapdir 
          SET VLCAPMES##3 = VLCAPMES##2 +  rw_craplct.vllanmto
@@ -96,7 +110,7 @@ BEGIN
                             ,pr_cdcriticidade => 0 
                             ,pr_tpexecucao    => 3 
                             ,pr_dsmensagem    => vr_dscritic
-                            ,pr_cdmensagem    => 333
+                            ,pr_cdmensagem    => 444
                             ,pr_cdprograma    => 'INC0239547'
                             ,pr_cdcooper      => 3 
                             ,pr_idprglog      => vr_idprglog);
@@ -110,7 +124,7 @@ BEGIN
                             ,pr_cdcriticidade => 0 
                             ,pr_tpexecucao    => 3 
                             ,pr_dsmensagem    => vr_dscritic
-                            ,pr_cdmensagem    => 444
+                            ,pr_cdmensagem    => 555
                             ,pr_cdprograma    => 'INC0239547'
                             ,pr_cdcooper      => 3 
                             ,pr_idprglog      => vr_idprglog);
