@@ -7,6 +7,11 @@ DECLARE
   vr_cdcoopcent  VARCHAR2(200) := '6,7,9,11,13,16';
   vr_cdcooprest  VARCHAR2(200) := '1,2,3,5,8,10,12,14';
   vr_cooperativa VARCHAR2(200);
+  vr_diretorio   VARCHAR2(200);
+  vr_rollback    VARCHAR2(4000);
+  vr_log         VARCHAR2(4000);
+  vr_arqrollback UTL_FILE.file_type;
+  vr_arqlog      UTL_FILE.file_type;
   vr_indice      PLS_INTEGER;
   vr_limite      PLS_INTEGER;
   vr_exec_erro EXCEPTION;
@@ -122,7 +127,42 @@ DECLARE
     WHEN OTHERS THEN
       pr_dscritic := SQLERRM;
   END obterProximaData;
+
+  PROCEDURE fecharArquivos IS
+  BEGIN
+    IF utl_file.IS_OPEN(vr_arqrollback) THEN
+      sistema.fecharArquivo(pr_utlfileh => vr_arqrollback);
+    END IF;
+  
+    IF utl_file.IS_OPEN(vr_arqlog) THEN
+      sistema.fecharArquivo(pr_utlfileh => vr_arqlog);
+    END IF;
+  END;
 BEGIN
+  vr_diretorio := sistema.obterParametroSistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0237169';
+
+  sistema.abrirArquivo(pr_nmdireto => vr_diretorio,
+                       pr_nmarquiv => 'rollback.sql',
+                       pr_tipabert => 'W',
+                       pr_utlfileh => vr_arqrollback,
+                       pr_dscritic => vr_dscritic);
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_exec_erro;
+  END IF;
+
+  sistema.abrirArquivo(pr_nmdireto => vr_diretorio,
+                       pr_nmarquiv => 'log.txt',
+                       pr_tipabert => 'W',
+                       pr_utlfileh => vr_arqlog,
+                       pr_dscritic => vr_dscritic);
+  IF TRIM(vr_dscritic) IS NOT NULL THEN
+    RAISE vr_exec_erro;
+  END IF;
+
+  sistema.escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                             ,pr_des_text => 'BEGIN');
+
   OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
   FETCH cecred.btch0001.cr_crapdat
     INTO cecred.btch0001.rw_crapdat;
@@ -154,6 +194,24 @@ BEGIN
         RAISE vr_exec_erro;
       END IF;
     
+      FOR idx IN vr_crapcyb.first .. vr_crapcyb.last LOOP
+        IF vr_crapcyb(idx).dtmancad IS NULL THEN
+          vr_dtmancad := 'NULL';
+        ELSE
+          vr_dtmancad := 'to_date(''' || to_char(vr_crapcyb(idx).dtmancad, 'DD/MM/RRRR') || ''', ''DD/MM/RRRR'')';
+        END IF;
+      
+        vr_rollback := 'UPDATE crapcyb cyb' || 
+                         ' SET cyb.dtmancad = ' || vr_dtmancad ||
+                       ' WHERE cyb.cdcooper = ' || vr_crapcyb(idx).cdcooper ||
+                         ' AND cyb.cdorigem = ' || vr_crapcyb(idx).cdorigem || 
+                         ' AND cyb.nrdconta = ' || vr_crapcyb(idx).nrdconta ||
+                         ' AND cyb.nrctremp = ' || vr_crapcyb(idx).nrctremp ||
+                         ' AND cyb.dtdbaixa IS NULL;';
+        sistema.escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                                   ,pr_des_text => vr_rollback);
+      END LOOP;
+    
       BEGIN
         FORALL idx IN INDICES OF vr_crapcyb SAVE EXCEPTIONS
           UPDATE cecred.crapcyb cyb
@@ -165,16 +223,32 @@ BEGIN
              AND cyb.dtdbaixa IS NULL;
       EXCEPTION
         WHEN OTHERS THEN
-          CONTINUE;
+          FOR idx IN 1 .. SQL%bulk_exceptions.count LOOP
+            vr_log := 'cdcooper: ' || vr_crapcyb(SQL%BULK_EXCEPTIONS(idx).error_index).cdcooper ||
+                      ' cdorigem: ' || vr_crapcyb(SQL%BULK_EXCEPTIONS(idx).error_index).cdorigem ||
+                      ' nrdconta: ' || vr_crapcyb(SQL%BULK_EXCEPTIONS(idx).error_index).nrdconta ||
+                      ' nrctremp: ' || vr_crapcyb(SQL%BULK_EXCEPTIONS(idx).error_index).nrctremp ||
+                      ' Erro: ' || SQLERRM;
+            sistema.escreveLinhaArquivo(pr_utlfileh => vr_arqlog
+                                       ,pr_des_text => vr_log);
+          END LOOP;
       END;
     
       COMMIT;
     END LOOP;
     CLOSE cr_crapcyb;
   END LOOP;
+
+  sistema.escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                             ,pr_des_text => 'COMMIT;');
+  sistema.escreveLinhaArquivo(pr_utlfileh => vr_arqrollback
+                             ,pr_des_text => 'END;');
+  fecharArquivos;
 EXCEPTION
   WHEN vr_exec_erro THEN
+    fecharArquivos;
     raise_application_error(-20500, vr_dscritic);
   WHEN OTHERS THEN
+    fecharArquivos;
     raise_application_error(-20500, SQLERRM);
 END;
