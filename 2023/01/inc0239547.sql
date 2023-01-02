@@ -9,7 +9,7 @@ DECLARE
    
   CURSOR cr_crapdir IS
   SELECT  dir.cdcooper, dir.nrdconta, dir.VLCAPMES##2
-    FROM crapdir dir, crapass ass
+    FROM cecred.crapdir dir, cecred.crapass ass
    WHERE ass.cdcooper = dir.cdcooper
      AND ass.nrdconta = dir.nrdconta
      AND (ass.dtdemiss >= '01/03/2022' or ass.dtdemiss is null)
@@ -23,7 +23,7 @@ DECLARE
   CURSOR cr_craplct(pr_cdcooper IN craprda.cdcooper%TYPE
                    ,pr_nrdconta IN craprda.nrdconta%TYPE)IS
   SELECT nvl(SUM(decode(his.indebcre,'C',1,-1) * lct.vllanmto),0) vllanmto
-    FROM craplct lct, craphis his
+    FROM cecred.craplct lct, cecred.craphis his
    WHERE lct.cdcooper = his.cdcooper
      AND lct.cdhistor = his.cdhistor
      AND lct.cdcooper = pr_cdcooper
