@@ -310,13 +310,6 @@ BEGIN
 
     v_dados.extend();
     v_dados(v_dados.last()).vr_cdcooper := 1;
-    v_dados(v_dados.last()).vr_nrdconta := 10800824;
-    v_dados(v_dados.last()).vr_nrctremp := 3684745;
-    v_dados(v_dados.last()).vr_vllanmto := 133.01;
-    v_dados(v_dados.last()).vr_cdhistor := 3919;
-
-    v_dados.extend();
-    v_dados(v_dados.last()).vr_cdcooper := 1;
     v_dados(v_dados.last()).vr_nrdconta := 12488968;
     v_dados(v_dados.last()).vr_nrctremp := 3695226;
     v_dados(v_dados.last()).vr_vllanmto := 48.42;
