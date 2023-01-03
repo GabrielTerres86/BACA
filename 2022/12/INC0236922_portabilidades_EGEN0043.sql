@@ -126,7 +126,7 @@ BEGIN
         END;
           
         CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol
-                                             ,pr_des_text => 'UPDATE cecred.tbcc_portabilidade_envia t SET t.idsituacao = '||rg_portab.idsituacao||' WHERE t.nrnu_portabilidade = '||to_char(vr_nrnuport)||';');
+                                             ,pr_des_text => 'UPDATE cecred.tbcc_portabilidade_envia t SET t.idsituacao = '||to_char(rg_portab.idsituacao)||' WHERE t.nrnu_portabilidade = '||to_char(vr_nrnuport)||';');
           
         CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqlog
                                              ,pr_des_text => 'Portabilidade '||to_char(vr_nrnuport)||' da coop/conta '||to_char(rg_portab.cdcooper)||'/'||to_char(rg_portab.nrdconta)||' alterada para reprovada.');
