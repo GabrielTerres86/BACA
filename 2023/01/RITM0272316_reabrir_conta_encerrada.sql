@@ -45,7 +45,7 @@ DECLARE
   
   vr_lgrowid     ROWID;
   vr_dstransa    VARCHAR2(100) := 'Alterada situacao de conta por script. RITM0272316.';
-  vr_cdsitdct    NUMBER := 7;
+  vr_cdsitdct    NUMBER := 1;
   vr_vldcotas    NUMBER;
   vr_nrdocmto    NUMBER;
   vr_nrseqdig    NUMBER;
