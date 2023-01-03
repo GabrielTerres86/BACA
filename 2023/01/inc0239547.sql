@@ -10,12 +10,7 @@ DECLARE
   CURSOR cr_crapdir IS
   SELECT  dir.cdcooper, dir.nrdconta, dir.VLCAPMES##2
     FROM cecred.crapdir dir, cecred.crapass ass
-   WHERE ass.cdcooper = dir.cdcooper
-     AND ass.nrdconta = dir.nrdconta
-     AND (ass.dtdemiss >= '01/03/2022' or ass.dtdemiss is null)
-     AND dir.vlcapmes##3 = 0
-     AND dir.vlcapmes##2 > 0
-     AND dir.vlcapmes##4 > 0
+   WHERE dir.vlcapmes##3 = 0
      AND dir.dtmvtolt = to_date('30/12/2022','dd/mm/yyyy')
      AND dir.cdcooper = 1; 
      rw_crapdir cr_crapdir%ROWTYPE;
