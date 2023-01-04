@@ -15,7 +15,7 @@ BEGIN
   VALUES
     (1047
     ,1018
-    ,'Simular Acordo de Contratos'
+    ,'Simular Acordo'
     ,3
     ,1
     ,1
@@ -34,7 +34,7 @@ BEGIN
   VALUES
     (1048
     ,1018
-    ,'Consultar Acordos'
+    ,'Acompanhar Acordos'
     ,4
     ,1
     ,1
