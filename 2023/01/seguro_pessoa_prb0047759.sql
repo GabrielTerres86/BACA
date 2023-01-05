@@ -12,7 +12,7 @@ DECLARE
       FROM CECRED.craplau l
      WHERE l.cdcooper = pr_cdcooper
        AND l.cdhistor = 3651
-       AND l.cdseqtel IN ('770628891850','770628950121');
+       AND l.cdseqtel IN ('770629447326','770628950121');
   
   CURSOR cr_crapcop IS
     SELECT c.cdcooper
