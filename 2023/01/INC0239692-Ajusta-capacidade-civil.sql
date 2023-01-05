@@ -13,7 +13,7 @@ DECLARE
        AND c.flgativo = 1
        AND l.dstransa =
            'Ajuste de dados cadastrais com dados da SERPRO via Foundation.'
-       AND l.dttransa >= '01/12/2022'
+       AND to_date(l.dttransa, 'dd/mm/rrrr') >= to_date('01/12/2022', 'dd/mm/rrrr')
        AND l.dsorigem = 'FOUNDATION'
        AND UPPER(l.nmdatela) = 'FOUNDATION'
        AND UPPER(l.cdoperad) = '1'
