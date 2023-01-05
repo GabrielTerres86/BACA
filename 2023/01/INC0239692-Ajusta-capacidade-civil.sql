@@ -27,7 +27,7 @@ DECLARE
        AND t.cdcooper = l.cdcooper
        AND t.nrdconta = l.nrdconta
        AND t.idseqttl = l.idseqttl
-       --AND t.inhabmen = 2
+       AND t.inhabmen = 2
        AND NOT EXISTS (SELECT 1
               FROM crapcrl c
              WHERE c.cdcooper = l.cdcooper
