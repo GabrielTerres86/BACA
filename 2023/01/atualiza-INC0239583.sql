@@ -1,0 +1,21 @@
+begin
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 8282340;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 3456781;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 11152800;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 6674755;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 9573623;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 1838644;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 9366652;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 2718650;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 9487700;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 8490643;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 8783918;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 2242850;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 8498750;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 12747831;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 1 and nrdconta = 7964358;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 11 and nrdconta = 425001;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 11 and nrdconta = 672866;
+  update cecred.tbconv_deb_nao_efetiv set dtmvtolt = to_date('05/01/2023','dd/mm/yyyy') where dtmvtolt = to_date('30/12/2022','dd/mm/yyyy') and cdcooper = 11 and nrdconta = 193780;
+  commit;
+end;
