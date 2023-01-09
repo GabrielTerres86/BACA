@@ -43,8 +43,8 @@ DECLARE
        AND t.nrdconta = pr_nrdconta
        AND t.dtdbaixa IS NULL; 
   
-  TYPE vr_tpaltdel IS TABLE OF VARCHAR2(2000) INDEX BY VARCHAR2(50);
-  TYPE vr_tpaltupd IS TABLE OF VARCHAR2(2000) INDEX BY VARCHAR2(50);
+  TYPE vr_tpaltdel IS TABLE OF VARCHAR2(500) INDEX BY VARCHAR2(50);
+  TYPE vr_tpaltupd IS TABLE OF VARCHAR2(500) INDEX BY VARCHAR2(50);
   TYPE vr_tpaltera IS TABLE OF NUMBER INDEX BY VARCHAR2(50);
   
   TYPE vr_rcaltcyb IS RECORD (cdcooper NUMBER, nrdconta NUMBER);
@@ -310,7 +310,7 @@ BEGIN
            WHERE ROWID    = rg_altera.dsdrowid;
           
           IF NOT vr_tbaltupd.EXISTS(rg_altera.dsdrowid) THEN
-            vr_tbaltupd(rg_altera.dsdrowid) := 'UPDATE cecred.crapalt SET dsaltera = '''||SUBSTR(rg_altera.dsaltera,1,1900)||''' WHERE rowid = '''||rg_altera.dsdrowid||'''; ';
+            vr_tbaltupd(rg_altera.dsdrowid) := 'UPDATE cecred.crapalt SET dsaltera = '''||rg_altera.dsaltera||''' WHERE rowid = '''||rg_altera.dsdrowid||'''; ';
           END IF;
                            
         EXCEPTION
