@@ -87,7 +87,7 @@ BEGIN
       END IF;
         
       BEGIN
-        vr_nrnuport := to_number(TRIM(vr_dsdlinha));
+        vr_nrnuport := to_number(TRIM(REPLACE(REPLACE(vr_dsdlinha,CHR(13),NULL),CHR(10),NULL)));
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao converter NUPortabilidade ('||TRIM(vr_dsdlinha)||'): '||SQLERRM;
