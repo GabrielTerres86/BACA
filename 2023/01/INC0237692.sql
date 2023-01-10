@@ -680,7 +680,7 @@ BEGIN
                                                ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0237692';
 
   sistema.abrirArquivo(pr_nmdireto => vr_diretorio,
-                       pr_nmarquiv => 'contas_20230105.txt',
+                       pr_nmarquiv => 'contas_20230109.txt',
                        pr_tipabert => 'R',
                        pr_utlfileh => vr_arquivo,
                        pr_dscritic => vr_dscritic);
