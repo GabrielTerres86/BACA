@@ -1,0 +1,68 @@
+BEGIN
+  
+  /*
+    Liberar o produto Poupaça para as cooperativas
+    Acredicoop - 2, 
+    Credifoz - 11, 
+    Credcrea - 7
+  */
+  
+  insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+  values ('CRED', 2, 'COOP_PILOTO_POUPANCA_PF', 'Indica se a cooperativa habilita contratacao de POUPANCA (0=Inativa,1=Piloto para algumas contas,2=Ativa)', '2');
+  
+  insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+  values ('CRED', 11, 'COOP_PILOTO_POUPANCA_PF', 'Indica se a cooperativa habilita contratacao de POUPANCA (0=Inativa,1=Piloto para algumas contas,2=Ativa)', '2');
+  
+  insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+  values ('CRED', 7, 'COOP_PILOTO_POUPANCA_PF', 'Indica se a cooperativa habilita contratacao de POUPANCA (0=Inativa,1=Piloto para algumas contas,2=Ativa)', '2');
+  
+  --Atualiza o CPF das pessoas ligadas de cada cooperativa
+  
+  --Credifoz   
+  update crapprm 
+  set DSVLRPRM = ',5196722912,93154356991,5389059646,80640974953,27261441015,5633307917,'
+  where CDACESSO = 'PESSOA_LIGADA_CNSLH_FSCL' and CDCOOPER = 11;
+  
+  update crapprm 
+  set DSVLRPRM = ',62592289968,1457550962,24675857949,69258376900,39828522934,67941931915,2024483984,'
+  where CDACESSO = 'PESSOA_LIGADA_CNSLH_ADM' and CDCOOPER = 11;
+  
+  update crapprm 
+  set DSVLRPRM = ',90770641920, 4594408966, 5114955950,'
+  where CDACESSO = 'PESSOA_LIGADA_DIRETORIA' and CDCOOPER = 11;
+  
+  --Acredicoop   
+  update crapprm 
+  set DSVLRPRM = ',91998441920,79640303968,41848950934,456419942,'
+  where CDACESSO = 'PESSOA_LIGADA_CNSLH_FSCL' and CDCOOPER = 2;
+  
+  update crapprm 
+  set DSVLRPRM = ',76595315904,2019876949,35179767920,52450929991,68682344904,'
+  where CDACESSO = 'PESSOA_LIGADA_CNSLH_ADM' and CDCOOPER = 2;
+  
+  update crapprm 
+  set DSVLRPRM = ',4744599931,2381914943,'
+  where CDACESSO = 'PESSOA_LIGADA_DIRETORIA' and CDCOOPER = 2;
+  
+  --Credcrea 
+  update crapprm 
+  set DSVLRPRM = ',1799964957,19453302872,96328045972,44194536991,3321170906,23443332900,'
+  where CDACESSO = 'PESSOA_LIGADA_CNSLH_FSCL' and CDCOOPER = 7;
+  
+  update crapprm 
+  set DSVLRPRM = ',2992710997,37766023920,37888722920,37837796934,388679905,6314188903,8400673999,'
+  where CDACESSO = 'PESSOA_LIGADA_CNSLH_ADM' and CDCOOPER = 7;
+  
+  update crapprm 
+  set DSVLRPRM = ',2498047948,2844604943,'
+  where CDACESSO = 'PESSOA_LIGADA_DIRETORIA' and CDCOOPER = 7;
+  
+  COMMIT;
+  
+  EXCEPTION
+  WHEN OTHERS THEN
+    SISTEMA.excecaoInterna(pr_compleme => 'RITM0270435');
+    ROLLBACK;   
+  
+  END;
+/
