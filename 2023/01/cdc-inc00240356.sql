@@ -1,0 +1,8 @@
+begin
+    update TBEPR_CDC_VENDEDOR set IDCOOPERADO_CDC = 55894
+    where IDCOOPERADO_CDC = 621;
+
+    update TBEPR_CDC_USUARIO_VINCULO set IDCOOPERADO_CDC = 55894
+    where IDCOOPERADO_CDC = 621;
+    commit;
+end;
