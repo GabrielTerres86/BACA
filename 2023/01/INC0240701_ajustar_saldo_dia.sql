@@ -3,8 +3,8 @@ DECLARE
   CURSOR cr_crapass is
     SELECT a.cdcooper
          , a.nrdconta
-      FROM CECRED.CRAPASS a
-     WHERE a.progress_recid IN (1039442,1615744,1431762,1586249,969552);
+      FROM CECRED.crapass a
+     WHERE a.progress_recid IN (1039442,1615744,1431762,1586249,969552,923517,897363,1089236);
 
   CURSOR cr_crapsda(pr_cdcooper CECRED.crapsda.cdcooper%TYPE
                    ,pr_nrdconta CECRED.crapsda.nrdconta%TYPE
@@ -12,7 +12,7 @@ DECLARE
     SELECT t.dtmvtolt
          , t.vlsddisp
          , ROWID dsdrowid
-      FROM crapsda t
+      FROM CECRED.crapsda t
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta
        AND t.dtmvtolt >= pr_dtmvtolt
@@ -23,8 +23,8 @@ DECLARE
                    ,pr_dtmvtolt CECRED.craplcm.dtmvtolt%TYPE) IS
     SELECT h.inhistor
          , t.vllanmto
-      FROM craphis h
-         , craplcm t
+      FROM CECRED.craphis h
+         , CECRED.craplcm t
      WHERE h.cdcooper = t.cdcooper
        AND h.cdhistor = t.cdhistor
        AND t.cdcooper = pr_cdcooper
@@ -35,12 +35,12 @@ DECLARE
                    ,pr_nrdconta CECRED.craplcm.nrdconta%TYPE) IS
     SELECT t.vlsddisp
          , ROWID dsdrowid
-      FROM crapsld t 
+      FROM CECRED.crapsld t 
      WHERE t.cdcooper = pr_cdcooper
        AND t.nrdconta = pr_nrdconta;
   rg_crapsld   cr_crapsld%ROWTYPE;
   
-  vr_arq_path    VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/INC0240701'; 
+  vr_arq_path    VARCHAR2(1000):= CECRED.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/INC0240701'; 
 
   vr_nmarqrol    VARCHAR2(100) := 'INC0240701_script_rollback.sql';
   vr_nmarqlog    VARCHAR2(100) := 'INC0240701_script_log.txt';  
