@@ -102,7 +102,7 @@ BEGIN
     
     OPEN cr_crapttl(vr_cdcooper, vr_nrdconta, vr_nrcpfcgc);
     FETCH cr_crapttl INTO rg_crapttl;
-    --
+    
     IF cr_crapttl%NOTFOUND THEN
       
       gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, vr_cdcooper 
