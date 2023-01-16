@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO craptab
+  INSERT INTO CECRED.craptab
     (NMSISTEM
     ,TPTABELA
     ,CDEMPRES
@@ -16,7 +16,7 @@ BEGIN
     ,'f0033708'
     ,3);
 
-  INSERT INTO craptab
+  INSERT INTO CECRED.craptab
     (NMSISTEM
     ,TPTABELA
     ,CDEMPRES
@@ -33,7 +33,7 @@ BEGIN
     ,'f0032937'
     ,3);
 
-  INSERT INTO craptab
+  INSERT INTO CECRED.craptab
     (NMSISTEM
     ,TPTABELA
     ,CDEMPRES
