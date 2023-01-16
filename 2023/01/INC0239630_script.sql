@@ -2,7 +2,7 @@ BEGIN
   UPDATE CECRED.crapceb c
      SET c.insitceb = 2
    WHERE c.cdcooper = 7
-     AND c.nrdconta = 99889412
+     AND c.nrdconta = 110523
      AND c.nrconven = 106002;
   COMMIT;
 EXCEPTION
