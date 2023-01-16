@@ -53,6 +53,26 @@ BEGIN
   vr_tab_param(3).cdcooper := 3;
   vr_tab_param(3).dsconteu := '0';
   
+  vr_tab_param(4).nmpartar := 'Integração Arquivo Quit Cyber Vs Mulesoft';
+  vr_tab_param(4).tpdedado := 2;
+  vr_tab_param(4).cdprodut := 12;
+  vr_tab_param(4).cdbattar := 'FLINTQITCYBMULE';
+  vr_tab_param(4).nmidenti := 'Integração Arquivo Quit Cyber Vs Mulesoft Ativada';
+  vr_tab_param(4).cdprogra := ' ';
+  vr_tab_param(4).tpcadast := 2;
+  vr_tab_param(4).cdcooper := 3;
+  vr_tab_param(4).dsconteu := '0';
+  
+  vr_tab_param(5).nmpartar := 'Integração Arquivo Queb Cyber Vs Mulesoft';
+  vr_tab_param(5).tpdedado := 2;
+  vr_tab_param(5).cdprodut := 12;
+  vr_tab_param(5).cdbattar := 'FLINTQBRCYBMULE';
+  vr_tab_param(5).nmidenti := 'Integração Arquivo Queb Cyber Vs Mulesoft Ativada';
+  vr_tab_param(5).cdprogra := ' ';
+  vr_tab_param(5).tpcadast := 2;
+  vr_tab_param(5).cdcooper := 3;
+  vr_tab_param(5).dsconteu := '0';
+  
   FOR idx IN vr_tab_param.first .. vr_tab_param.last LOOP
     FOR rw_crapbat IN cr_crapbat(pr_cdbattar => vr_tab_param(idx).cdbattar) LOOP
       DELETE 
