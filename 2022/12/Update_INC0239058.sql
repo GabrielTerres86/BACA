@@ -7,7 +7,7 @@ BEGIN
        
   EXCEPTION 
        WHEN OTHERS THEN
-          raise_application_error(-20000,'Ocorreu um erro ao atualizar o registro da tabela CRAPPRO. C贸digo do erro:'||SQLERRM);   
+          raise_application_error(-20000,'Ocorreu um erro ao atualizar o registro da tabela CRAPPRO. C骴igo do erro:'||SQLERRM);   
   END;
 
   BEGIN
@@ -17,7 +17,7 @@ BEGIN
       
   EXCEPTION 
       WHEN OTHERS THEN
-         RAISE_APPLICATION_ERROR(-20001,'Ocorreu um erro ao atualizar o registro 6167417. C贸digo do erro:'||SQLERRM);
+         RAISE_APPLICATION_ERROR(-20001,'Ocorreu um erro ao atualizar o registro 6167417. C骴igo do erro:'||SQLERRM);
   END;
 
   BEGIN
@@ -28,7 +28,7 @@ BEGIN
       
   EXCEPTION 
       WHEN OTHERS THEN
-         RAISE_APPLICATION_ERROR(-20001,'Ocorreu um erro ao atualizar o registro 6167418. C贸digo do erro:'||SQLERRM);
+         RAISE_APPLICATION_ERROR(-20001,'Ocorreu um erro ao atualizar o registro 6167418. C骴igo do erro:'||SQLERRM);
   END;
 
   BEGIN
@@ -38,9 +38,9 @@ BEGIN
       
   EXCEPTION 
       WHEN OTHERS THEN
-         RAISE_APPLICATION_ERROR(-20001,'Ocorreu um erro ao atualizar o registro 6167419. C贸digo do erro:'||SQLERRM);
+         RAISE_APPLICATION_ERROR(-20001,'Ocorreu um erro ao atualizar o registro 6167419. C骴igo do erro:'||SQLERRM);
   END;
 
   COMMIT;
-  
+ 
 END;
