@@ -5,6 +5,13 @@ BEGIN
        ,a.nmproced = 'pc_processar_arq_funding_cotista'	   
 	WHERE a.nmdeacao LIKE  'PROCESSA_ARQ_F%'
 	AND a.nmpackag = 'EMPR0025';
+
+insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+values ('CRED', 1, 'CONTA_PRO_COTISTA_CTR', 'Registro do movimento de inclusão de contrato de Pro-Cotista na Central', '710');
+
+insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+values ('CRED', 16, 'CONTA_PRO_COTISTA_CTR', 'Registro do movimento de inclusão de contrato de Pro-Cotista na Central','728');
+
    
   COMMIT;
 EXCEPTION WHEN OTHERS THEN
