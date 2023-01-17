@@ -20,7 +20,7 @@ CURSOR cr_parcelas IS
 BEGIN
   FOR rw_parcelas IN cr_parcelas LOOP
     
-    UPDATE tbepr_parcelas_cred_imob 
+    UPDATE credito.tbepr_parcelas_cred_imob 
        SET IDSITUACAO = 'C' 
        WHERE nrdconta = rw_parcelas.nrdconta
          AND nrctremp = rw_parcelas.nrctremp
@@ -30,7 +30,7 @@ BEGIN
     COMMIT;  
   END LOOP;
 
-  UPDATE tbepr_parcelas_cred_imob SET IDSITUACAO = 'C' where nrdconta = 0;
+  UPDATE credito.tbepr_parcelas_cred_imob SET IDSITUACAO = 'C' where nrdconta = 0;
   COMMIT;  
 
 EXCEPTION
