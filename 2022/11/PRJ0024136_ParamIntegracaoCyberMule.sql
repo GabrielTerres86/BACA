@@ -73,6 +73,36 @@ BEGIN
   vr_tab_param(5).cdcooper := 3;
   vr_tab_param(5).dsconteu := '0';
   
+  vr_tab_param(6).nmpartar := 'Integração arq Legado Cyber Vs Mulesoft';
+  vr_tab_param(6).tpdedado := 2;
+  vr_tab_param(6).cdprodut := 12;
+  vr_tab_param(6).cdbattar := 'FLINTLEGCYBMULE';
+  vr_tab_param(6).nmidenti := 'Integração Arquivo Legado Cyber Vs Mulesoft Ativada';
+  vr_tab_param(6).cdprogra := ' ';
+  vr_tab_param(6).tpcadast := 2;
+  vr_tab_param(6).cdcooper := 3;
+  vr_tab_param(6).dsconteu := '0';
+  
+  vr_tab_param(7).nmpartar := 'Qtade de posições da conta arq Legado';
+  vr_tab_param(7).tpdedado := 2;
+  vr_tab_param(7).cdprodut := 12;
+  vr_tab_param(7).cdbattar := 'PC657_CONTA';
+  vr_tab_param(7).nmidenti := 'Quantidade de posições da conta no arquivo LEGADO';
+  vr_tab_param(7).cdprogra := ' ';
+  vr_tab_param(7).tpcadast := 2;
+  vr_tab_param(7).cdcooper := 3;
+  vr_tab_param(7).dsconteu := 8;
+  
+  vr_tab_param(8).nmpartar := 'Quantidade de posições do ctr arq Legado';
+  vr_tab_param(8).tpdedado := 2;
+  vr_tab_param(8).cdprodut := 12;
+  vr_tab_param(8).cdbattar := 'PC657_CONTRATO';
+  vr_tab_param(8).nmidenti := 'Quantidade de posições do contrato no arquivo LEGADO';
+  vr_tab_param(8).cdprogra := ' ';
+  vr_tab_param(8).tpcadast := 2;
+  vr_tab_param(8).cdcooper := 3;
+  vr_tab_param(8).dsconteu := 8;
+  
   FOR idx IN vr_tab_param.first .. vr_tab_param.last LOOP
     FOR rw_crapbat IN cr_crapbat(pr_cdbattar => vr_tab_param(idx).cdbattar) LOOP
       DELETE 
