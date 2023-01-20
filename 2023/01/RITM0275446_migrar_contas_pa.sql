@@ -149,7 +149,7 @@ BEGIN
     gene0001.pc_gera_log_item(pr_nrdrowid => vr_lgrowid
                              ,pr_nmdcampo => 'dtultalt'
                              ,pr_dsdadant => NULL
-                             ,pr_dsdadatu => vr_dtmvtolt);
+                             ,pr_dsdadatu => to_char(vr_dtmvtolt,'dd/mm/yyyy'));
     
     OPEN  cr_altera(conta.cdcooper,conta.nrdconta,vr_dtmvtolt);
     FETCH cr_altera INTO rg_altera;
