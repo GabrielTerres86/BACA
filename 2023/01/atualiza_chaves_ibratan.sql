@@ -2,13 +2,13 @@ DECLARE
 
 BEGIN
 
-	UPDATE Crapprm
+	UPDATE Cecred.Crapprm
 	SET    Dsvlrprm = 'a681679f5ed149018c87f7885745f653'
 	WHERE  Cdcooper = 0
 	AND    Cdacesso = 'ACCESSKEY_BIRO_IBRATAN';
 
 
-	UPDATE Crapprm
+	UPDATE Cecred.Crapprm
 	SET    Dsvlrprm = 'e2926f2462c947b99eec67a61264e3c21528d857ee614e53a1af794d7089e45ce61aec363cb1467f8d808d681ea45dd7db85b647f65a41aeb35d7192eab179da'
 	WHERE  Cdcooper = 0
 	AND    Cdacesso = 'SECRETKEY_BIRO_IBRATAN';
