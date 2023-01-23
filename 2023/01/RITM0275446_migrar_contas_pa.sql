@@ -70,6 +70,7 @@ DECLARE
   
   vr_tbaltdel    vr_tpaltdel;
   vr_tbaltupd    vr_tpaltupd;
+  vr_dsindice    VARCHAR2(50);
   vr_cdagenew    CONSTANT NUMBER := 202;
   vr_dtmvtolt    DATE := datascooperativa(1).dtmvtolt;
   vr_lgrowid     ROWID;
@@ -149,7 +150,16 @@ BEGIN
     gene0001.pc_gera_log_item(pr_nrdrowid => vr_lgrowid
                              ,pr_nmdcampo => 'dtultalt'
                              ,pr_dsdadant => NULL
-                             ,pr_dsdadatu => vr_dtmvtolt);
+                             ,pr_dsdadatu => to_char(vr_dtmvtolt,'dd/mm/yyyy'));
+    
+    CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol
+                                         ,pr_des_text => '  DELETE cecred.craplgi i WHERE EXISTS (SELECT 1 FROM cecred.craplgm m WHERE m.rowid = '''||vr_lgrowid||''' '
+                                                      || ' AND i.cdcooper = m.cdcooper AND i.nrdconta = m.nrdconta AND i.idseqttl = m.idseqttl AND '
+                                                      || ' i.dttransa = m.dttransa AND i.hrtransa = m.hrtransa AND i.nrsequen = m.nrsequen);');
+    
+    CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol
+                                         ,pr_des_text => '  DELETE cecred.craplgm WHERE rowid = '''||vr_lgrowid||'''; ');
+    
     
     OPEN  cr_altera(conta.cdcooper,conta.nrdconta,vr_dtmvtolt);
     FETCH cr_altera INTO rg_altera;
@@ -172,7 +182,7 @@ BEGIN
                            ,conta.cdcooper) RETURNING ROWID INTO rg_altera.dsdrowid;
           
         IF NOT vr_tbaltdel.EXISTS(rg_altera.dsdrowid) THEN
-          vr_tbaltdel(rg_altera.dsdrowid) := 'DELETE cecred.crapalt WHERE rowid = '''||rg_altera.dsdrowid||'''; ';
+          vr_tbaltdel(rg_altera.dsdrowid) := '  DELETE cecred.crapalt WHERE rowid = '''||rg_altera.dsdrowid||'''; ';
         END IF;     
                       
       EXCEPTION
@@ -188,7 +198,7 @@ BEGIN
          WHERE ROWID    = rg_altera.dsdrowid;
           
           IF NOT vr_tbaltupd.EXISTS(rg_altera.dsdrowid) THEN
-            vr_tbaltupd(rg_altera.dsdrowid) := 'UPDATE cecred.crapalt SET dsaltera = '''||rg_altera.dsaltera||''' WHERE rowid = '''||rg_altera.dsdrowid||'''; ';
+            vr_tbaltupd(rg_altera.dsdrowid) := '  UPDATE cecred.crapalt SET dsaltera = '''||rg_altera.dsaltera||''' WHERE rowid = '''||rg_altera.dsdrowid||'''; ';
           END IF;
                            
         EXCEPTION
@@ -201,6 +211,28 @@ BEGIN
     CLOSE cr_altera;
     
   END LOOP;
+  
+  IF vr_tbaltupd.count() > 0 THEN
+    vr_dsindice := vr_tbaltupd.FIRST;
+    LOOP
+      
+      CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol, pr_des_text => vr_tbaltupd(vr_dsindice));
+    
+    EXIT WHEN vr_dsindice = vr_tbaltupd.LAST;
+      vr_dsindice := vr_tbaltupd.NEXT(vr_dsindice);
+    END LOOP;
+  END IF;
+    
+  IF vr_tbaltdel.count() > 0 THEN
+    vr_dsindice := vr_tbaltdel.FIRST;
+    LOOP
+      
+      CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol, pr_des_text => vr_tbaltdel(vr_dsindice));
+    
+    EXIT WHEN vr_dsindice = vr_tbaltdel.LAST;
+      vr_dsindice := vr_tbaltdel.NEXT(vr_dsindice);
+    END LOOP;
+  END IF;
   
   CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol, pr_des_text => '  COMMIT;');
   CECRED.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_flarqrol, pr_des_text => 'END;');
