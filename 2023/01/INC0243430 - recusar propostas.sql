@@ -210,7 +210,7 @@ cecred.gene0002.pc_escreve_xml(ds_dados_rollback_v, ds_texto_rollback_v, chr(13)
 
 cecred.gene0002.pc_solicita_relato_arquivo( pr_cdcooper => cd_cooperativa_v,
           pr_cdprogra => 'ATENDA',
-          pr_dtmvtolt => trunc(sysdate),
+          pr_dtmvtolt => to_date(trunc(sysdate),'dd/mm/yyyy'),
           pr_dsxml  => ds_dados_rollback_v,
           pr_dsarqsaid  => ds_nome_diretorio_v || '/' || ds_nome_arquivo_bkp_v,
           pr_flg_impri  => 'N',
