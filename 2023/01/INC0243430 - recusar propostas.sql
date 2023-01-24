@@ -11,9 +11,7 @@ ds_nome_arquivo_bkp_v varchar2(100);
 ds_nome_diretorio_v cecred.crapprm.dsvlrprm%type;
 ds_critica_v    cecred.crapcri.dscritic%type;
 
-qt_registro number(10)  := 0;
 nr_arquivo  number(10)  := 1;
-qt_reg_arquivo  number(10)  := 50000;
 
 vr_dscritic VARCHAR2(1000);
 
@@ -45,7 +43,7 @@ where s.cdcooper = p.cdcooper
                       '770629120300');
 
 procedure valida_diretorio_p( ds_nome_diretorio_p in  varchar2,
-        ds_critica_p    out crapcri.dscritic%TYPE) is
+        ds_critica_p    out cecred.crapcri.dscritic%TYPE) is
 
 ds_critica_v  cecred.crapcri.dscritic%type;
 ie_tipo_saida_v varchar2(3);
@@ -53,7 +51,7 @@ ds_saida_v  varchar2(1000);
    
 begin
 
-  if  (gene0001.fn_exis_diretorio(ds_nome_diretorio_p)) then
+  if  (cecred.gene0001.fn_exis_diretorio(ds_nome_diretorio_p)) then
 
     ds_critica_p  := null;
 
@@ -92,7 +90,7 @@ end valida_diretorio_p;
 
 begin
 
-if  (upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.fn_database_name) like '%AILOSTS%') then
+if  (upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(cecred.gene0001.fn_database_name) like '%AILOSTS%') then
 
   select  max(a.dsvlrprm)
   into  ds_nome_diretorio_v
@@ -116,7 +114,7 @@ if  (upper(cecred.gene0001.fn_database_name) like '%AYLLOSP%' or upper(gene0001.
 
 else
 
-  ds_nome_diretorio_v := gene0001.fn_diretorio( pr_tpdireto => 'C',
+  ds_nome_diretorio_v := cecred.gene0001.fn_diretorio( pr_tpdireto => 'C',
                 pr_cdcooper => 3);
 
   ds_nome_diretorio_v := ds_nome_diretorio_v || '/INC0243430/rollback';
