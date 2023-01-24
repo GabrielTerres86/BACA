@@ -144,12 +144,12 @@ for r01 in c01 loop
   begin
 
   update cecred.crapseg 
-       set dtfimvig  = trunc(sysdate),
-       dtcancel  = trunc(sysdate),
+     set dtfimvig  = to_date(trunc(sysdate),'dd/mm/yyyy'),
+       dtcancel  = to_date(trunc(sysdate),'dd/mm/yyyy'),
        cdsitseg  = 5,
        cdopeexc  = 1,
        cdageexc  = 1,
-       dtinsexc  = trunc(sysdate),
+       dtinsexc  = to_date(trunc(sysdate),'dd/mm/yyyy'),
        cdopecnl  = 1
    where cdcooper = r01.cdcooper
      and nrdconta = r01.nrdconta
@@ -175,7 +175,7 @@ for r01 in c01 loop
   update cecred.tbseg_prestamista
      set cdmotrec = 154,
          tprecusa = 'Ajuste via script INC0243430',
-         dtrecusa = trunc(sysdate)
+         dtrecusa = to_date(trunc(sysdate),'dd/mm/yyyy')
    where cdcooper = r01.cdcooper
      and nrdconta = r01.nrdconta
      and nrctrseg = r01.nrctrseg;
