@@ -9,5 +9,6 @@ BEGIN
   EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
+    raise_application_error(-20010, SQLERRM);
 END;
 
