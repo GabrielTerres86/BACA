@@ -1,3 +1,4 @@
+
 DECLARE
   vr_exc_erro       EXCEPTION;
   vr_dsdireto       VARCHAR2(2000);
