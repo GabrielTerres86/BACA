@@ -7,7 +7,7 @@ DECLARE
   
   CURSOR cr_crapcop IS
    SELECT cdcooper
-     FROM crapcop 
+     FROM CECRED.crapcop 
    WHERE flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
     
@@ -20,8 +20,8 @@ DECLARE
            rda.vlsdrdca,
            rda.vlsltxmx,
            rda.vlsltxmm
-      FROM crapass ass,
-           craprda rda
+      FROM CECRED.crapass ass,
+           CECRED.craprda rda
      WHERE ass.cdcooper = pr_cdcooper
        AND ass.cdcooper = rda.cdcooper
        AND ass.nrdconta = rda.nrdconta
