@@ -89,7 +89,7 @@ begin
   END IF;
   CLOSE cr_crapass;
   
-  vr_cdcooper := 6;
+  vr_cdcooper := 5;
   vr_nrdconta := 79820;
   vr_nrctremp := 96969;
   vr_innivris := 'C';
