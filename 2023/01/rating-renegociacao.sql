@@ -93,7 +93,7 @@ begin
   vr_nrdconta := 79820;
   vr_nrctremp := 96969;
   vr_innivris := 'C';
-  vr_progress := 767148;
+  vr_progress := 570398;
   
   OPEN cr_crapass(pr_cdcooper => vr_cdcooper
                  ,pr_progress => vr_progress);
