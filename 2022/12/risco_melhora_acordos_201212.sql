@@ -1,3 +1,4 @@
+
 DECLARE
   vr_exc_erro       EXCEPTION;
   vr_dsdireto       VARCHAR2(2000);
@@ -71,7 +72,7 @@ BEGIN
   vr_dsdireto := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto := vr_dsdireto||'cpd/bacas/MELHORA_ACORDO'; 
   vr_nmarqbkp := 'ROLLBACK_MELHORA_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
-  vr_nmarquiv := 'RISCO_MELHORA_ACORDO_201212.csv';
+  vr_nmarquiv := 'RISCO_MELHORA_ACORDO.csv';
 
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
                           ,pr_nmarquiv => vr_nmarquiv  
