@@ -10,7 +10,7 @@ BEGIN
   values ('CRED', 7, 'COOP_PILOTO_POUPANCA_PF', 'Indica se a cooperativa habilita contratacao de POUPANCA (0=Inativa,1=Piloto para algumas contas,2=Ativa)', '2');
    
   update crapprm 
-  set DSVLRPRM = ',05196722912,93154356991,05389059646,080640974953,27261441015,05633307917,'
+  set DSVLRPRM = ',05196722912,93154356991,05389059646,80640974953,27261441015,05633307917,'
   where CDACESSO = 'PESSOA_LIGADA_CNSLH_FSCL' and CDCOOPER = 11;
   
   update crapprm 
