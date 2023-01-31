@@ -2,7 +2,7 @@ DECLARE
 
 CURSOR cr_crapprm IS
   SELECT nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm, progress_recid, SUBSTR(cdacesso, 7, 1 ) produto 
-   FROM crapprm c 
+   FROM cecred.crapprm c 
   WHERE c.cdacesso LIKE ('MOTOR_%');
   
 rw_crapprm cr_crapprm%ROWTYPE;
@@ -11,13 +11,13 @@ BEGIN
   
   FOR rw_crapprm IN cr_crapprm  LOOP
         
-     INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+     INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
      VALUES (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PF_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');
        
-     INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+     INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
      VALUES (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PJ_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');     
      
-     DELETE crapprm c
+     DELETE cecred.crapprm c
       WHERE c.cdacesso = 'MOTOR_' ||rw_crapprm.produto;
         
   END LOOP;
