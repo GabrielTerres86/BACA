@@ -11,11 +11,14 @@ BEGIN
   
   FOR rw_crapprm IN cr_crapprm  LOOP
         
-     insert into crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
-     values (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PF_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');
+     INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+     VALUES (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PF_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');
        
-     insert into crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
-     values (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PJ_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');
+     INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+     VALUES (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PJ_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');     
+     
+     DELETE crapprm c
+      WHERE c.cdacesso = 'MOTOR_' ||rw_crapprm.produto;
         
   END LOOP;
        
