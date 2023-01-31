@@ -112,7 +112,7 @@ DECLARE
     END;
   
     dbms_output.put_line(' ');
-    dbms_output.put_line('   Par‚metros (LCM VLR):');
+    dbms_output.put_line('   Par√¢metros (LCM VLR):');
     dbms_output.put_line('     Cooperativa....: ' || prm_cdcooper);
     dbms_output.put_line('     Conta..........: ' || prm_nrdconta);
     dbms_output.put_line('     Data...........: ' || To_Char(vr_dtmvtolt, 'dd/mm/yyyy'));
@@ -145,7 +145,7 @@ DECLARE
     IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_erro;
     ELSE
-      dbms_output.put_line('   LanÁamento do HistÛrico ' || prm_cdhistor || ' efetuado com Sucesso na Coop\Conta ' || prm_cdcooper || '\' || prm_nrdconta || '.');
+      dbms_output.put_line('   Lan√ßamento do Hist√≥rico ' || prm_cdhistor || ' efetuado com Sucesso na Coop\Conta ' || prm_cdcooper || '\' || prm_nrdconta || '.');
     END IF;
   
     registrarVERLOG(pr_cdcooper => prm_cdcooper,
@@ -188,13 +188,13 @@ DECLARE
     CLOSE cr_sld_prj;
   
     IF NOT vr_found THEN
-      vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÌzo. Erro ao buscar Saldo Prejuizo Cop/Cta (' || prm_cdcooper || '/' || prm_nrdconta || ')';
+      vr_dscritic := 'Erro ao Atualizar Valor Saldo Preju√≠zo. Erro ao buscar Saldo Prejuizo Cop/Cta (' || prm_cdcooper || '/' || prm_nrdconta || ')';
       RAISE vr_erro;
     END IF;
     vr_found := NULL;
   
     dbms_output.put_line(' ');
-    dbms_output.put_line('   Par‚metros (prc_atlz_prejuizo):');
+    dbms_output.put_line('   Par√¢metros (prc_atlz_prejuizo):');
     dbms_output.put_line('     Cooperativa....: ' || prm_cdcooper);
     dbms_output.put_line('     Conta..........: ' || prm_nrdconta);
     dbms_output.put_line('     Valor..........: ' || prm_vllanmto);
@@ -203,7 +203,7 @@ DECLARE
     dbms_output.put_line('     Sld Prej. Antes: ' || vr_vlsdprej);
   
     IF prm_tipoajus IS NULL OR prm_tipoajus NOT IN ('E', 'I') THEN
-      vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÌzo. Erro: Tipo de Ajuste invalido! (' || prm_tipoajus || ')';
+      vr_dscritic := 'Erro ao Atualizar Valor Saldo Preju√≠zo. Erro: Tipo de Ajuste invalido! (' || prm_tipoajus || ')';
       RAISE vr_erro;
     END IF;
   
@@ -215,7 +215,7 @@ DECLARE
     CLOSE cr_his;
   
     IF NOT vr_found THEN
-      vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÌzo. Erro: Historico n„o encontrato Cop/Hist (' || prm_cdcooper || '/' || prm_cdhistor || ')';
+      vr_dscritic := 'Erro ao Atualizar Valor Saldo Preju√≠zo. Erro: Historico n√£o encontrato Cop/Hist (' || prm_cdcooper || '/' || prm_cdhistor || ')';
       RAISE vr_erro;
     END IF;
   
@@ -242,7 +242,7 @@ DECLARE
            AND a.idprejuizo = vr_idprejuizo;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÌzo. Erro: ' || SubStr(SQLERRM, 1, 255);
+          vr_dscritic := 'Erro ao Atualizar Valor Saldo Preju√≠zo. Erro: ' || SubStr(SQLERRM, 1, 255);
           RAISE vr_erro;
       END;
     ELSE
@@ -254,15 +254,15 @@ DECLARE
            AND a.idprejuizo = vr_idprejuizo;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÌzo. Erro: ' || SubStr(SQLERRM, 1, 255);
+          vr_dscritic := 'Erro ao Atualizar Valor Saldo Preju√≠zo. Erro: ' || SubStr(SQLERRM, 1, 255);
           RAISE vr_erro;
       END;
     END IF;
   
     IF Nvl(SQL%ROWCOUNT, 0) > 0 THEN
-      dbms_output.put_line('   Atualizado Saldo Devedor PrejuÌzo: ' || Nvl(SQL%ROWCOUNT, 0) || ' registro(s).');
+      dbms_output.put_line('   Atualizado Saldo Devedor Preju√≠zo: ' || Nvl(SQL%ROWCOUNT, 0) || ' registro(s).');
     ELSE
-      vr_dscritic := 'Conta n„o encontrada. Cooperativa: ' || prm_cdcooper || ' | Conta: ' || prm_nrdconta;
+      vr_dscritic := 'Conta n√£o encontrada. Cooperativa: ' || prm_cdcooper || ' | Conta: ' || prm_nrdconta;
       RAISE vr_erro;
     END IF;
   
@@ -368,7 +368,7 @@ DECLARE
   
     IF rw_crapass.inprejuz = 1 THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'A conta informada j· est· marcada como "Em prejuÌzo".';
+      vr_dscritic := 'A conta informada j√° est√° marcada como "Em preju√≠zo".';
       RAISE vr_exc_saida;
     END IF;
   
@@ -379,7 +379,7 @@ DECLARE
                                                pr_dscritic       => vr_dscritic);
     IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao cancelar produtos/serviÁos para a conta ' || pr_nrdconta;
+      vr_dscritic := 'Erro ao cancelar produtos/servi√ßos para a conta ' || pr_nrdconta;
       RAISE vr_exc_saida;
     END IF;
   
@@ -518,7 +518,7 @@ DECLARE
     END;
   
     dbms_output.put_line(' ');
-    dbms_output.put_line('   Par‚metros (ATZ TRANSIT):');
+    dbms_output.put_line('   Par√¢metros (ATZ TRANSIT):');
     dbms_output.put_line('     Cooperativa....: ' || prm_cdcooper);
     dbms_output.put_line('     Conta..........: ' || prm_nrdconta);
     dbms_output.put_line('     Data...........: ' || To_Char(vr_dtmvtolt, 'dd/mm/yyyy'));
@@ -535,7 +535,7 @@ DECLARE
     IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_erro;
     ELSE
-      dbms_output.put_line('   LanÁamento Credito Conta Transitoria efetuado com Sucesso na Coop/Conta ' || prm_cdcooper || '/' || prm_nrdconta || '.');
+      dbms_output.put_line('   Lan√ßamento Credito Conta Transitoria efetuado com Sucesso na Coop/Conta ' || prm_cdcooper || '/' || prm_nrdconta || '.');
     END IF;
   
     registrarVERLOG(pr_cdcooper => prm_cdcooper,
@@ -674,7 +674,7 @@ BEGIN
   dbms_output.put_line('  ');
 
   vr_diretorio := sistema.obterParametroSistema(pr_nmsistem => 'CRED'
-                                               ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0242813';
+                                               ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0242813_2';
 
   sistema.abrirArquivo(pr_nmdireto => vr_diretorio,
                        pr_nmarquiv => 'contas.txt',
@@ -682,7 +682,7 @@ BEGIN
                        pr_utlfileh => vr_arquivo,
                        pr_dscritic => vr_dscritic);
   IF vr_dscritic IS NOT NULL THEN
-    vr_dscritic := 'Arquivo contas.txt n„o encontrado.';
+    vr_dscritic := 'Arquivo contas.txt n√£o encontrado.';
     RAISE vr_excerro;
   END IF;
 
