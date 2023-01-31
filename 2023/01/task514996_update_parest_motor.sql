@@ -18,9 +18,7 @@ BEGIN
      values (rw_crapprm.nmsistem, rw_crapprm.cdcooper, 'MOTOR_PJ_'||rw_crapprm.produto, rw_crapprm.dstexprm, '1');
         
   END LOOP;
-    
-  COMMIT;
-   
+       
   UPDATE cecred.crapaca 
      SET lstparam = 'pr_tlcooper,pr_flgativo,pr_tpprodut,pr_incomite,pr_contigen,pr_anlautom,pr_nmregmpf,pr_nmregmpj,pr_qtsstime,pr_qtmeschq,pr_qtmeschqal11,pr_qtmeschqal12,pr_qtmesest,pr_qtmesemp,pr_incalris,pr_neurotechpf,pr_neurotechpj,pr_motorpf,pr_motorpj'
    WHERE nmdeacao = 'PAREST_ALTERA_PARAM';
