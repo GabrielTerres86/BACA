@@ -4,7 +4,8 @@ BEGIN
                              idsaqtot = 1
                           WHERE cdcooper = 1
                           AND nrdconta = 12361577
-                          AND idsaqtot = 0;
+                          AND idsaqtot = 0
+						  AND nraplica = 82;
    COMMIT;
    EXCEPTION
     WHEN OTHERS THEN
