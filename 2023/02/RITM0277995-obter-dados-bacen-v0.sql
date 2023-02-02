@@ -1,27 +1,24 @@
-  DECLARE
-    -- Dados Banco emissor do boleto
+  DECLARE    
     CURSOR cr_cadbanco(pr_nrcnpjif IN NUMBER) IS
       SELECT ban.nrcnpjif
         FROM CECRED.CRAPBAN ban 
        WHERE ban.nrcnpjif = pr_nrcnpjif;
-    rw_cadbanco cr_cadbanco%ROWTYPE;
-           
-    -- Dados XML
+    rw_cadbanco cr_cadbanco%ROWTYPE;           
+    
     CURSOR cr_consulta_benefic_cip(pr_cdctrlcs IN tbcobran_consulta_titulo.cdctrlcs%TYPE) IS
       SELECT npc.dsxml,
              npc.dscodbar
         FROM CECRED.tbcobran_consulta_titulo npc
        WHERE npc.cdctrlcs = pr_cdctrlcs;
     rw_consulta_benefic_cip cr_consulta_benefic_cip%ROWTYPE;
-
-    -- Títulos    
+    
     CURSOR cr_consulta_tit IS                           
-    SELECT to_date(pro.dttransa, 'DD/MM/YYYY') DTTRANSACAO, -- Data Transação
-           tit.nrcpfcgc CPFCNPJCOOP, -- CPF/CNPJ do cooperado (Conta débito);
-           cop.nmrescop NOMECOOPER, -- Cooperativa do cooperado (Conta débito); 
-           ass.cdagenci AGENCIACOOP,-- Agência do cooperado (Conta débito);
-           ass.nrdconta CONTACOOPER,-- Conta do cooperado (Conta débito);
-           tit.vltitulo VALORTITULO,-- Valor da transação;
+    SELECT to_date(pro.dttransa, 'DD/MM/YYYY') DTTRANSACAO,
+           tit.nrcpfcgc CPFCNPJCOOP,
+           cop.nmrescop NOMECOOPER,
+           ass.cdagenci AGENCIACOOP,
+           ass.nrdconta CONTACOOPER,
+           tit.vltitulo VALORTITULO,
            tit.cdctrlcs           
       FROM CECRED.craptit tit,
            CECRED.crapass ass,
@@ -34,7 +31,7 @@
        AND cop.cdcooper = tit.cdcooper       
        AND pro.dtmvtolt = tit.dtdpagto
        AND pro.nrdconta = tit.nrdconta
-       AND pro.cdtippro = 2 -- Pagamento cód barra
+       AND pro.cdtippro = 2
        AND TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
     
     CURSOR cr_cop(pr_nmcooper IN VARCHAR2) IS
@@ -42,9 +39,8 @@
       FROM CECRED.crapcop cop
      WHERE cop.nmrescop = pr_nmcooper; 
     rw_cop cr_cop%ROWTYPE;
-
-    ---------------> VARIAVEIS <-----------------
-    vr_ind_arqlog UTL_FILE.file_type; -- Handle para o arquivo de log
+    
+    vr_ind_arqlog UTL_FILE.file_type;
     vr_nmarquiv VARCHAR(200) := 'listaPagtosBoletosFraude.csv';    
     vr_utlfileh UTL_FILE.file_type;
     vr_tbtitulo NPCB0001.typ_reg_TituloCIP;
@@ -59,9 +55,8 @@
     pr_dscritic VARCHAR2(500);
   BEGIN
 
-    vr_dsdireto := '/micros/cecred/cpd/bacas/RITM0277995';
+    vr_dsdireto := '/micros/cecred/cpd/bacas/RITM0277995';    
     
-    -- Gera arquivo de saída
     SISTEMA.abrirarquivo(pr_nmdireto => vr_dsdireto,
                          pr_nmarquiv => vr_nmarquiv,
                          pr_tipabert => 'A',
@@ -72,16 +67,14 @@
       RAISE vr_exc_sai;
     END IF;     
 
-    FOR rw_consulta_tit IN cr_consulta_tit LOOP
+    FOR rw_consulta_tit IN cr_consulta_tit LOOP      
       
-      -- Informações do Título
       vr_des_tit := rw_consulta_tit.CPFCNPJCOOP || ';' ||
                     rw_consulta_tit.NOMECOOPER  || ';' ||
                     rw_consulta_tit.AGENCIACOOP || ';' ||
                     rw_consulta_tit.CONTACOOPER || ';' ||
                     rw_consulta_tit.VALORTITULO || ';';
-                                    
-      -- Pesquisa XML
+                                          
       OPEN cr_consulta_benefic_cip(rw_consulta_tit.cdctrlcs);
       FETCH cr_consulta_benefic_cip INTO rw_consulta_benefic_cip;
             
@@ -93,14 +86,13 @@
           NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
                                             ,pr_tbtitulo => vr_tbtitulo
                                             ,pr_des_erro => vr_des_erro
-                                            ,pr_dscritic => vr_dscritic);
-          -- Se for retornado um erro
+                                            ,pr_dscritic => vr_dscritic);          
           IF vr_des_erro = 'NOK' THEN
             vr_nrcpfCnpjBen := 'Erro consulta CIP;';
           ELSE
             vr_nrcpfCnpjBen := CASE WHEN vr_tbtitulo.CNPJ_CPFBenfcrioFinl IS NULL THEN vr_tbtitulo.CNPJ_CPFBenfcrioOr 
                                ELSE vr_tbtitulo.CNPJ_CPFBenfcrioFinl END;          
-            -- Consulta CNPJ da IF                      
+            
             OPEN cr_cadbanco(vr_tbtitulo.ISPBPartRecbdrPrincipal);
             FETCH cr_cadbanco INTO rw_cadbanco;   
             IF cr_cadbanco%FOUND THEN
@@ -128,9 +120,8 @@
       sistema.escrevelinhaarquivo(pr_utlfileh => vr_ind_arqlog, 
                                   pr_des_text => vr_des_tit);                   
 
-    END LOOP; -- Finaliza o loop das linhas do arquivo
+    END LOOP;    
     
-    -- Fecha arquivo saída
     SISTEMA.fechaArquivo(pr_utlfileh => vr_ind_arqlog);
     
     COMMIT;    
@@ -140,6 +131,6 @@
       CECRED.pc_internal_exception(pr_cdcooper => 1, 
                                    pr_compleme => to_char(vr_cdcritic) 
                                                   || '-' || vr_dscritic);
-    -- Fecha arquivo saída
+												  
     SISTEMA.fechaArquivo(pr_utlfileh => vr_ind_arqlog);
   END;
