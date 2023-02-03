@@ -55,7 +55,7 @@
     pr_dscritic VARCHAR2(500);
   BEGIN
 
-    vr_dsdireto := '/micros/cecred/cpd/bacas/RITM0277995';    
+    vr_dsdireto := '/micros/cpd/bacas/RITM0277995';    
     
     SISTEMA.abrirarquivo(pr_nmdireto => vr_dsdireto,
                          pr_nmarquiv => vr_nmarquiv,
