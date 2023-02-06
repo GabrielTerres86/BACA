@@ -110,13 +110,13 @@ arvore_poda <- rpart::rpart(Survived ~ Pclass + Sex + Age + SibSp + Parch + Fare
                             xval=0,
                             control = rpart.control(cp = cp_min, 
                                                     minsplit = 1, 
-                                                    maxdepth = 30)
+                                                    maxdepth = 40)
 )
 
 p_treino = stats::predict(arvore_poda, treino)
-c_treino = base::factor(ifelse(p_treino[,2]>.5, "Y", "N"))
+c_treino = base::factor(ifelse(p_treino[,2]>.6, "Y", "N"))
 p_teste = stats::predict(arvore_poda, teste)
-c_teste = base::factor(ifelse(p_teste[,2]>.5, "Y", "N"))
+c_teste = base::factor(ifelse(p_teste[,2]>.6, "Y", "N"))
 
 #####
 aval_treino <- data.frame(obs=treino$Survived, 
