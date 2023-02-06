@@ -1,5 +1,4 @@
 BEGIN
-    -- CSDC AILOSMAIS
     delete from crapprm where cdacesso = 'CSDC_AILOSMAIS';
     delete from crapprm where cdacesso = 'HOST_WEBSRV_CSDC';
     delete from crapprm where cdacesso = 'URI_WEBSRV_CSDC';	
@@ -29,7 +28,6 @@ BEGIN
     insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
     values ('CRED', 0, 'DIR_LOG_CSDC', 'Diretorio Log Webservice CSDC', '/usr/coop/cecred/log/webservices');
 
-    -- CCB AILOSMAIS	
     delete from crapprm where cdacesso = 'CCB_AILOSMAIS';
     
     insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
