@@ -35,6 +35,19 @@ BEGIN
   WHERE tnap.cdmensagem = 7393
   AND tnap.cdorigem_mensagem = 13;
   
+  UPDATE tbgen_notif_msg_cadastro tnmc
+  SET tnmc.dshtml_mensagem = 'Cooperado, <br><br> Em #data_hora_transacao você recebeu um Pix no valor de #valorpix de #nomepagador e ele foi contestado. O caso foi analisado e identificamos que a contestação é procedente. Portanto, o valor de #valor_bloqueado_pix bloqueado em #data_hora_bloqueio foi devolvido para o pagador. Esta é uma medida de segurança do Pix. <br><br>Agradecemos a sua compreensão.',
+  tnmc.inexibe_botao_acao_mobile = 1,
+  tnmc.dstexto_botao_acao_mobile = 'Ver Comprovante',
+  tnmc.cdmenu_acao_mobile = 400
+  WHERE tnmc.cdmensagem = 7392
+  AND tnmc.cdorigem_mensagem = 13;
+  
+  UPDATE tbgen_notif_automatica_prm tnap 
+  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva") <br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32") <br/>#valor_bloqueado_pix - Valor bloqueado (Ex: 2.000,00) <br />#data_hora_bloqueio - Data e hora do bloqueio - ("28/01/2023 15:34:52")'
+  WHERE tnap.cdmensagem = 7392
+  AND tnap.cdorigem_mensagem = 13;
+  
   COMMIT;
 
   EXCEPTION
