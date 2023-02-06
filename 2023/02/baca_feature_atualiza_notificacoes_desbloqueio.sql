@@ -23,7 +23,7 @@ BEGIN
   AND tnap.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'Cooperado, <br><br> Em #data_hora_transacao você recebeu um Pix no valor de #valorpix de #nomepagador e ele foi contestado. O caso foi analisado e identificamos que a contestação é improcedente, então o valor de #valor_bloqueado_pix em #data_hora_bloqueio foi liberado em sua conta. Esta é uma medida de segurança do Pix. <br><br>Agradecemos a sua compreensão.',
+  SET tnmc.dshtml_mensagem = 'Cooperado, <br><br> Em #data_hora_transacao você recebeu um Pix no valor de #valorpix de #nomepagador e ele foi contestado. O caso foi analisado e identificamos que a contestação é improcedente. Portanto, o valor de #valor_bloqueado_pix bloqueado em #data_hora_bloqueio foi liberado em sua conta. Esta é uma medida de segurança do Pix. <br><br>Agradecemos a sua compreensão.',
   tnmc.inexibe_botao_acao_mobile = 1,
   tnmc.dstexto_botao_acao_mobile = 'Ver Comprovante',
   tnmc.cdmenu_acao_mobile = 400
