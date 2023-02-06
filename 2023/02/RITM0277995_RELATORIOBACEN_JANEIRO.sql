@@ -62,7 +62,7 @@ DECLARE
                          pr_utlfileh => vr_ind_arqlog,
                          pr_dscritic => pr_dscritic);
     IF pr_dscritic IS NOT NULL THEN
-      vr_cdcritic := 'Arquivo não encontrado';
+      vr_cdcritic := 'Arquivo nï¿½o encontrado';
       RAISE vr_exc_sai;
     END IF;     
 
@@ -121,7 +121,6 @@ DECLARE
     END LOOP;    
     
     SISTEMA.fechaArquivo(pr_utlfileh => vr_ind_arqlog);
-    
     COMMIT;    
 
   EXCEPTION
