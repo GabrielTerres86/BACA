@@ -59,7 +59,7 @@ BEGIN
   AND tnap.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'O Pix que você realizou em #datahoratransacao no valor de #valorpix para #beneficiario foi devolvido no valor #parcialtotalmente de #valordevolvido.</br></br><b>O valor está novamente disponível em sua conta corrente.</b></br></br>Acesse o comprovante para mais detalhes da devolução.'
+  SET tnmc.dshtml_mensagem = 'O Pix que você realizou em #datahoratransacao, no valor de #valorpix para #beneficiario foi devolvido no valor #parcialtotalmente de #valordevolvido.</br></br><b>O valor está novamente disponível em sua conta corrente.</b></br></br>Acesse o comprovante para mais detalhes da devolução.'
   WHERE tnmc.cdmensagem = 5470
   AND tnmc.cdorigem_mensagem = 13;
   
