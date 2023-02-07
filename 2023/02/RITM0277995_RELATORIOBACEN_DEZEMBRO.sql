@@ -21,8 +21,8 @@ DECLARE
            CECRED.crapass ass,
            CECRED.crapcop cop,
            CECRED.crappro pro           
-     WHERE trunc(tit.dtdpagto) >= '01/12/2022'
-       AND trunc(tit.dtdpagto) <= '31/12/2022'       
+     WHERE trunc(tit.dtdpagto) >= to_date('01/12/2022','dd/mm/yyyy')
+       AND trunc(tit.dtdpagto) <= to_date('31/12/2022','dd/mm/yyyy')
        AND ass.cdcooper = tit.cdcooper
        AND ass.nrdconta = tit.nrdconta
        AND cop.cdcooper = tit.cdcooper       
