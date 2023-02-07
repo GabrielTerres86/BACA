@@ -30,7 +30,7 @@ DECLARE
        AND pro.nrdconta = tit.nrdconta
        AND pro.vldocmto = tit.vldpagto
        AND pro.cdtippro = 2
-       AND TRIM(CECRED.gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
+       AND TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
     
     CURSOR cr_cop(pr_nmcooper IN VARCHAR2) IS
     SELECT cop.cdcooper
