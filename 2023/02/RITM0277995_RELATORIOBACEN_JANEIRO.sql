@@ -30,7 +30,7 @@ DECLARE
        AND pro.nrdconta = tit.nrdconta
        AND pro.vldocmto = tit.vldpagto
        AND pro.cdtippro = 2
-       AND TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
+       AND TRIM(cecred.gene0002.fn_busca_entrada(2, TRIM(cecred.gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
     
     CURSOR cr_cop(pr_nmcooper IN VARCHAR2) IS
     SELECT cop.cdcooper
@@ -84,7 +84,7 @@ DECLARE
         
         BEGIN
           vr_xmltitulo := xmltype.createxml(rw_consulta_benefic_cip.dsxml);
-          NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
+          cecred.NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
                                             ,pr_tbtitulo => vr_tbtitulo
                                             ,pr_des_erro => vr_des_erro
                                             ,pr_dscritic => vr_dscritic);          
