@@ -39,7 +39,7 @@ DECLARE
     rw_cop cr_cop%ROWTYPE;
     
     vr_ind_arqlog UTL_FILE.file_type;
-    vr_nmarquiv VARCHAR(200) := 'listaPagtosBoletosFraudeDezembro.csv';    
+    vr_nmarquiv VARCHAR(200) := 'listaPagtosBoletosFraudeDezembro2.csv';    
     vr_utlfileh UTL_FILE.file_type;
     vr_tbtitulo NPCB0001.typ_reg_TituloCIP;
     vr_dscritic VARCHAR2(4000);
