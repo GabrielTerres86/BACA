@@ -121,6 +121,7 @@ DECLARE
     END LOOP;    
     
     SISTEMA.fechaArquivo(pr_utlfileh => vr_ind_arqlog);
+    
     COMMIT;    
 
   EXCEPTION
