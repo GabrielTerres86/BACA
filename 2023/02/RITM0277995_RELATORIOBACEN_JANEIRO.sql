@@ -58,7 +58,7 @@ DECLARE
     
     SISTEMA.abrirarquivo(pr_nmdireto => vr_dsdireto,
                          pr_nmarquiv => vr_nmarquiv,
-                         pr_tipabert => 'A',
+                         pr_tipabert => 'W',
                          pr_utlfileh => vr_ind_arqlog,
                          pr_dscritic => pr_dscritic);
     IF pr_dscritic IS NOT NULL THEN
