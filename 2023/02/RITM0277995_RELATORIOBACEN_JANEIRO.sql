@@ -21,8 +21,8 @@ DECLARE
            CECRED.crapass ass,
            CECRED.crapcop cop,
            CECRED.crappro pro           
-     WHERE trunc(tit.dtdpagto) >= '01/01/2023'
-       AND trunc(tit.dtdpagto) <= '31/01/2023'       
+     WHERE trunc(tit.dtdpagto) >= to_date('01/01/2023','dd/mm/yyyy')
+       AND trunc(tit.dtdpagto) <= to_date('31/01/2023','dd/mm/yyyy')     
        AND ass.cdcooper = tit.cdcooper
        AND ass.nrdconta = tit.nrdconta
        AND cop.cdcooper = tit.cdcooper       
@@ -30,7 +30,7 @@ DECLARE
        AND pro.nrdconta = tit.nrdconta
        AND pro.vldocmto = tit.vldpagto
        AND pro.cdtippro = 2
-       AND TRIM(CECRED.gene0002.fn_busca_entrada(2, TRIM(CECRED.gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
+       AND TRIM(cecred.gene0002.fn_busca_entrada(2, TRIM(cecred.gene0002.fn_busca_entrada(1, pro.dsinform##3, '#')), ':')) = tit.dscodbar;       
     
     CURSOR cr_cop(pr_nmcooper IN VARCHAR2) IS
     SELECT cop.cdcooper
@@ -84,7 +84,7 @@ DECLARE
         
         BEGIN
           vr_xmltitulo := xmltype.createxml(rw_consulta_benefic_cip.dsxml);
-          NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
+          cecred.NPCB0003.pc_xmlsoap_extrair_titulo(pr_dsxmltit => vr_xmltitulo.getClobVal()
                                             ,pr_tbtitulo => vr_tbtitulo
                                             ,pr_des_erro => vr_des_erro
                                             ,pr_dscritic => vr_dscritic);          
