@@ -82,6 +82,42 @@ BEGIN
     
   END LOOP;
   
+  INSERT INTO tbcc_produto
+                 (cdproduto
+                 ,dsproduto
+                 ,flgitem_soa
+                 ,flgutiliza_interface_padrao
+                 ,flgenvia_sms
+                 ,flgcobra_tarifa
+                 ,idfaixa_valor
+                 ,flgproduto_api)
+          VALUES (62
+                 ,'CREDITO IMOBILIARIO'
+                 ,0
+                 ,0
+                 ,0
+                 ,0
+                 ,0
+                 ,0);
+  
+  FOR dados IN cr_crapcop LOOP
+    
+    INSERT INTO tbcc_produtos_coop
+                   (cdcooper
+                   ,tpconta
+                   ,cdproduto
+                   ,nrordem_exibicao
+                   ,tpproduto
+                   ,inpessoa)
+             VALUES(dados.cdcooper
+                   ,dados.cdtipo_conta
+                   ,62
+                   ,42
+                   ,2
+                   ,dados.inpessoa);
+    
+  END LOOP;
+  
   COMMIT;
   
 END;
