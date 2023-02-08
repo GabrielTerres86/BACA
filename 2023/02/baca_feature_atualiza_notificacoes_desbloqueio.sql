@@ -57,6 +57,16 @@ BEGIN
   SET tnap.dsvariaveis_mensagem = '<br/>#valorpix - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva") <br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32") <br/>#valor_bloqueado_pix - Valor bloqueado (Ex: 2.000,00) <br />#data_hora_bloqueio - Data e hora do bloqueio - ("28/01/2023 15:34:52")'
   WHERE tnap.cdmensagem = 7392
   AND tnap.cdorigem_mensagem = 13;
+
+  UPDATE tbgen_notif_msg_cadastro tnmc
+  SET tnmc.dshtml_mensagem = 'Cooperado,<br>Em #data_hora_transacao você recebeu um Pix no valor de #valorpix, de #nomepagador, mas ele foi contestado. <br> Isto significa que esta operação está sendo analisada e em até 11 dias você receberá um retorno. Por enquanto, o valor de #valor_bloqueado foi bloqueado, ou seja, ele está indisponível na sua conta. <br> Se a análise indicar que está tudo certo, o valor será liberado, caso contrário, o valor será devolvido para a pessoa que lhe enviou. <br> Esta é uma medida de segurança do Pix. Agradecemos a sua compreensão.'
+  WHERE tnmc.cdmensagem = 7391
+  AND tnmc.cdorigem_mensagem = 13;
+  
+  UPDATE tbgen_notif_automatica_prm tnap 
+  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix  - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva")<br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32")<br/>#valor_bloqueado - Valor bloqueado (Ex: 2.000,00)'
+  WHERE tnap.cdmensagem = 7391
+  AND tnap.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_msg_cadastro tnmc
   SET tnmc.dshtml_mensagem = 'O Pix que você realizou em #datahoratransacao, no valor de #valorpix para #beneficiario foi devolvido no valor #parcialtotalmente de #valordevolvido.</br></br><b>O valor está novamente disponível em sua conta corrente.</b></br></br>Acesse o comprovante para mais detalhes da devolução.'
