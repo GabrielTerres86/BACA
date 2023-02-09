@@ -24,7 +24,7 @@ DECLARE
   CURSOR cr_dados IS 
     select rc.idpessoa
       , count(*)
-    from tbcadast_pessoa_rendacompl rc
+    from cecred.tbcadast_pessoa_rendacompl rc
     where rc.tprenda = 6
 
     group by rc.idpessoa
@@ -35,8 +35,8 @@ DECLARE
   CURSOR cr_excluir (pr_idpessoa IN NUMBER) IS
     SELECT p.nrcpfcgc
       , rc.*
-    FROM tbcadast_pessoa_rendacompl rc
-    JOIN tbcadast_pessoa p ON rc.idpessoa = p.idpessoa
+    FROM cecred.tbcadast_pessoa_rendacompl rc
+    JOIN cecred.tbcadast_pessoa p ON rc.idpessoa = p.idpessoa
     WHERE rc.idpessoa = pr_idpessoa
       AND rc.tprenda = 6
       AND rc.nrseq_renda <> ( SELECT MAX(rc2.nrseq_renda)
