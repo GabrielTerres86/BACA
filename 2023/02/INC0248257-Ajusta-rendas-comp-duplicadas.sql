@@ -190,6 +190,20 @@ BEGIN
             WHERE idpessoa = rg_excluir.idpessoa
               AND tprenda = 6;
             
+            UPDATE CECRED.Tbcadast_Pessoa_Rendacompl
+              SET nrseq_renda = ind
+                , vlrenda = ( vlrenda - 0.01 )
+            WHERE idpessoa = rg_excluir.idpessoa
+              AND tprenda = 6;
+            
+            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, ' UPDATE CECRED.Tbcadast_Pessoa_Rendacompl '
+                                                        || '   SET nrseq_renda = ' || (vr_maior + 1)
+                                                        || '     , vlrenda = ( vlrenda + 0.01 ) '
+                                                        || ' WHERE idpessoa = ' || rg_excluir.idpessoa
+                                                        || '   AND nrseq_renda = ' || ind || ';'
+            );
+            
+            
             gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, ' UPDATE CECRED.Tbcadast_Pessoa_Rendacompl '
                                                         || '   SET nrseq_renda = ' || (vr_maior + 1)
                                                         || '     , vlrenda = ( vlrenda - 0.01 ) '
