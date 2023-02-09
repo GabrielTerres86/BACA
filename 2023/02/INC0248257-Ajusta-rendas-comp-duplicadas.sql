@@ -8,6 +8,7 @@ DECLARE
   vr_texto_completo     VARCHAR2(32600) := NULL;
   vr_texto_completo_ret VARCHAR2(32600) := NULL;
   vr_ind_arquiv         utl_file.file_type;
+  vr_ind_arquiv2        utl_file.file_type;
   vr_ind_arqlog         utl_file.file_type;
   vr_setlinha           VARCHAR2(10000);
   vr_count              PLS_INTEGER;
@@ -35,8 +36,12 @@ DECLARE
   CURSOR cr_excluir (pr_idpessoa IN NUMBER) IS
     SELECT p.nrcpfcgc
       , rc.*
-    FROM cecred.tbcadast_pessoa_rendacompl rc
-    JOIN cecred.tbcadast_pessoa p ON rc.idpessoa = p.idpessoa
+      , ( SELECT MAX(rc3.nrseq_renda) 
+          FROM tbcadast_pessoa_rendacompl rc3
+          WHERE p.idpessoa = rc3.idpessoa
+        ) max_geral
+    FROM tbcadast_pessoa_rendacompl rc
+    JOIN tbcadast_pessoa p ON rc.idpessoa = p.idpessoa
     WHERE rc.idpessoa = pr_idpessoa
       AND rc.tprenda = 6
       AND rc.nrseq_renda <> ( SELECT MAX(rc2.nrseq_renda)
@@ -45,6 +50,18 @@ DECLARE
                                 AND rc2.tprenda  = rc.tprenda );
   
   rg_excluir     cr_excluir%ROWTYPE;
+  
+  CURSOR cr_ajustanrseq (pr_idpes    IN NUMBER
+                       , pr_seqrenda IN NUMBER) IS
+    SELECT r.tprenda
+    FROM tbcadast_pessoa_rendacompl r
+    WHERE r.idpessoa    = pr_idpes
+      AND r.nrseq_renda = pr_seqrenda;
+      
+  rg_ajustanrseq  cr_ajustanrseq%ROWTYPE;
+  
+  vr_atualiza_seq BOOLEAN;
+  vr_maior        NUMBER;
   
   vr_dscritic    VARCHAR2(2000);
   vr_exception   EXCEPTION;
@@ -64,6 +81,17 @@ BEGIN
      RAISE vr_exception;
   END IF;
   
+  
+  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
+                          ,pr_nmarquiv => 'INC0248257_script_ROLLBACK_01.sql'
+                          ,pr_tipabert => 'W'
+                          ,pr_utlfileh => vr_ind_arquiv2
+                          ,pr_des_erro => vr_dscritic);
+                          
+  IF vr_dscritic IS NOT NULL THEN        
+     RAISE vr_exception;
+  END IF;
+  
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
                           ,pr_nmarquiv => vr_nmarqlog
                           ,pr_tipabert => 'W'
@@ -76,7 +104,8 @@ BEGIN
   
   
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'BEGIN');
-
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, 'BEGIN');
+  
   vr_count := 0;
   
   OPEN cr_dados;
@@ -84,6 +113,8 @@ BEGIN
     FETCH cr_dados INTO rg_dados;
     EXIT WHEN cr_dados%NOTFOUND;
     
+    vr_atualiza_seq := FALSE;
+    vr_maior        := NULL;
     OPEN cr_excluir(rg_dados.idpessoa);
     LOOP
       FETCH cr_excluir INTO rg_excluir;
@@ -97,6 +128,12 @@ BEGIN
           AND tprenda     = rg_excluir.tprenda;
         
         IF SQL%ROWCOUNT = 1 THEN
+          
+          IF rg_excluir.max_geral > 4 OR rg_excluir.nrseq_renda >= 4 THEN
+            vr_atualiza_seq := TRUE;
+            vr_maior        := rg_excluir.nrseq_renda;
+          END IF;
+          
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, '    INSERT INTO CECRED.Tbcadast_Pessoa_Rendacompl '
                                                         || '   ( idpessoa, 
                                                                   nrseq_renda, 
@@ -128,12 +165,66 @@ BEGIN
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao deletar registro: ' || SQLERRM;
+          CLOSE cr_excluir;
           RAISE vr_exception;
       END;
       
     END LOOP;
     
     CLOSE cr_excluir;
+    
+    IF vr_atualiza_seq THEN
+      
+      FOR ind IN 1..4 LOOP
+        
+        OPEN cr_ajustanrseq(rg_excluir.idpessoa, ind);
+        FETCH cr_ajustanrseq INTO rg_ajustanrseq;
+        
+        IF cr_ajustanrseq%NOTFOUND THEN
+          
+          BEGIN
+            
+            UPDATE CECRED.Tbcadast_Pessoa_Rendacompl
+              SET nrseq_renda = ind
+                , vlrenda = ( vlrenda + 0.01 )
+            WHERE idpessoa = rg_excluir.idpessoa
+              AND tprenda = 6;
+            
+            gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, ' UPDATE CECRED.Tbcadast_Pessoa_Rendacompl '
+                                                        || '   SET nrseq_renda = ' || (vr_maior + 1)
+                                                        || '     , vlrenda = ( vlrenda - 0.01 ) '
+                                                        || ' WHERE idpessoa = ' || rg_excluir.idpessoa
+                                                        || '   AND nrseq_renda = ' || ind || ';'
+            );
+            
+            gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, rg_excluir.nrcpfcgc 
+                                                      || ';' || rg_excluir.idpessoa
+                                                      || ';ALERTA' 
+                                                      || ';Ajustado NRSEQ_RENDA para: ' || ind 
+                                                      || '. Maior índice excluído: ' || vr_maior );
+            
+          EXCEPTION
+            WHEN OTHERS THEN
+              
+              vr_dscritic := 'Erro ao atualizar nrseqrenda CPF ' || rg_excluir.nrcpfcgc || ': ' || SQLERRM;
+              CLOSE cr_ajustanrseq;
+              RAISE vr_exception;
+              
+          END;
+          
+          CLOSE cr_ajustanrseq;
+          
+          EXIT;
+          
+        END IF;
+        
+        IF cr_ajustanrseq%ISOPEN THEN
+          CLOSE cr_ajustanrseq;
+        END IF;
+        
+      END LOOP;
+      
+    END IF;
     
   END LOOP;
   
@@ -142,7 +233,11 @@ BEGIN
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'COMMIT;');
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'EXCEPTION WHEN OTHERS THEN ROLLBACK; RAISE_APPLICATION_ERROR(-20000, SQLERRM); END;');
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);
-    
+  
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, 'COMMIT;');
+  gene0001.pc_escr_linha_arquivo(vr_ind_arquiv2, 'EXCEPTION WHEN OTHERS THEN ROLLBACK; RAISE_APPLICATION_ERROR(-20000, SQLERRM); END;');
+  gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv2);
+  
   gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'Final do script.');
   gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog);
   
@@ -154,6 +249,9 @@ EXCEPTION
     
     gene0001.pc_escr_linha_arquivo( vr_ind_arquiv, 'ERRO: ' || vr_dscritic );
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);
+    
+    gene0001.pc_escr_linha_arquivo( vr_ind_arquiv2, 'ERRO: ' || vr_dscritic );
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv2);
     
     gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, vr_dscritic);
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog);
@@ -167,6 +265,9 @@ EXCEPTION
     
     gene0001.pc_escr_linha_arquivo( vr_ind_arquiv, 'ERRO: ' || SQLERRM );
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv);
+    
+    gene0001.pc_escr_linha_arquivo( vr_ind_arquiv2, 'ERRO: ' || SQLERRM );
+    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquiv2);
 
     gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'ERRO NAO TRATADO: ' || SQLERRM);
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog);
