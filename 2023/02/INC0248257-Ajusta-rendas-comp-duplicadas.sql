@@ -25,7 +25,7 @@ DECLARE
   CURSOR cr_dados IS 
     select rc.idpessoa
       , count(*)
-    from tbcadast_pessoa_rendacompl rc
+    from cecred.tbcadast_pessoa_rendacompl rc
     where rc.tprenda = 6
 
     group by rc.idpessoa
