@@ -9,6 +9,7 @@ DECLARE
 
 BEGIN
   apagar('DROP PROCEDURE GESTAODERISCO.obterVencParcelas');
+  commit;
 EXCEPTION
   WHEN OTHERS THEN
     cecred.pc_internal_exception;
