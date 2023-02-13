@@ -8,7 +8,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '<br />#valor_pix - Valor do Pix (Ex.: 2.000,00)<br />#nome_pagador - Nome do Pagador - ("João da Silva")<br />#instituicao_pagador - Instituição do Pagador ("Viacredi")<br />#identificao_transacao - Identificação da Transação (E18236120202011062016s0644601CBP)<br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32")<br />#valor_bloqueado_pix - Valor do Pix bloqueado (Ex.: 2.000,00)'
+  SET tnap.dsvariaveis_mensagem = '<br />#valor_pix - Valor do Pix (Ex.: 2.000,00)<br />#nome_pagador - Nome do Pagador - ("João da Silva")<br />#instituicao_pagador - Instituição do Pagador ("Viacredi")<br />#identificao_transacao - Identificação da Transação (E18236120202011062016s0644601CBP)<br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 às 17:54:32")<br />#valor_bloqueado_pix - Valor do Pix bloqueado (Ex.: 2.000,00)'
   WHERE tnap.cdmensagem = 10524
   AND tnap.cdorigem_mensagem = 13;
   
@@ -18,7 +18,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '<br />#data_transacao - Data da Transação (Ex.: 17/02/2022)<br />#data_hora_transacao - Data da Transação (Ex.: 17/02/2022 11:06:32)<br />#valor_pix - Valor do Pix (Ex.: 2.000,00)<br />#nome_pagador - Nome do Pagador - ("João da Silva")<br />#instituicao_pagador - Instituição do Pagador ("Viacredi")<br />#identificao_transacao - Identificação da Transação (E18236120202011062016s0644601CBP)<br />#valor_desbloqueado_pix - Valor desbloqueado (Ex.: 2.000,00)<br />#data_hora_bloqueio - Data e hora do bloqueio (Ex.: 18/02/2022 13:12:54)'
+  SET tnap.dsvariaveis_mensagem = '<br />#data_transacao - Data da Transação (Ex.: 17/02/2022)<br />#data_hora_transacao - Data da Transação (Ex.: 17/02/2022 às 11:06:32)<br />#valor_pix - Valor do Pix (Ex.: 2.000,00)<br />#nome_pagador - Nome do Pagador - ("João da Silva")<br />#instituicao_pagador - Instituição do Pagador ("Viacredi")<br />#identificao_transacao - Identificação da Transação (E18236120202011062016s0644601CBP)<br />#valor_desbloqueado_pix - Valor desbloqueado (Ex.: 2.000,00)<br />#data_hora_bloqueio - Data e hora do bloqueio (Ex.: 18/02/2022 às 13:12:54)'
   WHERE tnap.cdmensagem = 10525
   AND tnap.cdorigem_mensagem = 13;
   
@@ -28,7 +28,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '<br />#data_transacao - Data da Transação (Ex.: 17/02/2022)<br />#data_hora_transacao - Data da Transação (Ex.: 17/02/2022 11:06:32)<br />#valor_pix - Valor do Pix (Ex.: 2.000,00)<br />#nome_pagador - Nome do Pagador - ("João da Silva")<br />#instituicao_pagador - Instituição do Pagador ("Viacredi")<br />#identificao_transacao - Identificação da Transação (E18236120202011062016s0644601CBP)<br />#valor_desbloqueado_pix - Valor desbloqueado (Ex.: 2.000,00)<br />#data_hora_bloqueio - Data e hora do bloqueio (Ex.: 18/02/2022 13:12:54)'
+  SET tnap.dsvariaveis_mensagem = '<br />#data_transacao - Data da Transação (Ex.: 17/02/2022)<br />#data_hora_transacao - Data da Transação (Ex.: 17/02/2022 às 11:06:32)<br />#valor_pix - Valor do Pix (Ex.: 2.000,00)<br />#nome_pagador - Nome do Pagador - ("João da Silva")<br />#instituicao_pagador - Instituição do Pagador ("Viacredi")<br />#identificao_transacao - Identificação da Transação (E18236120202011062016s0644601CBP)<br />#valor_desbloqueado_pix - Valor desbloqueado (Ex.: 2.000,00)<br />#data_hora_bloqueio - Data e hora do bloqueio (Ex.: 18/02/2022 às 13:12:54)'
   WHERE tnap.cdmensagem = 10526
   AND tnap.cdorigem_mensagem = 13;
   
@@ -41,7 +41,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva") <br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32") <br/>#valor_bloqueado_pix - Valor bloqueado (Ex: 2.000,00) <br />#data_hora_bloqueio - Data e hora do bloqueio - ("28/01/2023 15:34:52")'
+  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva") <br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 às 17:54:32") <br/>#valor_bloqueado_pix - Valor bloqueado (Ex: 2.000,00) <br />#data_hora_bloqueio - Data e hora do bloqueio - ("28/01/2023 às 15:34:52")'
   WHERE tnap.cdmensagem = 7393
   AND tnap.cdorigem_mensagem = 13;
   
@@ -54,7 +54,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva") <br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32") <br/>#valor_bloqueado_pix - Valor bloqueado (Ex: 2.000,00) <br />#data_hora_bloqueio - Data e hora do bloqueio - ("28/01/2023 15:34:52")'
+  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva") <br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 às 17:54:32") <br/>#valor_bloqueado_pix - Valor bloqueado (Ex: 2.000,00) <br />#data_hora_bloqueio - Data e hora do bloqueio - ("28/01/2023 às 15:34:52")'
   WHERE tnap.cdmensagem = 7392
   AND tnap.cdorigem_mensagem = 13;
 
@@ -64,7 +64,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix  - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva")<br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 17:54:32")<br/>#valor_bloqueado - Valor bloqueado (Ex: 2.000,00)'
+  SET tnap.dsvariaveis_mensagem = '<br/>#valorpix  - Valor do Pix (Ex: 2.000,00) <br/> #nomepagador - Nome do Pagador (Ex: "Fabio da Silva")<br />#data_hora_transacao - Data e hora da transação - ("26/01/2023 às 17:54:32")<br/>#valor_bloqueado - Valor bloqueado (Ex: 2.000,00)'
   WHERE tnap.cdmensagem = 7391
   AND tnap.cdorigem_mensagem = 13;
   
@@ -74,7 +74,7 @@ BEGIN
   AND tnmc.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_automatica_prm tnap 
-  SET tnap.dsvariaveis_mensagem = '</br>#datatransacao - Data e hora da transação (Ex.: 25/08/2099)</br>#valorpix - Valor do Pix (Ex.: 45,00)</br>#beneficiario - Nome do beneficiário</br>#parcialtotalmente - Tipo da devolução (Parcial/Totalmente)</br>#datahoratransacao - Data e hora da transação (Ex.: 25/08/2099 18:12:48)</br>#valordevolvido - Valor da devolução recebida (Ex.: 45,00)'
+  SET tnap.dsvariaveis_mensagem = '</br>#datatransacao - Data da transação (Ex.: 25/08/2099)</br>#valorpix - Valor do Pix (Ex.: 45,00)</br>#beneficiario - Nome do beneficiário</br>#parcialtotalmente - Tipo da devolução (Parcial/Totalmente)</br>#datahoratransacao - Data e hora da transação (Ex.: 25/08/2099 às 18:12:48)</br>#valordevolvido - Valor da devolução recebida (Ex.: 45,00)'
   WHERE tnap.cdmensagem = 5470
   AND tnap.cdorigem_mensagem = 13;
   
