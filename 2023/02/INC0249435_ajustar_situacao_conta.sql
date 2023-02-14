@@ -4,7 +4,7 @@ DECLARE
     SELECT t.cdcooper
          , t.nrdconta 
          , t.cdsitdct
-      FROM CRAPASS t
+      FROM cecred.CRAPASS t
      WHERE t.progress_recid = 1085374;
   rg_crapass   cr_crapass%rowtype;
    
@@ -23,7 +23,7 @@ BEGIN
   CLOSE cr_crapass;
   
   BEGIN
-    UPDATE crapass a
+    UPDATE cecred.crapass a
        SET a.cdsitdct = 4
      WHERE a.cdcooper = rg_crapass.cdcooper
        AND a.nrdconta = rg_crapass.nrdconta;
