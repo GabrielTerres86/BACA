@@ -37,15 +37,15 @@ DECLARE
     SELECT p.nrcpfcgc
       , rc.*
       , ( SELECT MAX(rc3.nrseq_renda) 
-          FROM tbcadast_pessoa_rendacompl rc3
+          FROM cecred.tbcadast_pessoa_rendacompl rc3
           WHERE p.idpessoa = rc3.idpessoa
         ) max_geral
-    FROM tbcadast_pessoa_rendacompl rc
-    JOIN tbcadast_pessoa p ON rc.idpessoa = p.idpessoa
+    FROM cecred.tbcadast_pessoa_rendacompl rc
+    JOIN cecred.tbcadast_pessoa p ON rc.idpessoa = p.idpessoa
     WHERE rc.idpessoa = pr_idpessoa
       AND rc.tprenda = 6
       AND rc.nrseq_renda <> ( SELECT MAX(rc2.nrseq_renda)
-                              FROM tbcadast_pessoa_rendacompl rc2 
+                              FROM cecred.tbcadast_pessoa_rendacompl rc2 
                               WHERE rc2.idpessoa = rc.idpessoa
                                 AND rc2.tprenda  = rc.tprenda );
   
@@ -54,7 +54,7 @@ DECLARE
   CURSOR cr_ajustanrseq (pr_idpes    IN NUMBER
                        , pr_seqrenda IN NUMBER) IS
     SELECT r.tprenda
-    FROM tbcadast_pessoa_rendacompl r
+    FROM cecred.tbcadast_pessoa_rendacompl r
     WHERE r.idpessoa    = pr_idpes
       AND r.nrseq_renda = pr_seqrenda;
       
