@@ -3,7 +3,7 @@ DECLARE
 BEGIN
   
   UPDATE tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'Cooperado,<br /><br />Você recebeu um crédito Pix de #valor_pix, porém esta transação está em análise. Este valor ficará com bloqueio cautelar por no máximo 72 horas. Após a conclusão da análise, dentro do prazo citado, você receberá uma nova notificação com o resultado da avaliação.<br /><br />Valor bloqueado: #valor_bloqueado_pix<br />Pagador: #nome_pagador<br />Instituição: #instituicao_pagador<br />Identificação: #identificao_transacao<br />Descrição: <br />Data hora transação: #data_hora_transacao<br /><br />Este é uma procedimento obrigatório de acordo com o Regulamento Pix, emitido pelo Banco Central do Brasil para garantir mais segurança às suas transações.'
+  SET tnmc.dshtml_mensagem = 'Cooperado,<br /><br />Você recebeu um crédito Pix de #valor_pix, porém esta transação está em análise. Este valor ficará com bloqueio cautelar por no máximo 72 horas. Após a conclusão da análise, dentro do prazo citado, você receberá uma nova notificação com o resultado da avaliação.<br /><br />Valor bloqueado: #valor_bloqueado_pix<br />Pagador: #nome_pagador<br />Instituição: #instituicao_pagador<br />Identificação: #identificao_transacao<br />Data hora transação: #data_hora_transacao<br />Descrição:<br /><br />Este é uma procedimento obrigatório de acordo com o Regulamento Pix, emitido pelo Banco Central do Brasil para garantir mais segurança às suas transações.'
   WHERE tnmc.cdmensagem = 10524
   AND tnmc.cdorigem_mensagem = 13;
   
@@ -13,7 +13,7 @@ BEGIN
   AND tnap.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'Cooperado,<br /><br />O crédito Pix de #valor_pix, que você recebeu em #data_hora_transacao foi analisado e liberado. O valor já está disponível em sua conta.<br /><br />Valor desbloqueado: #valor_desbloqueado_pix<br />Pagador: #nome_pagador<br />Instituição: #instituicao_pagador<br />Identificação: #identificao_transacao<br />Descrição:<br />Data hora bloqueio: #data_hora_bloqueio<br /><br />Acesse o comprovante no App Ailos ou confira o extrato da sua conta.'
+  SET tnmc.dshtml_mensagem = 'Cooperado,<br /><br />O crédito Pix de #valor_pix, que você recebeu em #data_hora_transacao foi analisado e liberado. O valor já está disponível em sua conta.<br /><br />Valor desbloqueado: #valor_desbloqueado_pix<br />Pagador: #nome_pagador<br />Instituição: #instituicao_pagador<br />Identificação: #identificao_transacao<br />Data hora bloqueio: #data_hora_bloqueio<br />Descrição:<br /><br />Acesse o comprovante no App Ailos ou confira o extrato da sua conta.'
   WHERE tnmc.cdmensagem = 10525
   AND tnmc.cdorigem_mensagem = 13;
   
@@ -23,7 +23,7 @@ BEGIN
   AND tnap.cdorigem_mensagem = 13;
   
   UPDATE tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'Cooperado,<br /><br />O crédito Pix de #valor_pix, que você recebeu em #data_hora_transacao foi analisado e devolvido para o pagador.<br /><br />Valor desbloqueado: #valor_desbloqueado_pix<br />Pagador: #nome_pagador<br />Instituição: #instituicao_pagador<br />Identificação: #identificao_transacao<br />Descrição:<br />Data hora bloqueio: #data_hora_bloqueio<br /><br />Em caso de dúvidas contatar o remetente do recurso.'
+  SET tnmc.dshtml_mensagem = 'Cooperado,<br /><br />O crédito Pix de #valor_pix, que você recebeu em #data_hora_transacao foi analisado e devolvido para o pagador.<br /><br />Valor desbloqueado: #valor_desbloqueado_pix<br />Pagador: #nome_pagador<br />Instituição: #instituicao_pagador<br />Identificação: #identificao_transacao<br />Data hora bloqueio: #data_hora_bloqueio<br />Descrição:<br /><br />Em caso de dúvidas contatar o remetente do recurso.'
   WHERE tnmc.cdmensagem = 10526
   AND tnmc.cdorigem_mensagem = 13;
   
