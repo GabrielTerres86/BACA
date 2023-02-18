@@ -12,7 +12,7 @@ BEGIN
   
   UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdcooper IN (8, 10, 12) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
   
-  UPDATE gestaoderisco.tbrisco_central_carga c SET c.cdstatus = 7;
+  UPDATE gestaoderisco.tbrisco_central_carga c SET c.cdstatus = 7 where cdcooper IN (8, 10, 12);
   
   COMMIT;
 END;
