@@ -9,5 +9,8 @@ BEGIN
     insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
     values ('CRED', rw_crapcop.cdcooper, 'TPEXEC_SAIDAS_CENTRAL', 'Tipo de execucao das saidas geradas na carga da central (1-saidas diarias / 2-saidas mensais)', '2');
   END LOOP;
+  
+  UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdcooper IN (8, 10, 12) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
+  
   COMMIT;
 END;
