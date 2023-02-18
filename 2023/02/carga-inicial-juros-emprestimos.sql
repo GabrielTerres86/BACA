@@ -1,7 +1,5 @@
 DECLARE
   
-  vr_cdcooper INTEGER := 0;
-  
   TYPE typ_reg_principal IS
   RECORD( cdcooper  crappep.cdcooper%TYPE
          ,nrdconta  crappep.nrdconta%TYPE
@@ -18,7 +16,7 @@ DECLARE
   vr_tab_cr_principal_bulk typ_tab_principal_bulk;
   idx_principal VARCHAR2(25);
   
-  CURSOR cr_principal(pr_cdcooper IN crapris.cdcooper%TYPE) IS
+  CURSOR cr_principal IS
     SELECT r.cdcooper, r.nrdconta, r.nrctremp, r.qtdiaatr, e.inprejuz, r.dtrefere, r.vljura60,
            (SELECT SUM(vlempres) 
               FROM crapvri v 
@@ -36,7 +34,7 @@ DECLARE
        AND e.cdcooper = r.cdcooper
        AND e.nrdconta = r.nrdconta
        AND e.nrctremp = r.nrctremp
-       AND (r.cdcooper = pr_cdcooper OR nvl(pr_cdcooper, 0) = 0)
+       AND r.cdcooper IN (8, 10, 12)
        AND r.cdcooper = c.cdcooper
        AND r.cdmodali IN (299,499)
        AND r.inddocto = 1
@@ -47,7 +45,7 @@ DECLARE
 BEGIN
  
  vr_tab_cr_principal_bulk.DELETE;
- OPEN cr_principal(pr_cdcooper => vr_cdcooper);
+ OPEN cr_principal;
  FETCH cr_principal BULK COLLECT INTO vr_tab_cr_principal_bulk;
  CLOSE cr_principal;
  
@@ -59,7 +57,7 @@ BEGIN
                                                            nrctremp,
                                                            dtrefere,
                                                            qtdiaatr,
-                                                           inprejuz,
+                                                           tpprejuz,
                                                            vljura60,
                                                            vlemprst)
                                                    VALUES (vr_tab_cr_principal_bulk(idx).cdcooper,
