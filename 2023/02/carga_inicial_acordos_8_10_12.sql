@@ -20,10 +20,10 @@ BEGIN
                   ,a.cdcooper
                   ,a.nrdconta
                   ,CASE c.cdorigem
-                     WHEN 1 THEN 10 -- Adp
-                     WHEN 2 THEN 90 -- Emprestimo
-                     WHEN 3 THEN 90 -- Emprestimo
-                     WHEN 4 THEN 3  -- Desconto de titulo
+                     WHEN 1 THEN 10 
+                     WHEN 2 THEN 90 
+                     WHEN 3 THEN 90 
+                     WHEN 4 THEN 3  
                      ELSE 0
                    END cdproduto
                   ,c.nrctremp
