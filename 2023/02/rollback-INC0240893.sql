@@ -178,7 +178,7 @@ BEGIN
     delete from tbcc_prejuizo_detalhe
      where cdcooper = 14
        and nrdconta = rw_crapass.nrdconta
-       and cdhistor = 2721
+       and cdhistor = 2738
        and vllanmto = 0.88
        and dtmvtolt = to_date('', 'dd/mm/rrrr');
   
