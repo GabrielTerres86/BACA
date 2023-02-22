@@ -5,7 +5,7 @@ DECLARE
          , t.nrdconta 
          , t.cdsitdct
       FROM cecred.CRAPASS t
-     WHERE t.progress_recid = 1085374; -- Precisa ser alterado para a conta correta
+     WHERE t.progress_recid = 819193;
   rg_crapass   cr_crapass%rowtype;
    
   vr_nrdrowid  ROWID;
