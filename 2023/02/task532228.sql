@@ -18,9 +18,9 @@ DECLARE
              nrctremp,
              tpctrato,
              nrcpfcnpj_base
-        FROM tbrisco_operacoes opr
+        FROM CECRED.tbrisco_operacoes opr
         WHERE 1=1
-          AND opr.tpctrato = 11          -- ADP sem contrato
+          AND opr.tpctrato = 11         
           AND opr.flencerrado = 0
           AND opr.dtvencto_rating < (select dtmvtolt from crapdat where cdcooper = opr.cdcooper);
   rw_principal cr_principal%ROWTYPE;
@@ -35,7 +35,7 @@ BEGIN
  IF vr_tab_cr_principal_bulk.count > 0 THEN 
   BEGIN
   FORALL idx in vr_tab_cr_principal_bulk.first .. vr_tab_cr_principal_bulk.last SAVE EXCEPTIONS  
-        UPDATE tbrisco_operacoes
+        UPDATE CECRED.tbrisco_operacoes
        SET flencerrado = 1
      WHERE cdcooper = vr_tab_cr_principal_bulk(idx).cdcooper
        AND nrdconta = vr_tab_cr_principal_bulk(idx).nrdconta
