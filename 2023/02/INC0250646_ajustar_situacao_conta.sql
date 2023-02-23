@@ -175,7 +175,7 @@ BEGIN
     CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                      pr_nmdcampo => 'craplct.dtmvtolt',
                                      pr_dsdadant => null,
-                                     pr_dsdadatu => vr_dtmvtolt);
+                                     pr_dsdadatu => to_char(vr_dtmvtolt,'dd/mm/yyyy'));
     
     CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                      pr_nmdcampo => 'craplct.vllanmto',
