@@ -44,6 +44,8 @@ DECLARE
   
   rg_dados  cr_dados%ROWTYPE;
   
+  
+  
   CURSOR cr_dados_ctr (pr_cpf IN cecred.tbcadast_pessoa.nrcpfcgc%TYPE) IS
     SELECT e.rowid       id_endereco
     FROM cecred.tbcadast_pessoa p
