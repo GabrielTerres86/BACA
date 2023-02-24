@@ -21,8 +21,8 @@ DECLARE
         FROM CECRED.tbrisco_operacoes opr
         WHERE 1=1
           AND opr.tpctrato = 11         
-          AND opr.flencerrado = 0
-          AND opr.dtvencto_rating < (select dtmvtolt from crapdat where cdcooper = opr.cdcooper);
+          AND opr.flencerrado = 1
+          AND opr.dtvencto_rating > (select dtmvtolt from crapdat where cdcooper = opr.cdcooper);
   rw_principal cr_principal%ROWTYPE;
   
 BEGIN
@@ -36,7 +36,7 @@ BEGIN
   BEGIN
   FORALL idx in vr_tab_cr_principal_bulk.first .. vr_tab_cr_principal_bulk.last SAVE EXCEPTIONS  
         UPDATE CECRED.tbrisco_operacoes
-       SET flencerrado = 1
+       SET flencerrado = 0
      WHERE cdcooper = vr_tab_cr_principal_bulk(idx).cdcooper
        AND nrdconta = vr_tab_cr_principal_bulk(idx).nrdconta
        AND nrctremp = vr_tab_cr_principal_bulk(idx).nrctremp
