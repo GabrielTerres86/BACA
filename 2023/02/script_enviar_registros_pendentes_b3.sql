@@ -751,7 +751,7 @@ DECLARE
         IF cecred.BTCH0001.cr_crapdat%NOTFOUND THEN
           CLOSE cecred.BTCH0001.cr_crapdat;
           vr_cdcritic := 1;
-          vr_idcritic := 1; -- Media    
+          vr_idcritic := 1;
           RAISE vr_exc_sai_LanArq_LopCop_1;
         ELSE
           CLOSE cecred.BTCH0001.cr_crapdat;
