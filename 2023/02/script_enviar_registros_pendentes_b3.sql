@@ -5,14 +5,14 @@ DECLARE
 
     CURSOR cr_crapcop IS
       SELECT cdcooper, nmrescop
-        FROM crapcop
+        FROM cecred.crapcop
        WHERE cdcooper <> 3
          AND flgativo = 1;
 
     vr_dtinictd DATE;
     vr_vlinictd NUMBER;
 
-    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+    rw_crapdat cecred.btch0001.cr_crapdat%ROWTYPE;
       
     vr_exc_sai_lan_arq_1_S        EXCEPTION; 
     vr_exc_sai_LanArq_LopCop_S    EXCEPTION; 
@@ -31,7 +31,7 @@ DECLARE
     vr_qtlimerr                NUMBER      (9);
     vr_flenvreg VARCHAR2(1); 
     vr_flenvrgt VARCHAR2(1); 
-    vr_cdacesso     crapprm.cdacesso%TYPE;
+    vr_cdacesso     cecred.crapprm.cdacesso%TYPE;
     vr_idcritic  NUMBER;
     vr_cdcritic  NUMBER;
     vr_dscritic  VARCHAR2(32767);
@@ -61,10 +61,10 @@ DECLARE
             ,rda.nrdconta nrdconta
             ,rda.nraplica nraplica
             ,0            cdprodut
-        FROM craplap lap
-            ,craprda rda
-            ,crapdtc dtc
-            ,vw_capt_histor_operac hst
+        FROM cecred.craplap lap
+            ,cecred.craprda rda
+            ,cecred.crapdtc dtc
+            ,cecred.vw_capt_histor_operac hst
        WHERE rda.cdcooper = dtc.cdcooper
          AND rda.tpaplica = dtc.tpaplica
          AND lap.cdcooper = rda.cdcooper
@@ -92,9 +92,9 @@ DECLARE
             ,rac.nrdconta nrdconta
             ,rac.nraplica nraplica
             ,rac.cdprodut cdprodut
-        FROM craplac lac
-            ,craprac rac
-            ,vw_capt_histor_operac hst
+        FROM cecred.craplac lac
+            ,cecred.craprac rac
+            ,cecred.vw_capt_histor_operac hst
        WHERE rac.cdcooper = lac.cdcooper
          AND rac.nrdconta = lac.nrdconta
          AND rac.nraplica = lac.nraplica
@@ -136,12 +136,12 @@ DECLARE
                     ,rda.insaqtot idsaqtot
                     ,his.indebcre
                     ,capl.dscodigo_b3
-                FROM craplap lap
-                    ,craprda rda
-                    ,crapdtc dtc
-                    ,tbcapt_custodia_aplicacao capl
-                    ,vw_capt_histor_operac hst
-                    ,craphis his
+                FROM cecred.craplap lap
+                    ,cecred.craprda rda
+                    ,cecred.crapdtc dtc
+                    ,cecred.tbcapt_custodia_aplicacao capl
+                    ,cecred.vw_capt_histor_operac hst
+                    ,cecred.craphis his
                WHERE rda.cdcooper = dtc.cdcooper
                  AND rda.tpaplica = dtc.tpaplica
                  AND lap.cdcooper = rda.cdcooper
@@ -183,11 +183,11 @@ DECLARE
                     ,rac.idsaqtot
                     ,his.indebcre
                     ,capl.dscodigo_b3
-                FROM craplac lac
-                    ,craprac rac
-                    ,tbcapt_custodia_aplicacao capl
-                    ,vw_capt_histor_operac hst
-                    ,craphis his
+                FROM cecred.craplac lac
+                    ,cecred.craprac rac
+                    ,cecred.tbcapt_custodia_aplicacao capl
+                    ,cecred.vw_capt_histor_operac hst
+                    ,cecred.craphis his
                WHERE rac.cdcooper = lac.cdcooper
                  AND rac.nrdconta = lac.nrdconta  
                  AND rac.nraplica = lac.nraplica
@@ -213,15 +213,15 @@ DECLARE
                  
     rw_lcto_rgt cr_lctos_rgt%ROWTYPE; 
 
-    CURSOR cr_resgat(pr_cdcooper crapcop.cdcooper%TYPE     
-                    ,pr_nrdconta craprda.nrdconta%TYPE     
-                    ,pr_nraplica craprda.nraplica%TYPE     
-                    ,pr_tpaplrdc craprda.tpaplica%TYPE     
-                    ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+    CURSOR cr_resgat(pr_cdcooper cecred.crapcop.cdcooper%TYPE     
+                    ,pr_nrdconta cecred.craprda.nrdconta%TYPE     
+                    ,pr_nraplica cecred.craprda.nraplica%TYPE     
+                    ,pr_tpaplrdc cecred.craprda.tpaplica%TYPE     
+                    ,pr_dtmvtolt cecred.crapdat.dtmvtolt%TYPE) IS 
       SELECT sum(nvl(lct.vllanmto,0))
         FROM (SELECT lap.vllanmto
-                FROM craplap lap
-                    ,vw_capt_histor_operac hst
+                FROM cecred.craplap lap
+                    ,cecred.vw_capt_histor_operac hst
                WHERE lap.cdcooper = pr_cdcooper
                  AND lap.nrdconta = pr_nrdconta
                  AND lap.nraplica = pr_nraplica
@@ -232,8 +232,8 @@ DECLARE
                  AND hst.idtipo_lancto = 2
               UNION
               SELECT lac.vllanmto
-                FROM craplac lac
-                    ,vw_capt_histor_operac hst
+                FROM cecred.craplac lac
+                    ,cecred.vw_capt_histor_operac hst
                WHERE lac.cdcooper = pr_cdcooper
                  AND lac.nrdconta = pr_nrdconta
                  AND lac.nraplica = pr_nraplica
@@ -244,24 +244,24 @@ DECLARE
                  AND hst.idtipo_lancto = 2 
                ) lct;
 
-    CURSOR cr_craplap(pr_cdcooper crapcop.cdcooper%TYPE     
-                     ,pr_nrdconta craprda.nrdconta%TYPE     
-                     ,pr_nraplica craprda.nraplica%TYPE     
-                     ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+    CURSOR cr_craplap(pr_cdcooper cecred.crapcop.cdcooper%TYPE     
+                     ,pr_nrdconta cecred.craprda.nrdconta%TYPE     
+                     ,pr_nraplica cecred.craprda.nraplica%TYPE     
+                     ,pr_dtmvtolt cecred.crapdat.dtmvtolt%TYPE) IS 
      SELECT 1 tem
-       FROM craplap lap
+       FROM cecred.craplap lap
       WHERE lap.cdcooper = pr_cdcooper
         AND lap.nrdconta = pr_nrdconta
         AND lap.nraplica = pr_nraplica
         AND lap.dtmvtolt > pr_dtmvtolt;
     rw_craplap cr_craplap%ROWTYPE;
           
-    CURSOR cr_craplac(pr_cdcooper crapcop.cdcooper%TYPE     
-                     ,pr_nrdconta craprac.nrdconta%TYPE     
-                     ,pr_nraplica craprac.nraplica%TYPE     
-                     ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS 
+    CURSOR cr_craplac(pr_cdcooper cecred.crapcop.cdcooper%TYPE     
+                     ,pr_nrdconta cecred.craprac.nrdconta%TYPE     
+                     ,pr_nraplica cecred.craprac.nraplica%TYPE     
+                     ,pr_dtmvtolt cecred.crapdat.dtmvtolt%TYPE) IS 
      SELECT 1 tem
-       FROM craplac lac
+       FROM cecred.craplac lac
       WHERE lac.cdcooper = pr_cdcooper
         AND lac.nrdconta = pr_nrdconta
         AND lac.nraplica = pr_nraplica
@@ -285,36 +285,36 @@ DECLARE
     vr_tab_reg_ultimo_rgt typ_reg_ultimo_rgt;
     vr_idx_aplic         VARCHAR(028);
     vr_idx               pls_integer;
-    vr_tipo_lancto       tbcapt_custodia_lanctos.idtipo_lancto%TYPE;
-    vr_aplicacao         tbcapt_custodia_aplicacao.idaplicacao%TYPE;
+    vr_tipo_lancto       cecred.tbcapt_custodia_lanctos.idtipo_lancto%TYPE;
+    vr_aplicacao         cecred.tbcapt_custodia_aplicacao.idaplicacao%TYPE;
                    
-    vr_qtcotas      tbcapt_custodia_aplicacao.qtcotas%TYPE;
+    vr_qtcotas      cecred.tbcapt_custodia_aplicacao.qtcotas%TYPE;
 
-    vr_idaplicacao  tbcapt_custodia_aplicacao.idaplicacao%TYPE;
-    vr_idlancamento tbcapt_custodia_lanctos.idlancamento%TYPE;
+    vr_idaplicacao  cecred.tbcapt_custodia_aplicacao.idaplicacao%TYPE;
+    vr_idlancamento cecred.tbcapt_custodia_lanctos.idlancamento%TYPE;
 
     vr_dtmvtolt       DATE;
     vr_dtmvtolt_dat   DATE;
     vr_dtmvtoan_dat   DATE;
     vr_dtmvtoan_2_dat DATE;
-    vr_nrdconta       craprda.nrdconta%TYPE;
-    vr_nraplica       craprda.nraplica%TYPE;
+    vr_nrdconta       cecred.craprda.nrdconta%TYPE;
+    vr_nraplica       cecred.craprda.nraplica%TYPE;
 
-    vr_sldaplic     craprda.vlsdrdca%TYPE;
+    vr_sldaplic     cecred.craprda.vlsdrdca%TYPE;
     vr_vlpreco_unit NUMBER(38,30);
-    vr_qtcotas_resg tbcapt_custodia_aplicacao.qtcotas%TYPE;
+    vr_qtcotas_resg cecred.tbcapt_custodia_aplicacao.qtcotas%TYPE;
 
     vr_qtregrgt NUMBER := 0;
     vr_qtregreg NUMBER := 0;
 
 
    TYPE typ_reg_tbcapt_custodia_aplicacao_det IS
-   RECORD (idaplicacao tbcapt_custodia_aplicacao.idaplicacao%TYPE
-          ,tpaplicacao tbcapt_custodia_aplicacao.tpaplicacao%TYPE
-          ,vlregistro  tbcapt_custodia_aplicacao.vlregistro%TYPE
-          ,qtcotas     tbcapt_custodia_aplicacao.qtcotas%TYPE
-          ,vlpreco_registro tbcapt_custodia_aplicacao.vlpreco_registro%TYPE
-          ,vlpreco_unitario tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE
+   RECORD (idaplicacao cecred.tbcapt_custodia_aplicacao.idaplicacao%TYPE
+          ,tpaplicacao cecred.tbcapt_custodia_aplicacao.tpaplicacao%TYPE
+          ,vlregistro  cecred.tbcapt_custodia_aplicacao.vlregistro%TYPE
+          ,qtcotas     cecred.tbcapt_custodia_aplicacao.qtcotas%TYPE
+          ,vlpreco_registro cecred.tbcapt_custodia_aplicacao.vlpreco_registro%TYPE
+          ,vlpreco_unitario cecred.tbcapt_custodia_aplicacao.vlpreco_unitario%TYPE
           ,vr_rowid VARCHAR2(30));
 
      
@@ -323,17 +323,17 @@ DECLARE
      INDEX BY PLS_INTEGER;
            
    TYPE typ_reg_tbcapt_custodia_lanctos_det IS
-   RECORD (idlancamento     tbcapt_custodia_lanctos.idlancamento%TYPE
-          ,idaplicacao      tbcapt_custodia_lanctos.idaplicacao%TYPE
-          ,idtipo_arquivo   tbcapt_custodia_lanctos.idtipo_arquivo%TYPE
-          ,idtipo_lancto    tbcapt_custodia_lanctos.idtipo_lancto%TYPE
-          ,cdhistorico      tbcapt_custodia_lanctos.cdhistorico%TYPE
-          ,cdoperacao_b3    tbcapt_custodia_lanctos.cdoperacao_b3%TYPE
-          ,vlregistro       tbcapt_custodia_lanctos.vlregistro%TYPE
-          ,qtcotas          tbcapt_custodia_lanctos.qtcotas%TYPE    
-          ,vlpreco_unitario tbcapt_custodia_lanctos.vlpreco_unitario%TYPE 
-          ,idsituacao       tbcapt_custodia_lanctos.idsituacao%TYPE 
-          ,dtregistro       tbcapt_custodia_lanctos.dtregistro%TYPE                                
+   RECORD (idlancamento     cecred.tbcapt_custodia_lanctos.idlancamento%TYPE
+          ,idaplicacao      cecred.tbcapt_custodia_lanctos.idaplicacao%TYPE
+          ,idtipo_arquivo   cecred.tbcapt_custodia_lanctos.idtipo_arquivo%TYPE
+          ,idtipo_lancto    cecred.tbcapt_custodia_lanctos.idtipo_lancto%TYPE
+          ,cdhistorico      cecred.tbcapt_custodia_lanctos.cdhistorico%TYPE
+          ,cdoperacao_b3    cecred.tbcapt_custodia_lanctos.cdoperacao_b3%TYPE
+          ,vlregistro       cecred.tbcapt_custodia_lanctos.vlregistro%TYPE
+          ,qtcotas          cecred.tbcapt_custodia_lanctos.qtcotas%TYPE    
+          ,vlpreco_unitario cecred.tbcapt_custodia_lanctos.vlpreco_unitario%TYPE 
+          ,idsituacao       cecred.tbcapt_custodia_lanctos.idsituacao%TYPE 
+          ,dtregistro       cecred.tbcapt_custodia_lanctos.dtregistro%TYPE                                
           ,vr_rowid VARCHAR2(30));
 
    TYPE typ_tab_tbcapt_custodia_lanctos_det IS
@@ -343,25 +343,25 @@ DECLARE
   TYPE typ_tab_produt_ipca IS TABLE OF PLS_INTEGER INDEX BY PLS_INTEGER; 
     vr_tab_produto_ipca typ_tab_produt_ipca;
   
-  TYPE typ_rec_craprac IS RECORD(idaplcus   craprac.idaplcus%TYPE
+  TYPE typ_rec_craprac IS RECORD(idaplcus   cecred.craprac.idaplcus%TYPE
                               ,vr_rowid VARCHAR2(30));    
   TYPE typ_tab_craprac IS TABLE OF typ_rec_craprac INDEX BY PLS_INTEGER; 
   vr_tab_craprac typ_tab_craprac;
     
   
-  TYPE typ_rec_craplac IS RECORD(idlctcus   craplac.idlctcus%TYPE
+  TYPE typ_rec_craplac IS RECORD(idlctcus   cecred.craplac.idlctcus%TYPE
                               ,vr_rowid VARCHAR2(30));    
   TYPE typ_tab_craplac IS TABLE OF typ_rec_craplac INDEX BY PLS_INTEGER; 
   vr_tab_craplac typ_tab_craplac;
   
 
-  TYPE typ_rec_craprda IS RECORD(idaplcus   craprda.idaplcus%TYPE
+  TYPE typ_rec_craprda IS RECORD(idaplcus   cecred.craprda.idaplcus%TYPE
                               ,vr_rowid VARCHAR2(30));    
   TYPE typ_tab_craprda IS TABLE OF typ_rec_craprda INDEX BY PLS_INTEGER; 
   vr_tab_craprda typ_tab_craprda;  
   
 
-  TYPE typ_rec_craplap IS RECORD(idlctcus   craplap.idlctcus%TYPE
+  TYPE typ_rec_craplap IS RECORD(idlctcus   cecred.craplap.idlctcus%TYPE
                               ,vr_rowid VARCHAR2(30));    
   TYPE typ_tab_craplap IS TABLE OF typ_rec_craplap INDEX BY PLS_INTEGER; 
   vr_tab_craplap typ_tab_craplap; 
@@ -378,7 +378,7 @@ DECLARE
   IS
     CURSOR cr_crapcpc IS
      SELECT cpc.cdprodut      
-       FROM crapcpc cpc
+       FROM cecred.crapcpc cpc
       WHERE cpc.indanive = 1;
   BEGIN
     FOR rw_crapcpc IN cr_crapcpc LOOP
@@ -390,7 +390,7 @@ DECLARE
     IS 
   BEGIN
       vr_cdcritic := NVL(vr_cdcritic,0);
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
+      vr_dscritic := cecred.gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
                                               ,pr_dscritic => vr_dscritic) ||
                          ' ' || vr_dssqlerrm ||
                          ' ' || vr_nmaction  ||
@@ -402,7 +402,7 @@ DECLARE
                          
       dbms_output.put_line(vr_dscritic);
       
-      apli0007.pc_log(pr_cdcritic => vr_cdcritic
+      cecred.apli0007.pc_log(pr_cdcritic => vr_cdcritic
             ,pr_dscrilog => vr_dscritic
             ,pr_cdcricid => vr_idcritic);          
       ROLLBACK; 
@@ -412,7 +412,7 @@ DECLARE
     IS 
   BEGIN 
           vr_cdcritic := NVL(vr_cdcritic,0);
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
+          vr_dscritic := cecred.gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic
                                                   ,pr_dscritic => vr_dscritic) ||
                          ' ' || vr_dssqlerrm ||
                          ' ' || vr_nmaction  ||
@@ -423,7 +423,7 @@ DECLARE
                          ' ' || vr_dsparesp;  
           dbms_output.put_line(vr_dscritic);                    
 
-          apli0007.pc_log(pr_cdcritic => vr_cdcritic
+          cecred.apli0007.pc_log(pr_cdcritic => vr_cdcritic
                 ,pr_dscrilog => vr_dscritic
                 ,pr_cdcricid => vr_idcritic); 
   END pc_critica_loop;
@@ -433,7 +433,7 @@ DECLARE
     RETURN nvl(pr_vllancto,0) / vr_qtftcota;
  END;
  
- FUNCTION fn_eh_pcapta(pr_tpaplica IN tbcapt_custodia_aplicacao.tpaplicacao%TYPE) RETURN BOOLEAN IS
+ FUNCTION fn_eh_pcapta(pr_tpaplica IN cecred.tbcapt_custodia_aplicacao.tpaplicacao%TYPE) RETURN BOOLEAN IS
   BEGIN
      IF pr_tpaplica IN(3,4) THEN
        RETURN TRUE;
@@ -442,14 +442,14 @@ DECLARE
      END IF;
   END;
  
- FUNCTION fn_busca_qtcotas_atualizado(pr_idaplicacao tbcapt_custodia_aplicacao.idaplicacao%TYPE) RETURN tbcapt_custodia_aplicacao.qtcotas%TYPE IS
+ FUNCTION fn_busca_qtcotas_atualizado(pr_idaplicacao cecred.tbcapt_custodia_aplicacao.idaplicacao%TYPE) RETURN cecred.tbcapt_custodia_aplicacao.qtcotas%TYPE IS
 
-   CURSOR cr_tbcapt_custodia_aplicacao(pr_idaplicacao tbcapt_custodia_aplicacao.idaplicacao%TYPE) IS
+   CURSOR cr_tbcapt_custodia_aplicacao(pr_idaplicacao cecred.tbcapt_custodia_aplicacao.idaplicacao%TYPE) IS
    SELECT tbcapt_custodia_aplicacao.qtcotas
-     FROM tbcapt_custodia_aplicacao
+     FROM cecred.tbcapt_custodia_aplicacao
     WHERE tbcapt_custodia_aplicacao.idaplicacao = pr_idaplicacao;
       
-  vr_qtcotas tbcapt_custodia_aplicacao.qtcotas%TYPE;
+  vr_qtcotas cecred.tbcapt_custodia_aplicacao.qtcotas%TYPE;
     
  BEGIN
    OPEN cr_tbcapt_custodia_aplicacao(pr_idaplicacao => pr_idaplicacao);
@@ -464,7 +464,7 @@ DECLARE
 
     CURSOR cr_hiscapt IS
       SELECT 1
-        FROM crapcpc cpc
+        FROM cecred.crapcpc cpc
        WHERE cpc.cdprodut = pr_cdprodut
          AND pr_cdhistor in(cpc.cdhsprap,cpc.cdhsrdap);
     vr_id_exist NUMBER := 0;
@@ -487,24 +487,24 @@ DECLARE
     RETURN FALSE;
   END;
  
- PROCEDURE pc_busca_saldo_anterior(pr_cdcooper  IN craprda.cdcooper%TYPE                  
-                                   ,pr_nrdconta  IN craprda.nrdconta%TYPE                 
-                                   ,pr_nraplica  IN craprda.nraplica%TYPE                 
-                                   ,pr_tpaplica  IN crapdtc.tpaplica%TYPE                 
-                                   ,pr_cdprodut  IN craprac.cdprodut%TYPE                 
-                                   ,pr_dtmvtolt  IN craprda.dtmvtolt%TYPE                 
-                                   ,pr_dtmvtsld  IN craprda.dtmvtolt%TYPE                 
+ PROCEDURE pc_busca_saldo_anterior(pr_cdcooper  IN cecred.craprda.cdcooper%TYPE                  
+                                   ,pr_nrdconta  IN cecred.craprda.nrdconta%TYPE                 
+                                   ,pr_nraplica  IN cecred.craprda.nraplica%TYPE                 
+                                   ,pr_tpaplica  IN cecred.crapdtc.tpaplica%TYPE                 
+                                   ,pr_cdprodut  IN cecred.craprac.cdprodut%TYPE                 
+                                   ,pr_dtmvtolt  IN cecred.craprda.dtmvtolt%TYPE                 
+                                   ,pr_dtmvtsld  IN cecred.craprda.dtmvtolt%TYPE                 
                                    ,pr_tpconsul  IN VARCHAR2                              
-                                   ,pr_sldaplic OUT craprda.vlsdrdca%TYPE                 
+                                   ,pr_sldaplic OUT cecred.craprda.vlsdrdca%TYPE                 
                                    ,pr_idcritic OUT NUMBER                                
                                    ,pr_dssqlerr OUT VARCHAR2
                                    ,pr_cdcritic OUT NUMBER                                
                                    ,pr_dscritic OUT VARCHAR2) IS                          
   BEGIN
     DECLARE
-      vr_tbsaldo_rdca     APLI0001.typ_tab_saldo_rdca;
+      vr_tbsaldo_rdca     cecred.APLI0001.typ_tab_saldo_rdca;
       vr_tab_extrato_rdca cecred.APLI0002.typ_tab_extrato_rdca;
-      vr_tab_extrato      apli0005.typ_tab_extrato;
+      vr_tab_extrato      cecred.apli0005.typ_tab_extrato;
       vr_tab_erro  cecred.gene0001.typ_tab_erro;
       vr_vlresgat NUMBER;
       vr_vlrendim NUMBER;
@@ -513,8 +513,8 @@ DECLARE
       vr_txacumes NUMBER;                  
       vr_percirrf NUMBER;
       vr_vlsldapl NUMBER;
-      vr_dtmvtsld crapdat.dtmvtolt%TYPE := pr_dtmvtsld;
-      vr_cdagenci crapage.cdagenci%TYPE := 1;
+      vr_dtmvtsld cecred.crapdat.dtmvtolt%TYPE := pr_dtmvtsld;
+      vr_cdagenci cecred.crapage.cdagenci%TYPE := 1;
       vr_index_extrato_rdca PLS_INTEGER;
       vr_nmproint1               VARCHAR2 (100) := 'pc_busca_saldo_anterior';
       vr_des_reto                VARCHAR2 (100);
@@ -526,7 +526,7 @@ DECLARE
       vr_tbsaldo_rdca.DELETE();
 
       IF pr_tpaplica > 2 THEN
-        APLI0008.pc_lista_aplicacoes_progr(pr_cdcooper   => pr_cdcooper   
+        cecred.APLI0008.pc_lista_aplicacoes_progr(pr_cdcooper   => pr_cdcooper   
                                     ,pr_cdoperad   => '1'                 
                                     ,pr_nmdatela   => 'CUSAPL'            
                                     ,pr_idorigem   => 5                   
@@ -552,7 +552,7 @@ DECLARE
           RAISE vr_exc_saida_bus_sal_ant_1;
         END IF;
       ELSE
-        APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper   
+        cecred.APLI0001.pc_consulta_aplicacoes(pr_cdcooper   => pr_cdcooper   
                                        ,pr_cdagenci   => 1             
                                        ,pr_nrdcaixa   => 1             
                                        ,pr_nrdconta   => pr_nrdconta   
@@ -575,7 +575,7 @@ DECLARE
         END IF;
       END IF;
       
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+      cecred.GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
       IF vr_tbsaldo_rdca.exists(vr_tbsaldo_rdca.FIRST) THEN
         pr_sldaplic := vr_tbsaldo_rdca(vr_tbsaldo_rdca.FIRST).VLSDRDAD;
@@ -588,7 +588,7 @@ DECLARE
           IF vr_tbsaldo_rdca.exists(vr_idx) THEN
             vr_tab_extrato_rdca.DELETE;
             IF vr_tbsaldo_rdca(vr_idx).idtipapl = 'N' THEN
-              APLI0005.pc_busca_extrato_aplicacao(pr_cdcooper => pr_cdcooper       
+              cecred.APLI0005.pc_busca_extrato_aplicacao(pr_cdcooper => pr_cdcooper       
                                                  ,pr_cdoperad => '1'               
                                                  ,pr_nmdatela => 'EXTRDA'          
                                                  ,pr_idorigem => 5                 
@@ -611,7 +611,7 @@ DECLARE
               IF vr_cdcritic <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
                 RAISE vr_exc_saida_bus_sal_ant_1;
               ELSE
-                GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+                cecred.GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
                 IF vr_tab_extrato.COUNT > 0 THEN
                   FOR vr_contador IN vr_tab_extrato.FIRST..vr_tab_extrato.LAST LOOP
@@ -636,7 +636,7 @@ DECLARE
                 vr_dtmvtsld := vr_dtmvtsld - 1;
               END IF;
             ELSE
-              APLI0002.pc_consulta_extrato_rdca (pr_cdcooper    => pr_cdcooper      
+              cecred.APLI0002.pc_consulta_extrato_rdca (pr_cdcooper    => pr_cdcooper      
                                                 ,pr_cdageope    => 1                
                                                 ,pr_nrcxaope    => 1                
                                                 ,pr_cdoperad    => '1'              
@@ -664,7 +664,7 @@ DECLARE
                 END IF;
                 RAISE vr_exc_saida_bus_sal_ant_1;
               END IF;
-              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+              cecred.GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
 
             END IF;
 
@@ -718,14 +718,14 @@ DECLARE
     vr_dscritic  := NULL;
                 
     vr_dsdaviso := '<br><br>' || fn_get_time_char || vr_dspro002_E;
-    vr_qtlimerr := gene0001.fn_param_sistema('CRED',0,'LIMERRO_ENV_REG_CTD_B3');
-    vr_flenvreg := gene0001.fn_param_sistema('CRED',0,'FLG_ENV_REG_CUSTODIA_B3');
-    vr_flenvrgt := gene0001.fn_param_sistema('CRED',0,'FLG_ENV_RGT_CUSTODIA_B3');
+    vr_qtlimerr := cecred.gene0001.fn_param_sistema('CRED',0,'LIMERRO_ENV_REG_CTD_B3');
+    vr_flenvreg := cecred.gene0001.fn_param_sistema('CRED',0,'FLG_ENV_REG_CUSTODIA_B3');
+    vr_flenvrgt := cecred.gene0001.fn_param_sistema('CRED',0,'FLG_ENV_RGT_CUSTODIA_B3');
       
     pc_carrega_produtos_diferen;
     
     vr_qtlimerr := NVL(vr_qtlimerr,0);         
-    apli0007.pc_log(pr_cdcritic => 1201
+    cecred.apli0007.pc_log(pr_cdcritic => 1201
           ,pr_dscrilog => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
                           ' Inicio ' || vr_nmaction  ||
                           ' ' || vr_nmproint1 ||
@@ -746,22 +746,22 @@ DECLARE
       vr_dsparesp  := NULL;
       vr_dssqlerrm := NULL;                
       
-      OPEN BTCH0001.cr_crapdat(pr_cdcooper => rw_cop.cdcooper);
-        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-        IF BTCH0001.cr_crapdat%NOTFOUND THEN
-          CLOSE BTCH0001.cr_crapdat;
+      OPEN cecred.BTCH0001.cr_crapdat(pr_cdcooper => rw_cop.cdcooper);
+        FETCH cecred.BTCH0001.cr_crapdat INTO rw_crapdat;
+        IF cecred.BTCH0001.cr_crapdat%NOTFOUND THEN
+          CLOSE cecred.BTCH0001.cr_crapdat;
           vr_cdcritic := 1;
           vr_idcritic := 1;
           RAISE vr_exc_sai_LanArq_LopCop_1;
         ELSE
-          CLOSE BTCH0001.cr_crapdat;
+          CLOSE cecred.BTCH0001.cr_crapdat;
         END IF;
         
       vr_dtmvtolt_dat := rw_crapdat.dtmvtolt;
       
-      vr_dtinictd := to_date(gene0001.fn_param_sistema('CRED',rw_cop.cdcooper,'INIC_CUSTODIA_APLICA_B3'),'dd/mm/rrrr');
-      vr_vlinictd := to_number(gene0001.fn_param_sistema('CRED',rw_cop.cdcooper,'VLMIN_CUSTOD_APLICA_B3'),'FM999999990D00');
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
+      vr_dtinictd := to_date(cecred.gene0001.fn_param_sistema('CRED',rw_cop.cdcooper,'INIC_CUSTODIA_APLICA_B3'),'dd/mm/rrrr');
+      vr_vlinictd := to_number(cecred.gene0001.fn_param_sistema('CRED',rw_cop.cdcooper,'VLMIN_CUSTOD_APLICA_B3'),'FM999999990D00');
+      cecred.GENE0001.pc_set_modulo(pr_module => NULL, pr_action => vr_nmaction);
         
       IF vr_flenvreg = 'S' THEN
         vr_tab_craprac.delete();          
@@ -792,7 +792,7 @@ DECLARE
                 
           vr_qtcotas := fn_converte_valor_em_cota(rw_lcto.vllanmto);
             
-          select tbcapt_custodia_aplicacao_seq.nextval into vr_idaplicacao from dual;
+          select cecred.tbcapt_custodia_aplicacao_seq.nextval into vr_idaplicacao from dual;
     
             vr_tab_tbcapt_custodia_aplicacao(vr_idaplicacao).idaplicacao          := vr_idaplicacao;
             vr_tab_tbcapt_custodia_aplicacao(vr_idaplicacao).tpaplicacao          := rw_lcto.tpaplrdc;
@@ -802,7 +802,7 @@ DECLARE
             vr_tab_tbcapt_custodia_aplicacao(vr_idaplicacao).vlpreco_unitario     := vr_qtftcota;  
                                      
 
-            select tbcapt_custodia_lanctos_seq.nextval into vr_idlancamento from dual;
+            select cecred.tbcapt_custodia_lanctos_seq.nextval into vr_idlancamento from dual;
                              
             vr_tab_tbcapt_custodia_lanctos(vr_idlancamento).idlancamento      := vr_idlancamento;
             vr_tab_tbcapt_custodia_lanctos(vr_idlancamento).idaplicacao       := vr_idaplicacao;
@@ -856,7 +856,7 @@ DECLARE
         
       BEGIN
         FORALL idx IN INDICES OF vr_tab_tbcapt_custodia_aplicacao SAVE EXCEPTIONS
-          INSERT INTO TBCAPT_CUSTODIA_APLICACAO
+          INSERT INTO cecred.TBCAPT_CUSTODIA_APLICACAO
                  (idaplicacao
                  ,tpaplicacao
                  ,vlregistro
@@ -888,7 +888,7 @@ DECLARE
                
       BEGIN
         FORALL idx IN INDICES OF vr_tab_tbcapt_custodia_lanctos SAVE EXCEPTIONS
-          INSERT INTO TBCAPT_CUSTODIA_LANCTOS
+          INSERT INTO cecred.TBCAPT_CUSTODIA_LANCTOS
                 (idlancamento
                 ,idaplicacao
                 ,idtipo_arquivo
@@ -932,7 +932,7 @@ DECLARE
       BEGIN
                
         FORALL idx IN INDICES OF vr_tab_craprac SAVE EXCEPTIONS
-            UPDATE craprac
+            UPDATE cecred.craprac
                SET idaplcus = vr_tab_craprac(idx).idaplcus 
              WHERE ROWID    = vr_tab_craprac(idx).vr_rowid;
       EXCEPTION
@@ -952,7 +952,7 @@ DECLARE
       BEGIN
                
         FORALL idx IN INDICES OF vr_tab_craplac SAVE EXCEPTIONS                
-          UPDATE craplac
+          UPDATE cecred.craplac
              SET idlctcus = vr_tab_craplac(idx).idlctcus
            WHERE ROWID    = vr_tab_craplac(idx).vr_rowid;
       EXCEPTION
@@ -972,7 +972,7 @@ DECLARE
       BEGIN    
               
         FORALL idx IN INDICES OF vr_tab_craprda SAVE EXCEPTIONS 
-            UPDATE craprda
+            UPDATE cecred.craprda
                SET idaplcus =  vr_tab_craprda(idx).idaplcus
              WHERE ROWID    =  vr_tab_craprda(idx).vr_rowid;
           EXCEPTION
@@ -992,7 +992,7 @@ DECLARE
       BEGIN
                 
         FORALL idx IN INDICES OF vr_tab_craplap SAVE EXCEPTIONS  
-          UPDATE craplap
+          UPDATE cecred.craplap
              SET idlctcus = vr_tab_craplap(idx).idlctcus 
            WHERE ROWID    = vr_tab_craplap(idx).vr_rowid;
       EXCEPTION
@@ -1143,7 +1143,7 @@ DECLARE
                 IF vr_idx = 1 THEN
 
                   vr_qtcotas := rw_lcto_rgt.qtcotas;
-                  IF apli0007.fn_tem_carencia(pr_dtmvtapl => rw_lcto_rgt.dtmvtapl
+                  IF cecred.apli0007.fn_tem_carencia(pr_dtmvtapl => rw_lcto_rgt.dtmvtapl
                                     ,pr_qtdiacar => rw_lcto_rgt.qtdiacar
                                     ,pr_dtmvtres => rw_lcto_rgt.dtmvtolt) = 'N' THEN
                     vr_sldaplic := 0;
@@ -1214,7 +1214,7 @@ DECLARE
                       IF NOT cr_craplac%FOUND THEN
                         vr_qtcotas_resg := fn_busca_qtcotas_atualizado(rw_lcto_rgt.idaplcus);
                           
-                        apli0007.pc_log(pr_cdcritic => 1201
+                        cecred.apli0007.pc_log(pr_cdcritic => 1201
                               ,pr_dscrilog => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
                                               ' - '     || ' Cotas atualizadas - ' ||
                                               'cdcooper ' || rw_cop.cdcooper      || ' - ' ||
@@ -1238,7 +1238,7 @@ DECLARE
                       IF NOT cr_craplap%FOUND THEN
                         vr_qtcotas_resg := fn_busca_qtcotas_atualizado(rw_lcto_rgt.idaplcus);
                           
-                       apli0007.pc_log(pr_cdcritic => 1201
+                       cecred.apli0007.pc_log(pr_cdcritic => 1201
                               ,pr_dscrilog => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
                                               ' - '     || ' Cotas atualizadas - ' ||
                                               'cdcooper ' || rw_cop.cdcooper      || ' - ' ||
@@ -1257,7 +1257,7 @@ DECLARE
                   END IF;
                 END IF;
 
-              select tbcapt_custodia_lanctos_seq.nextval into vr_idlancamento from dual;   
+              select cecred.tbcapt_custodia_lanctos_seq.nextval into vr_idlancamento from dual;   
                
               vr_tab_tbcapt_custodia_lanctos(vr_idlancamento).idlancamento      := vr_idlancamento;
               vr_tab_tbcapt_custodia_lanctos(vr_idlancamento).idaplicacao       := rw_lcto_rgt.idaplcus;
@@ -1343,7 +1343,7 @@ DECLARE
           
         BEGIN               
           FORALL idx IN INDICES OF vr_tab_tbcapt_custodia_lanctos SAVE EXCEPTIONS                    
-            INSERT INTO TBCAPT_CUSTODIA_LANCTOS
+            INSERT INTO cecred.TBCAPT_CUSTODIA_LANCTOS
                      (idlancamento
                      ,idaplicacao
                      ,idtipo_arquivo
@@ -1384,7 +1384,7 @@ DECLARE
                   
         BEGIN                
           FORALL idx IN INDICES OF vr_tab_craplac SAVE EXCEPTIONS                
-            UPDATE craplac
+            UPDATE cecred.craplac
                SET idlctcus = vr_tab_craplac(idx).idlctcus
              WHERE ROWID =  vr_tab_craplac(idx).vr_rowid; 
         EXCEPTION
@@ -1403,7 +1403,7 @@ DECLARE
                     
         BEGIN                
           FORALL idx IN INDICES OF vr_tab_craplap SAVE EXCEPTIONS  
-            UPDATE craplap
+            UPDATE cecred.craplap
                SET idlctcus = vr_tab_craplap(idx).idlctcus 
              WHERE ROWID    = vr_tab_craplap(idx).vr_rowid;
         EXCEPTION
@@ -1422,7 +1422,7 @@ DECLARE
                 
         BEGIN                   
             FORALL idx IN INDICES OF vr_tab_tbcapt_custodia_aplicacao SAVE EXCEPTIONS
-            UPDATE tbcapt_custodia_aplicacao apl
+            UPDATE cecred.tbcapt_custodia_aplicacao apl
                SET apl.qtcotas =  greatest(0,apl.qtcotas-vr_tab_tbcapt_custodia_aplicacao(idx).qtcotas) 
                   ,apl.vlpreco_unitario = vr_tab_tbcapt_custodia_aplicacao(idx).vlpreco_unitario
              WHERE apl.idaplicacao      =  vr_tab_tbcapt_custodia_aplicacao(idx).idaplicacao;
@@ -1493,7 +1493,7 @@ DECLARE
     
     dbms_output.put_line(vr_dsdaviso);
     
-    apli0007.pc_log(pr_cdcritic => 1201
+    cecred.apli0007.pc_log(pr_cdcritic => 1201
           ,pr_dscrilog => gene0001.fn_busca_critica(pr_cdcritic => 1201) ||
                           '. Finalizado' ||
                           ' '      || vr_nmaction  ||
