@@ -59,7 +59,7 @@ BEGIN
   AND tnap.cdorigem_mensagem = 13;
 
   UPDATE tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'Cooperado,<br>Em #data_hora_transacao você recebeu um Pix no valor de #valorpix, de #nomepagador, mas ele foi contestado. <br> Isto significa que esta operação está sendo analisada e em até 11 dias você receberá um retorno. Por enquanto, o valor de #valor_bloqueado foi bloqueado, ou seja, ele está indisponível na sua conta. <br> Se a análise indicar que está tudo certo, o valor será liberado, caso contrário, o valor será devolvido para a pessoa que lhe enviou. <br> Esta é uma medida de segurança do Pix. Agradecemos a sua compreensão.'
+  SET tnmc.dshtml_mensagem = 'Cooperado,<br><br>Em #data_hora_transacao você recebeu um Pix no valor de #valorpix, de #nomepagador, mas ele foi contestado. <br> Isto significa que esta operação está sendo analisada e em até 11 dias você receberá um retorno. Por enquanto, o valor de #valor_bloqueado foi bloqueado, ou seja, ele está indisponível na sua conta. <br> Se a análise indicar que está tudo certo, o valor será liberado, caso contrário, o valor será devolvido para a pessoa que lhe enviou. <br><br> Esta é uma medida de segurança do Pix. Agradecemos a sua compreensão.'
   WHERE tnmc.cdmensagem = 7391
   AND tnmc.cdorigem_mensagem = 13;
   
