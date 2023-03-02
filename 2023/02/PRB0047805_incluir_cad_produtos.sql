@@ -2,15 +2,15 @@ DECLARE
 
    CURSOR cr_crapcop IS
      SELECT c.cdcooper, t.inpessoa, t.cdtipo_conta
-       FROM tbcc_tipo_conta_coop t
-          , crapcop c
+       FROM cecred.tbcc_tipo_conta_coop t
+          , cecred.crapcop c
       WHERE t.cdcooper = c.cdcooper
         AND c.flgativo = 1
         AND c.cdcooper <> 3;
         
 BEGIN
   
-  INSERT INTO tbcc_produto
+  INSERT INTO cecred.tbcc_produto
                  (cdproduto
                  ,dsproduto
                  ,flgitem_soa
@@ -30,7 +30,7 @@ BEGIN
   
   FOR dados IN cr_crapcop LOOP
     
-    INSERT INTO tbcc_produtos_coop
+    INSERT INTO cecred.tbcc_produtos_coop
                    (cdcooper
                    ,tpconta
                    ,cdproduto
@@ -46,7 +46,7 @@ BEGIN
     
   END LOOP;
   
-  INSERT INTO tbcc_produto
+  INSERT INTO cecred.tbcc_produto
                  (cdproduto
                  ,dsproduto
                  ,flgitem_soa
@@ -66,7 +66,7 @@ BEGIN
   
   FOR dados IN cr_crapcop LOOP
     
-    INSERT INTO tbcc_produtos_coop
+    INSERT INTO cecred.tbcc_produtos_coop
                    (cdcooper
                    ,tpconta
                    ,cdproduto
@@ -82,7 +82,7 @@ BEGIN
     
   END LOOP;
   
-  INSERT INTO tbcc_produto
+  INSERT INTO cecred.tbcc_produto
                  (cdproduto
                  ,dsproduto
                  ,flgitem_soa
@@ -102,7 +102,7 @@ BEGIN
   
   FOR dados IN cr_crapcop LOOP
     
-    INSERT INTO tbcc_produtos_coop
+    INSERT INTO cecred.tbcc_produtos_coop
                    (cdcooper
                    ,tpconta
                    ,cdproduto
@@ -118,7 +118,7 @@ BEGIN
     
   END LOOP;
   
-  INSERT INTO tbcc_produto
+  INSERT INTO cecred.tbcc_produto
                  (cdproduto
                  ,dsproduto
                  ,flgitem_soa
@@ -138,7 +138,7 @@ BEGIN
   
   FOR dados IN cr_crapcop LOOP
     
-    INSERT INTO tbcc_produtos_coop
+    INSERT INTO cecred.tbcc_produtos_coop
                    (cdcooper
                    ,tpconta
                    ,cdproduto
