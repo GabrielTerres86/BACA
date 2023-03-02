@@ -42,12 +42,12 @@ update cecred.crapscn set cecred.crapscn.dsnomres = 'DARF153' where cecred.craps
 update cecred.crapscn set cecred.crapscn.dsnomres = 'DARF' where cecred.crapscn.cdempres = 'D0100';  
 update cecred.crapscn set cecred.crapscn.dsnomres = 'DAE' where cecred.crapscn.cdempres = 'D0432';
 
-insert into cecred.tbconv_receita (cdconven, cdhisrep) values ('D0432', 3467);
-insert into cecred.tbconv_receita (cdconven, cdhisrep) values ('D0328', 3467);
-insert into cecred.tbconv_receita (cdconven, cdhisrep) values ('D0064', 3467);
-insert into cecred.tbconv_receita (cdconven, cdhisrep) values ('D0385', 3467);
-insert into cecred.tbconv_receita (cdconven, cdhisrep) values ('D0153', 3467);
-insert into cecred.tbconv_receita (cdconven, cdhisrep) values ('D0100', 3467);
+insert into convenios.tbconv_receita_repasse (cdconven, cdhisrep) values ('D0432', 3467);
+insert into convenios.tbconv_receita_repasse (cdconven, cdhisrep) values ('D0328', 3467);
+insert into convenios.tbconv_receita_repasse (cdconven, cdhisrep) values ('D0064', 3467);
+insert into convenios.tbconv_receita_repasse (cdconven, cdhisrep) values ('D0385', 3467);
+insert into convenios.tbconv_receita_repasse (cdconven, cdhisrep) values ('D0153', 3467);
+insert into convenios.tbconv_receita_repasse (cdconven, cdhisrep) values ('D0100', 3467);
 
 insert into cecred.tbfin_remessa_fluxo_caixa (CDREMESSA, NMREMESSA, CDOPERADOR, DTALTERACAO, TPFLUXO_ENTRADA, TPFLUXO_SAIDA, FLREMESSA_DINAMICA) values (21, 'DAS RECEITA FEDERAL', '1', to_date('15-02-2021 23:03:07', 'dd-mm-yyyy hh24:mi:ss'), '1', '2', 1);
 insert into cecred.tbfin_remessa_fluxo_caixa (CDREMESSA, NMREMESSA, CDOPERADOR, DTALTERACAO, TPFLUXO_ENTRADA, TPFLUXO_SAIDA, FLREMESSA_DINAMICA) values (22, 'DAE RECEITA FEDERAL', '1', to_date('15-02-2021 23:03:07', 'dd-mm-yyyy hh24:mi:ss'), '1', '2', 1);
