@@ -4,7 +4,7 @@ BEGIN
   
   UPDATE tbgen_notif_msg_cadastro tnmc
   SET tnmc.dshtml_mensagem = 'Cooperado,<br/><br/>Foi devolvido #valor_devolucao_pix de um Pix recebido em #data_hora_transacao.<br/><br/>Destinatário: #nome_pagador<br/>Valor da transação original: #valor_pix<br/>Instituição: #instituicao_pagador<br/>Identificação: #identificao_transacao<br/>Descrição:<br/><br/>Acesse o comprovante ou confira o extrato da sua conta corrente.',
-  tnmc.dstexto_mensagem = 'Foi devolvido #valor_devolucao_pix de um Pix. A transação já foi concluída.'
+  tnmc.dstexto_mensagem = 'Foi devolvido #valor_devolucao_pix de um Pix. A transação já foi concluída.',
   tnmc.dstexto_botao_acao_mobile = 'Ver Comprovante'
   WHERE tnmc.cdmensagem = 12416
   AND tnmc.cdorigem_mensagem = 13;
