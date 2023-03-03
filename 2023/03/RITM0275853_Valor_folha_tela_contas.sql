@@ -58,7 +58,7 @@ DECLARE
     CURSOR cr_tbfolha_lanaut(pr_cdcooper crapcop.cdcooper%TYPE
                             ,pr_nrdconta craplcm.nrdconta%TYPE
                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
-      SELECT /*+ INDEX(lan TBFOLHA_LANAUT_IDX01) */ lan.vlrenda, lan.dtmvtolt, his.dshistor, his.cdhistor
+      SELECT lan.vlrenda, lan.dtmvtolt, his.dshistor, his.cdhistor
         FROM tbfolha_lanaut lan, craphis his
        WHERE lan.cdcooper = pr_cdcooper
          AND lan.nrdconta = pr_nrdconta
