@@ -1,6 +1,3 @@
-select * from tbgen_notif_automatica_prm a where a.cdorigem_mensagem = 13;
-select * from tbgen_notif_msg_cadastro a where a.cdorigem_mensagem = 13;
-
 DECLARE
 
 V_CODIGO_MENSAGEM TBGEN_NOTIF_MSG_CADASTRO.cdmensagem%TYPE;
