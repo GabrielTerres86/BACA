@@ -59,70 +59,70 @@ BEGIN
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 1090607;
   v_dados(v_dados.last()).vr_nrctremp := 339567;
-  v_dados(v_dados.last()).vr_vllanmto := 3857.25;
+  v_dados(v_dados.last()).vr_vllanmto := 3506.92;
   v_dados(v_dados.last()).vr_cdhistor := 3919;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 1101897;
   v_dados(v_dados.last()).vr_nrctremp := 344567;
-  v_dados(v_dados.last()).vr_vllanmto := 32.48;
+  v_dados(v_dados.last()).vr_vllanmto := 220.69;
   v_dados(v_dados.last()).vr_cdhistor := 3918;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 1106880;
   v_dados(v_dados.last()).vr_nrctremp := 345685;
-  v_dados(v_dados.last()).vr_vllanmto := 1497.25;
+  v_dados(v_dados.last()).vr_vllanmto := 146.78;
   v_dados(v_dados.last()).vr_cdhistor := 3883;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 1019660;
   v_dados(v_dados.last()).vr_nrctremp := 362952;
-  v_dados(v_dados.last()).vr_vllanmto := 18.6;
+  v_dados(v_dados.last()).vr_vllanmto := 23.87;
   v_dados(v_dados.last()).vr_cdhistor := 3917;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 771511;
   v_dados(v_dados.last()).vr_nrctremp := 367096;
-  v_dados(v_dados.last()).vr_vllanmto := 19.19;
+  v_dados(v_dados.last()).vr_vllanmto := 21.62;
   v_dados(v_dados.last()).vr_cdhistor := 3919;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 575046;
   v_dados(v_dados.last()).vr_nrctremp := 383395;
-  v_dados(v_dados.last()).vr_vllanmto := 3506.92;
+  v_dados(v_dados.last()).vr_vllanmto := 88.36;
   v_dados(v_dados.last()).vr_cdhistor := 3883;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 15755223;
   v_dados(v_dados.last()).vr_nrctremp := 420713;
-  v_dados(v_dados.last()).vr_vllanmto := 220.69;
+  v_dados(v_dados.last()).vr_vllanmto := 28.47;
   v_dados(v_dados.last()).vr_cdhistor := 3917;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 15699927;
   v_dados(v_dados.last()).vr_nrctremp := 427146;
-  v_dados(v_dados.last()).vr_vllanmto := 146.78;
+  v_dados(v_dados.last()).vr_vllanmto := 67.42;
   v_dados(v_dados.last()).vr_cdhistor := 3917;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 873926;
   v_dados(v_dados.last()).vr_nrctremp := 433246;
-  v_dados(v_dados.last()).vr_vllanmto := 23.87;
+  v_dados(v_dados.last()).vr_vllanmto := 70.76;
   v_dados(v_dados.last()).vr_cdhistor := 3919;
 
   v_dados.extend();
   v_dados(v_dados.last()).vr_cdcooper := 2;
   v_dados(v_dados.last()).vr_nrdconta := 16089367;
   v_dados(v_dados.last()).vr_nrctremp := 434762;
-  v_dados(v_dados.last()).vr_vllanmto := 21.62;
+  v_dados(v_dados.last()).vr_vllanmto := 123.64;
   v_dados(v_dados.last()).vr_cdhistor := 3919;
 
   FOR x IN NVL(v_dados.first(), 1) .. nvl(v_dados.last(), 0) LOOP
