@@ -1,6 +1,5 @@
 BEGIN
   DECLARE
-  
     CURSOR cr_crapcob IS
       SELECT c.cdcooper
             ,c.rowid
@@ -430,15 +429,12 @@ BEGIN
                          ,99098514);
   
     rw_crapcob  cr_crapcob%ROWTYPE;
-    pr_cdcooper crapcop.cdcooper%TYPE := 3;
-    vr_linha    PLS_INTEGER;
+    pr_cdcooper crapcop.cdcooper%TYPE;
     vr_dscritic VARCHAR2(2000);
-  
+    vr_exception EXCEPTION;
   BEGIN
-  
+    pr_cdcooper := 3;
     FOR rw_crapcob IN cr_crapcob LOOP
-      vr_linha := vr_linha + 1;
-    
       INSERT INTO crapdda
         (cdcooper
         ,dtsolici
@@ -447,25 +443,19 @@ BEGIN
         ,cobrowid)
       VALUES
         (pr_cdcooper
-        ,TRUNC(SYSDATE) -->dtsolici
-        ,TRUNC(SYSDATE) -->dtmvtolt
-        ,'N' -->flgerado
+        ,SYSDATE
+        ,TRUNC(SYSDATE)
+        ,'N'
         ,rw_crapcob.rowid);
-    
     END LOOP;
-  
     COMMIT;
-  
-    COBRANCA.enviarBaixaEfetiva(pr_cdcooper => 3, pr_dscritic => vr_dscritic);
-  
+    COBRANCA.enviarBaixaEfetiva(pr_cdcooper => pr_cdcooper, pr_dscritic => vr_dscritic);
     IF TRIM(vr_dscritic) IS NOT NULL THEN
-      SISTEMA.excecaoInterna(pr_compleme => 'Erro ao realizar a chamada COBRANCA.enviarBaixaEfetiva: ' ||
-                                            vr_dscritic);
+      RAISE vr_exception;
     END IF;
-  
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;
-      SISTEMA.excecaoInterna(pr_compleme => 'INC0257424');
+      SISTEMA.excecaoInterna(pr_compleme => 'INC0257424:' || vr_dscritic);
   END;
 END;
