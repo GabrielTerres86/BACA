@@ -22,12 +22,11 @@ DECLARE
       , t.rowid       idregttl
       , t.vlsalari
       , a.flgrestr
-    FROM CECRED.tbcadast_colaborador c
-    JOIN CECRED.crapttl t ON c.nrcpfcgc = t.nrcpfcgc
-                             AND c.cdcooper = t.cdcooper
-    JOIN CECRED.crapass a ON t.cdcooper = a.cdcooper
-                             and t.nrdconta = a.nrdconta
-                             and c.nrcpfcgc = a.nrcpfcgc
+    from CECRED.tbcadast_colaborador c
+    join crapass a on c.nrcpfcgc = a.nrcpfcgc
+    join crapttl t on a.cdcooper = t.cdcooper
+                      and a.nrdconta = t.nrdconta
+                      and a.nrcpfcgc = t.nrcpfcgc
     WHERE a.dtdemiss is null
       AND c.flgativo = 'A';
   
@@ -312,7 +311,6 @@ BEGIN
   END LOOP;
   
   CLOSE cr_colaborador;
-  
   
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'COMMIT;');
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'EXCEPTION WHEN OTHERS THEN ROLLBACK; RAISE_APPLICATION_ERROR(-20000, SQLERRM); END;');
