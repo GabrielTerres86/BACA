@@ -23,8 +23,8 @@ DECLARE
       , t.vlsalari
       , a.flgrestr
     from CECRED.tbcadast_colaborador c
-    join crapass a on c.nrcpfcgc = a.nrcpfcgc
-    join crapttl t on a.cdcooper = t.cdcooper
+    join CECRED.crapass a on c.nrcpfcgc = a.nrcpfcgc
+    join CECRED.crapttl t on a.cdcooper = t.cdcooper
                       and a.nrdconta = t.nrdconta
                       and a.nrcpfcgc = t.nrcpfcgc
     WHERE a.dtdemiss is null
