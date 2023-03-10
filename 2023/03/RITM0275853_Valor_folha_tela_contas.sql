@@ -49,7 +49,7 @@ DECLARE
     CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_nrdconta crapass.nrdconta%TYPE) IS                              
       SELECT ass.nrdconta
-        FROM crapass ass
+        FROM cecred.crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
@@ -58,7 +58,7 @@ DECLARE
                             ,pr_nrdconta craplcm.nrdconta%TYPE
                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
       SELECT lan.vlrenda, lan.dtmvtolt, his.dshistor, his.cdhistor
-        FROM tbfolha_lanaut lan, craphis his
+        FROM cecred.tbfolha_lanaut lan, cecred.craphis his
        WHERE lan.cdcooper = pr_cdcooper
          AND lan.nrdconta = pr_nrdconta
          AND lan.dtmvtolt >= pr_dtmvtolt
