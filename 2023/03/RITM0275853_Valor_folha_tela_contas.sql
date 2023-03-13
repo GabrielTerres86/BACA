@@ -22,12 +22,11 @@ DECLARE
       , t.rowid       idregttl
       , t.vlsalari
       , a.flgrestr
-    FROM CECRED.tbcadast_colaborador c
-    JOIN CECRED.crapttl t ON c.nrcpfcgc = t.nrcpfcgc
-                             AND c.cdcooper = t.cdcooper
-    JOIN CECRED.crapass a ON t.cdcooper = a.cdcooper
-                             and t.nrdconta = a.nrdconta
-                             and c.nrcpfcgc = a.nrcpfcgc
+    from CECRED.tbcadast_colaborador c
+    join CECRED.crapass a on c.nrcpfcgc = a.nrcpfcgc
+    join CECRED.crapttl t on a.cdcooper = t.cdcooper
+                      and a.nrdconta = t.nrdconta
+                      and a.nrcpfcgc = t.nrcpfcgc
     WHERE a.dtdemiss is null
       AND c.flgativo = 'A';
   
@@ -50,7 +49,7 @@ DECLARE
     CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_nrdconta crapass.nrdconta%TYPE) IS                              
       SELECT ass.nrdconta
-        FROM crapass ass
+        FROM cecred.crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
@@ -59,7 +58,7 @@ DECLARE
                             ,pr_nrdconta craplcm.nrdconta%TYPE
                             ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
       SELECT lan.vlrenda, lan.dtmvtolt, his.dshistor, his.cdhistor
-        FROM tbfolha_lanaut lan, craphis his
+        FROM cecred.tbfolha_lanaut lan, cecred.craphis his
        WHERE lan.cdcooper = pr_cdcooper
          AND lan.nrdconta = pr_nrdconta
          AND lan.dtmvtolt >= pr_dtmvtolt
@@ -312,7 +311,6 @@ BEGIN
   END LOOP;
   
   CLOSE cr_colaborador;
-  
   
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'COMMIT;');
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'EXCEPTION WHEN OTHERS THEN ROLLBACK; RAISE_APPLICATION_ERROR(-20000, SQLERRM); END;');
