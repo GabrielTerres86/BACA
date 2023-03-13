@@ -8,7 +8,7 @@ DECLARE
   rw_crapdat cecred.btch0001.cr_crapdat%ROWTYPE;
 
   vr_cdcooper cecred.crapcop.cdcooper%TYPE := 1;
-  vr_nrdconta cecred.crapass.nrdconta%TYPE := 89702239; --conta prod 10297707
+  vr_nrdconta cecred.crapass.nrdconta%TYPE := 10297707;
   vr_nrctremp cecred.craplem.nrctremp%TYPE := 3093689;
 
   vr_cdhistor cecred.craplem.cdhistor%TYPE;
@@ -44,8 +44,8 @@ DECLARE
           ,pep.vlmrapar = pr_vlmrapar
           ,pep.vlpagmta = 0.00
           ,pep.vlpagmra = 0.00
-          ,pep.inliquid = 0 --??
-          ,pep.dtultpag = NULL --??
+          ,pep.inliquid = 0
+          ,pep.dtultpag = NULL
           ,pep.vlpagpar = 0.00
      WHERE pep.cdcooper = pr_cdcooper
        AND pep.nrdconta = pr_nrdconta
@@ -80,7 +80,7 @@ BEGIN
   CLOSE cr_crapass;
 
   vr_cdhistor := 3274;
-  vr_vllanmto := 3423.29;
+  vr_vllanmto := 3607.15;
 
   cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => vr_cdcooper,
                                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
@@ -111,9 +111,9 @@ BEGIN
   END IF;
 
   vr_nrparepr := 24;
-  vr_vlparepr := 3.423.29; --??
+  vr_vlparepr := 3633.76;
   vr_vlmtapar := 72.68;
-  vr_vlmrapar := 161.46;
+  vr_vlmrapar := 150.94;
 
   pc_update_crappep_crapepr(pr_cdcooper => vr_cdcooper,
                             pr_nrdconta => vr_nrdconta,
