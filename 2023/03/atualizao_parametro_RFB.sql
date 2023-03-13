@@ -1,3 +1,4 @@
+BEGIN
 UPDATE CECRED.TBCONV_CANALCOOP_LIBERADO CL
    SET CL.FLGLIBERADO = 1  --ativar
  WHERE CL.CDCANAL = 2   --apenas caixa
@@ -6,3 +7,5 @@ UPDATE CECRED.TBCONV_CANALCOOP_LIBERADO CL
                              WHERE LIB.CDCOOPER = 5
                                AND LIB.CDEMPRES = 'D0100'
                                AND LIB.CDCONVEN = 0);
+  COMMIT;
+END;							   
