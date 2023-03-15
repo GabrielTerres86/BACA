@@ -6,8 +6,8 @@ DECLARE
   vr_nmarq          VARCHAR2(100)  := 'ROLLBACK_INC0255693_1.sql';
   vr_exc_saida      EXCEPTION;
   vcount            NUMBER;
-  vr_tiporecus      CECRED.tbseg_prestamista.tprecusa;
-  vr_motivorec      CECRED.tbseg_prestamista.cdmotrec;
+  vr_tiporecus      CECRED.tbseg_prestamista.tprecusa%TYPE;
+  vr_motivorec      CECRED.tbseg_prestamista.cdmotrec%TYPE;
   vr_des_xml        CLOB;
   vr_tpregist       VARCHAR2(200);
   vr_nrlinha        NUMBER(9) := 0;
@@ -255,12 +255,12 @@ DECLARE
     END;
 
   PROCEDURE pc_leitor(pr_nrproposta IN VARCHAR2,
-                      pr_tipo       OUT CECRED.tbseg_prestamista.tprecusa,
-                      pr_motivo     OUT CECRED.tbseg_prestamista.cdmotrec) IS
+                      pr_tipo       OUT CECRED.tbseg_prestamista.tprecusa%TYPE,
+                      pr_motivo     OUT CECRED.tbseg_prestamista.cdmotrec%TYPE) IS
                       
-  vr_proposta_idx  CECRED.tbseg_prestamista.nrproposta;
-  vr_tipo_idx      CECRED.tbseg_prestamista.tprecusa;
-  vr_motivo_idx    CECRED.tbseg_prestamista.cdmotrec;
+  vr_proposta_idx  CECRED.tbseg_prestamista.nrproposta%TYPE;
+  vr_tipo_idx      CECRED.tbseg_prestamista.tprecusa%TYPE;
+  vr_motivo_idx    CECRED.tbseg_prestamista.cdmotrec%TYPE;
   vr_separador_idx VARCHAR2(1000);
 
   vr_texto varchar2(20000) := '770359166346#8$207,
