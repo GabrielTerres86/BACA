@@ -258,10 +258,10 @@ DECLARE
                       pr_tipo       OUT CECRED.tbseg_prestamista.tprecusa%TYPE,
                       pr_motivo     OUT CECRED.tbseg_prestamista.cdmotrec%TYPE) IS
                       
-  vr_proposta_idx  CECRED.tbseg_prestamista.nrproposta%TYPE;
-  vr_tipo_idx      CECRED.tbseg_prestamista.tprecusa%TYPE;
-  vr_motivo_idx    CECRED.tbseg_prestamista.cdmotrec%TYPE;
-  vr_separador_idx VARCHAR2(1000);
+  vr_proposta_idx  NUMBER;
+  vr_tipo_idx      NUMBER;
+  vr_motivo_idx    NUMBER;
+  vr_separador_idx NUMBER;
 
   vr_texto varchar2(20000) := '770359166346#8$207,
 770354947285#8$207,
@@ -391,9 +391,13 @@ BEGIN
   pr_tipo     := SUBSTR(vr_texto,
                         vr_tipo_idx + 1,
                         vr_motivo_idx - vr_tipo_idx - 1);
-  pr_motivo   := SUBSTR(vr_texto,
-                        vr_motivo_idx + 1,
-                        vr_separador_idx - vr_motivo_idx - 1);
+  BEGIN
+    pr_motivo   := TO_NUMBER(SUBSTR(vr_texto,
+                          vr_motivo_idx + 1,
+                          vr_separador_idx - vr_motivo_idx - 1));
+  EXCEPTION WHEN OTHERS THEN
+    pr_motivo   := 193;
+  END;
 END;
 
   PROCEDURE pc_escreve_xml(pr_des_dados IN VARCHAR2) IS
