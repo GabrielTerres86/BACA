@@ -75,7 +75,7 @@ BEGIN
   vtCnaes(3).vlrrisco  := 1;
   
   vtCnaes(4).cdcnae    := 1610205;
-  vtCnaes(4).dscnae    := 'Serviço de tratamento de madeira realizado sob contrato';
+  vtCnaes(4).dscnae    := 'Servico de tratamento de madeira realizado sob contrato';
   vtCnaes(4).flserasa  := 1;
   vtCnaes(4).vlrrisco  := 1;
   
@@ -90,12 +90,12 @@ BEGIN
   vtCnaes(6).vlrrisco  := 2;
   
   vtCnaes(7).cdcnae    := 5231103;
-  vtCnaes(7).dscnae    := 'Gestão de terminais aquaviários';
+  vtCnaes(7).dscnae    := 'Gestao de terminais aquaviarios';
   vtCnaes(7).flserasa  := 1;
   vtCnaes(7).vlrrisco  := 2;
   
   vtCnaes(8).cdcnae    := 6438799;
-  vtCnaes(8).dscnae    := 'Outras instituições de intermediação não monetária não especificadas anteriormente';
+  vtCnaes(8).dscnae    := 'Outras instituicoes de intermediacao nao monetaria nao especificadas anteriormente';
   vtCnaes(8).flserasa  := 1;
   vtCnaes(8).vlrrisco  := 3;
   
