@@ -7,5 +7,5 @@ Update cecred.craplau l  set l.CDSEQTEL =  '202304400288' where l.IDLANCTO = 772
 Update cecred.craplau l  set l.CDSEQTEL =  '202304497133' where l.IDLANCTO = 77294282;
 Update cecred.craplau l  set l.CDSEQTEL =  '202212152359' where l.IDLANCTO = 77293914;
 Update cecred.craplau l  set l.CDSEQTEL =  '202304641974' where l.IDLANCTO = 77626140;
-commit
+commit;
 end;
