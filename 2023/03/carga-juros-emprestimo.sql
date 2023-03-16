@@ -34,7 +34,7 @@ DECLARE
        AND e.cdcooper = r.cdcooper
        AND e.nrdconta = r.nrdconta
        AND e.nrctremp = r.nrctremp
-       AND r.cdcooper IN (8, 10, 12)
+       AND r.cdcooper IN (1, 8, 10, 12, 16)
        AND r.cdcooper = c.cdcooper
        AND r.cdmodali IN (299,499)
        AND r.inddocto = 1
@@ -43,6 +43,21 @@ DECLARE
   rw_principal cr_principal%ROWTYPE;
   
 BEGIN
+ 
+ UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdcooper IN (1, 16) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
+ UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdacesso = 'TPEXEC_SAIDAS_CENTRAL';
+ 
+ UPDATE gestaoderisco.tbrisco_central_carga c SET c.cdstatus = 7;
+ 
+ UPDATE cecred.tbrisco_operacoes
+    SET dhtransmissao = to_date('01/01/2000 08:00:00', 'DD/MM/RRRR HH24:MI:SS')
+  WHERE dhalteracao IS NOT NULL
+    AND dhtransmissao IS NULL;
+   
+ UPDATE cecred.crapnrc
+    SET dhtransmissao = to_date('01/01/2000 08:00:00', 'DD/MM/RRRR HH24:MI:SS')
+  WHERE dhalteracao IS NOT NULL
+    AND dhtransmissao IS NULL;
  
  DELETE FROM gestaoderisco.tbrisco_juros_emprestimo WHERE cdcooper IN (8, 10, 12);
  
