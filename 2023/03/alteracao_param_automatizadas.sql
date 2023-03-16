@@ -1,0 +1,17 @@
+BEGIN
+  
+  UPDATE CRAPPCO
+  SET    DSCONTEU = 1
+  WHERE  CDCOOPER = 3
+  AND    CDPARTAR IN (SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'CHAVE_LIGA_NOVO_BIRO_IBRATAN');
+
+  UPDATE CRAPPRM
+  SET    DSVLRPRM = 'file:/u03/app/oracle/admin/ayllosp_03200/ibratan_wallet'
+  WHERE  CDACESSO = 'PATH_WALLET_IBRATAN';
+  
+  COMMIT;
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
