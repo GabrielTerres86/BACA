@@ -109,7 +109,7 @@ DECLARE
     END;
   
     dbms_output.put_line(' ');
-    dbms_output.put_line('   ParÃ¢metros (LCM VLR):');
+    dbms_output.put_line('   Parâmetros (LCM VLR):');
     dbms_output.put_line('     Cooperativa....: ' || prm_cdcooper);
     dbms_output.put_line('     Conta..........: ' || prm_nrdconta);
     dbms_output.put_line('     Data...........: ' || To_Char(vr_dtmvtolt, 'dd/mm/yyyy'));
@@ -142,7 +142,7 @@ DECLARE
     IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_erro;
     ELSE
-      dbms_output.put_line('   LanÃ§amento do HistÃ³rico ' || prm_cdhistor || ' efetuado com Sucesso na Coop\Conta ' || prm_cdcooper || ' ' || prm_nrdconta );
+      dbms_output.put_line('   Lançamento do Histórico ' || prm_cdhistor || ' efetuado com Sucesso na Coop\Conta ' || prm_cdcooper || ' ' || prm_nrdconta );
     END IF;
   
     registrarVERLOG(pr_cdcooper => prm_cdcooper,
@@ -186,13 +186,13 @@ DECLARE
     CLOSE cr_sld_prj;
   
     IF NOT vr_found THEN
-      vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro ao buscar Saldo Prejuizo Cop/Cta (' || prm_cdcooper || '/' || prm_nrdconta || ')';
+      vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro ao buscar Saldo Prejuizo Cop/Cta (' || prm_cdcooper || '/' || prm_nrdconta || ')';
       RAISE vr_erro;
     END IF;
     vr_found := NULL;
   
     dbms_output.put_line(' ');
-    dbms_output.put_line('   ParÃ¢metros (prc_atlz_prejuizo):');
+    dbms_output.put_line('   Parâmetros (prc_atlz_prejuizo):');
     dbms_output.put_line('     Cooperativa....: ' || prm_cdcooper);
     dbms_output.put_line('     Conta..........: ' || prm_nrdconta);
     dbms_output.put_line('     Valor..........: ' || prm_vllanmto);
@@ -201,7 +201,7 @@ DECLARE
     dbms_output.put_line('     Sld Prej. Antes: ' || vr_vlsdprej);
   
     IF prm_tipoajus IS NULL OR prm_tipoajus NOT IN ('E', 'I') THEN
-      vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro: Tipo de Ajuste invalido! (' || prm_tipoajus || ')';
+      vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: Tipo de Ajuste invalido! (' || prm_tipoajus || ')';
       RAISE vr_erro;
     END IF;
   
@@ -213,7 +213,7 @@ DECLARE
     CLOSE cr_his;
   
     IF NOT vr_found THEN
-      vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro: Historico nÃ£o encontrato Cop/Hist (' || prm_cdcooper || '/' || prm_cdhistor || ')';
+      vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: Historico não encontrato Cop/Hist (' || prm_cdcooper || '/' || prm_cdhistor || ')';
       RAISE vr_erro;
     END IF;
   
@@ -240,7 +240,7 @@ DECLARE
            AND a.idprejuizo = vr_idprejuizo;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro: ' || SubStr(SQLERRM, 1, 255);
+          vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: ' || SubStr(SQLERRM, 1, 255);
           RAISE vr_erro;
       END;
     ELSE
@@ -252,15 +252,15 @@ DECLARE
            AND a.idprejuizo = vr_idprejuizo;
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao Atualizar Valor Saldo PrejuÃ­zo. Erro: ' || SubStr(SQLERRM, 1, 255);
+          vr_dscritic := 'Erro ao Atualizar Valor Saldo Prejuízo. Erro: ' || SubStr(SQLERRM, 1, 255);
           RAISE vr_erro;
       END;
     END IF;
   
     IF Nvl(SQL%ROWCOUNT, 0) > 0 THEN
-      dbms_output.put_line('   Atualizado Saldo Devedor PrejuÃ­zo: ' || Nvl(SQL%ROWCOUNT, 0) || ' registro(s).');
+      dbms_output.put_line('   Atualizado Saldo Devedor Prejuízo: ' || Nvl(SQL%ROWCOUNT, 0) || ' registro(s).');
     ELSE
-      vr_dscritic := 'Conta nÃ£o encontrada. Cooperativa: ' || prm_cdcooper || ' | Conta: ' || prm_nrdconta;
+      vr_dscritic := 'Conta não encontrada. Cooperativa: ' || prm_cdcooper || ' | Conta: ' || prm_nrdconta;
       RAISE vr_erro;
     END IF;
   
@@ -367,7 +367,7 @@ DECLARE
   
     IF rw_crapass.inprejuz = 1 THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'A conta informada jÃ¡ estÃ¡ marcada como "Em prejuÃ­zo".';
+      vr_dscritic := 'A conta informada já está marcada como "Em prejuízo".';
       RAISE vr_exc_saida;
     END IF;
   
@@ -378,7 +378,7 @@ DECLARE
                                                pr_dscritic       => vr_dscritic);  
     IF nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       vr_cdcritic := 0;
-      vr_dscritic := 'Erro ao cancelar produtos/serviÃ§os para a conta ' || pr_nrdconta;
+      vr_dscritic := 'Erro ao cancelar produtos/serviços para a conta ' || pr_nrdconta;
       RAISE vr_exc_saida;
     END IF;
   
@@ -516,7 +516,7 @@ DECLARE
     END;
   
     dbms_output.put_line(' ');
-    dbms_output.put_line('   ParÃ¢metros (ATZ TRANSIT):');
+    dbms_output.put_line('   Parâmetros (ATZ TRANSIT):');
     dbms_output.put_line('     Cooperativa....: ' || prm_cdcooper);
     dbms_output.put_line('     Conta..........: ' || prm_nrdconta);
     dbms_output.put_line('     Data...........: ' || To_Char(vr_dtmvtolt, 'dd/mm/yyyy'));
@@ -533,7 +533,7 @@ DECLARE
     IF Nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_erro;
     ELSE
-      dbms_output.put_line('   LanÃ§amento Credito Conta Transitoria efetuado com Sucesso na Coop/Conta ' || prm_cdcooper || '/' || prm_nrdconta || '.');
+      dbms_output.put_line('   Lançamento Credito Conta Transitoria efetuado com Sucesso na Coop/Conta ' || prm_cdcooper || '/' || prm_nrdconta || '.');
     END IF;
   
     registrarVERLOG(pr_cdcooper => prm_cdcooper,
@@ -567,7 +567,7 @@ DECLARE
     vr_cdcritic NUMBER;
     vr_dscritic VARCHAR2(1000);
   BEGIN
-    IF pr_cdhistor = 2408 or pr_cdhistor = 2722 THEN
+    IF pr_cdhistor = 2408 THEN
       prc_gera_lct(prm_cdcooper => pr_cdcooper,
                    prm_nrdconta => pr_nrdconta,
                    prm_vllanmto => pr_vllanmto,
@@ -580,7 +580,7 @@ DECLARE
                         prm_tipoajus => 'I');
     END IF;
   
-    IF pr_cdhistor = 2721 or pr_cdhistor = 2719 THEN
+    IF pr_cdhistor = 2721 THEN
       prc_gera_lct(prm_cdcooper => pr_cdcooper,
                    prm_nrdconta => pr_nrdconta,
                    prm_vllanmto => pr_vllanmto,
@@ -702,9 +702,7 @@ BEGIN
 															'8;927339;2721;1200,00;0;0|' ||
 															'14;1126740;2408;13,49;0;0|' ||
 															'14;1150493;2408;69,41;0;0|' ||
-															'1;1565927;2722;2176,04;0;0|' ||
-															'1;1565927;2719;2176,04;0;0|' ||
-															'1;1565927;2738;2176,04;0;0|' ||
+															'1;1565927;2738;2176,04;0;0|', ||
 															'12;547912;2721;3,90;0;0|' ||
 															'12;930797;2721;11,81;0;0|' ||
 															'12;931981;2721;10,57;0;0|' ||
@@ -754,23 +752,93 @@ BEGIN
       COMMIT;
     END LOOP;
   END IF;
-   
-   
-   OPEN cr_crapass(pr_cdcooper => 1
-                     ,pr_progress => 876934);
-      FETCH cr_crapass
-        INTO rw_crapass;
-      IF cr_crapass%FOUND THEN       
-	    prc_gera_lct(prm_cdcooper => 1,
-                     prm_nrdconta => rw_crapass.nrdconta,
-                     prm_vllanmto => 1585.40,
-                     prm_cdhistor => 2722);
-      ELSE
-        dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
-      END IF;
-      CLOSE cr_crapass;   
-      COMMIT;  
-   
+
+  OPEN cr_crapass(pr_cdcooper => 1
+                 ,pr_progress => 876934);
+  FETCH cr_crapass
+    INTO rw_crapass;
+  IF cr_crapass%FOUND THEN       
+	  prc_gera_lct(prm_cdcooper => 1,
+                 prm_nrdconta => rw_crapass.nrdconta,
+                 prm_vllanmto => 1585.40,
+                 prm_cdhistor => 2722);
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;   
+  COMMIT;  
+  
+  OPEN cr_crapass(pr_cdcooper => 1
+                 ,pr_progress => 1565927);
+  FETCH cr_crapass
+    INTO rw_crapass;
+  IF cr_crapass%FOUND THEN       
+	  prc_gera_lct(prm_cdcooper => 1,
+                 prm_nrdconta => rw_crapass.nrdconta,
+                 prm_vllanmto => 2176.04,
+                 prm_cdhistor => 2722);
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;   
+  COMMIT;  
+  
+  OPEN cr_crapass(pr_cdcooper => 1
+                 ,pr_progress => 1565927);
+  FETCH cr_crapass
+    INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    OPEN cecred.BTCH0001.cr_crapdat(1);
+    FETCH cecred.BTCH0001.cr_crapdat
+      INTO rw_crapdat;
+    CLOSE cecred.BTCH0001.cr_crapdat;
+      
+    vr_nrdocmto := fn_sequence('CRAPLCT',
+                               'NRDOCMTO',
+                               1 || ';' ||
+                               TRIM(to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY')) || ';' || 61);
+      
+    cecred.LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => 1,
+                                              pr_dtmvtolt    => rw_crapdat.dtmvtolt,
+                                              pr_cdagenci    => 1,
+                                              pr_cdbccxlt    => 1,
+                                              pr_nrdolote    => 600040,
+                                              pr_nrdctabb    => rw_crapass.nrdconta,
+                                              pr_nrdocmto    => vr_nrdocmto,
+                                              pr_cdhistor    => 2719,
+                                              pr_vllanmto    => 2176.04,
+                                              pr_nrdconta    => rw_crapass.nrdconta,
+                                              pr_hrtransa    => cecred.gene0002.fn_busca_time,
+                                              pr_cdorigem    => 0,
+                                              pr_inprolot    => 1,
+                                              pr_tab_retorno => vr_tab_retorno,
+                                              pr_incrineg    => vr_incrineg,
+                                              pr_cdcritic    => vr_cdcritic,
+                                              pr_dscritic    => vr_dscritic);
+    IF NVL(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_excerro;
+    END IF;
+  ELSE
+    dbms_output.put_line('Conta nao encontrada - Progress_RECID: ' || vr_progress);
+  END IF;
+  CLOSE cr_crapass;   
+  COMMIT;
+  
+  BEGIN
+     SELECT a.nrdconta into vr_nrdconta
+      FROM cecred.crapass a
+     WHERE a.cdcooper = 1
+       AND a.progress_recid = 1565927;
+
+       UPDATE cecred.tbcc_prejuizo
+       SET vlsdprej = 0,
+           vljuprej = 0,
+           vljur60_ctneg = 0,
+           vljur60_lcred = 0
+       WHERE cdcooper = 1
+       AND nrdconta = vr_nrdconta;
+       COMMIT;
+   END;  
 				   
   dbms_output.put_line(' ');
   dbms_output.put_line('Script finalizado com Sucesso em ' || to_Char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
