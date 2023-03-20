@@ -8,4 +8,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     SISTEMA.excecaoInterna(pr_cdcooper => 3);
+    RAISE;
 END;
