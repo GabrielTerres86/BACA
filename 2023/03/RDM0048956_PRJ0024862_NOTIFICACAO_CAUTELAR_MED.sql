@@ -66,7 +66,7 @@ BEGIN
   AND tnap.cdorigem_mensagem = 13;
   
   UPDATE cecred.tbgen_notif_msg_cadastro tnmc
-  SET tnmc.dshtml_mensagem = 'Cooperado,<br><br>Em #data_hora_transacao você recebeu um Pix no valor de #valorpix, de #nomepagador, mas ele foi contestado. <br> Isto significa que esta operação está sendo analisada e em até 11 dias você receberá um retorno. Por enquanto, o valor de #valor_bloqueado foi bloqueado, ou seja, ele está indisponível na sua conta. <br> Se a análise indicar que está tudo certo, o valor será liberado, caso contrário, o valor será devolvido para a pessoa que lhe enviou. <br><br> Esta é uma medida de segurança do Pix. Agradecemos a sua compreensão.'
+  SET tnmc.dshtml_mensagem = 'Cooperado, <br><br>O Pix que você contestou no valor de #valorpix para #nomerecebedor está sendo analisado pela área responsável. Caso o retorno da contestação seja positivo, faremos a solicitação de devolução mediante aprovação da instituição financeira do recebedor. Assim que a análise for concluída, você receberá um retorno. Esta é uma medida de segurança do Pix. <br><br> Agradecemos a sua compreensão.'
   WHERE tnmc.cdmensagem = 7394
   AND tnmc.cdorigem_mensagem = 13;
   
@@ -224,11 +224,11 @@ BEGIN
     ,'<br/>#valor_devolucao_pix - Valor de Devolução do Pix (Ex: 2.000,00)<br/>#data_hora_transacao - Data e hora da transação - ("26/01/2023 às 17:54:32")<br/>#nome_pagador - Nome do Pagador (Ex: "Fabio da Silva")<br/>#valor_pix - Valor do Pix (Ex: 2.000,00)<br/>#instituicao_pagador - PSP do Pagador (Ex.:"Viacredi")<br/>#identificao_transacao - Identificação da Transação (896547896)<br/>#data_hora_bloqueio - data hora bloqueio (Ex.: 26/01/2023 às 17:54:32)'
     ,1
     ,0);
-    
+  
   COMMIT;
-
+    
   EXCEPTION
     WHEN OTHERS THEN
-      ROLLBACK;
+      ROLLBACK;  
 
 END;
