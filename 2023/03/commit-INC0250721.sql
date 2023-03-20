@@ -831,7 +831,7 @@ BEGIN
        AND a.progress_recid = 1565927;
 
        UPDATE cecred.tbcc_prejuizo
-       SET vlsdprej = 0,
+       SET vlsdprej = 2216.04,
            vljuprej = 0,
            vljur60_ctneg = 0,
            vljur60_lcred = 0
