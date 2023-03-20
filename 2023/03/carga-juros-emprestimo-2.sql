@@ -44,12 +44,9 @@ DECLARE
   
 BEGIN
  
- UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdcooper IN (1, 16) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
- UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdacesso = 'TPEXEC_SAIDAS_CENTRAL';
+ UPDATE crapprm SET dsvlrprm = '0' WHERE nmsistem = 'CRED' AND cdcooper IN (1) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
  
- UPDATE gestaoderisco.tbrisco_central_carga c SET c.cdstatus = 7;
-  
- DELETE FROM gestaoderisco.tbrisco_juros_emprestimo WHERE cdcooper IN (8, 10, 12);
+ DELETE FROM gestaoderisco.tbrisco_juros_emprestimo WHERE cdcooper IN (1, 8, 10, 12, 16);
  
  vr_tab_cr_principal_bulk.DELETE;
  OPEN cr_principal;
