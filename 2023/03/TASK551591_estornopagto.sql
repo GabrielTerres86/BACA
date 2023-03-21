@@ -11,11 +11,11 @@ declare
   vr_vllanmto      craplem.vllanmto%TYPE := 2857.25;
   vr_vllanmto1     craplem.vllanmto%TYPE := 2036.70;
   
-  vr_vlmtapar1     crappep.vlmtapar%TYPE := 40.73; ---MULTA
-  vr_vlmrapar1     crappep.vlmrapar%TYPE := 54.40; --JUROS
+  vr_vlmtapar1     crappep.vlmtapar%TYPE := 40.73; 
+  vr_vlmrapar1     crappep.vlmrapar%TYPE := 54.40; 
   
-  vr_vlmtapar2     crappep.vlmtapar%TYPE := 40.73; ---MULTA
-  vr_vlmrapar2     crappep.vlmrapar%TYPE := 9.72; --JUROS
+  vr_vlmtapar2     crappep.vlmtapar%TYPE := 40.73; 
+  vr_vlmrapar2     crappep.vlmrapar%TYPE := 9.72;
   
   vr_cdhistor      craplem.cdhistor%TYPE := 3274;
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
