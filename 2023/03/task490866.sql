@@ -1,6 +1,20 @@
-BEGIN
-  INSERT INTO cecred.crapaca ( nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-  VALUES ('VALIDA_EMPR_CONSIG', 'TELA_CONSIG', 'pc_valida_empr_consig_web', NULL, 1805);
+BEGIN 
+    DELETE cecred.crapaca 
+     WHERE nmdeacao = 'VALIDA_EMPR_CONSIG';
+     
+    INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('VALIDA_EMPR_CONSIG'
+    ,''
+    ,'credito.obterEmpresaConsigWeb'
+    ,''
+    ,1805);
+    
   COMMIT;
 EXCEPTION    
   WHEN OTHERS THEN 
