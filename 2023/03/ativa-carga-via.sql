@@ -25,10 +25,10 @@ DECLARE
                AND v.nrctremp = r.nrctremp 
                AND v.dtrefere = r.dtrefere
            ) as vlempres
-      FROM crapris r
-          ,crapdat d
-          ,crapepr e
-          ,crapcop c
+      FROM cecred.crapris r
+          ,cecred.crapdat d
+          ,cecred.crapepr e
+          ,cecred.crapcop c
      WHERE d.cdcooper = r.cdcooper
        AND r.dtrefere = d.dtmvcentral
        AND e.cdcooper = r.cdcooper
@@ -44,7 +44,9 @@ DECLARE
   
 BEGIN
  
- UPDATE crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdcooper IN (1) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
+ UPDATE cecred.crapprm SET dsvlrprm = '2' WHERE nmsistem = 'CRED' AND cdcooper IN (1) AND cdacesso = 'EXECUTAR_CARGA_CENTRAL';
+ 
+ UPDATE gestaoderisco.tbrisco_central_carga SET cdstatus = 2, QTOPERACOES = 957370, dhfimcar_aimaro = SYSDATE WHERE idcentral_carga = 1485;
  
  DELETE FROM gestaoderisco.tbrisco_juros_emprestimo WHERE cdcooper IN (1);
  
