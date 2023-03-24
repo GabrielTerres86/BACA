@@ -39,6 +39,7 @@ DECLARE
   
 BEGIN
 
+
   FOR rw_contas IN cr_contas LOOP
          
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||rw_contas.cdcooper ||';'||
