@@ -112,7 +112,6 @@ BEGIN
                                  ,pr_idprglog => vr_idprglog);
           END LOOP;
 
-           -- Gerar erro
            vr_dscritic := 'Erro ao inserir na tabela tbrisco_operacao_emprestimo. '||
                           '- ' || SQL%BULK_EXCEPTIONS(1).ERROR_INDEX || ' ' ||
                           SQLERRM(-(SQL%BULK_EXCEPTIONS(1).ERROR_CODE));
@@ -121,11 +120,12 @@ BEGIN
     END IF;
 	COMMIT;
   END LOOP;
+  COMMIT;
 EXCEPTION
   WHEN vr_exc_erro THEN
     ROLLBACK;
     raise_application_error(-20500, vr_dscritic);
   WHEN OTHERS THEN
     ROLLBACK;
-    raise_application_error(-20500, 'Erro nao tratado na gravarCargaEmprestimo --> ' || SQLERRM);
+    raise_application_error(-20500, 'Erro nao tratado na gravarCargaEmprestimo -> ' || SQLERRM);
 END;
