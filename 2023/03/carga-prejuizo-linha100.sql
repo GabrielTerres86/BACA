@@ -119,6 +119,7 @@ BEGIN
           RAISE vr_exc_erro;
       END;
     END IF;
+	COMMIT;
   END LOOP;
 EXCEPTION
   WHEN vr_exc_erro THEN
