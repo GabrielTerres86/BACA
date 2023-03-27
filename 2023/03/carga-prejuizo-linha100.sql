@@ -47,11 +47,11 @@ DECLARE
   vr_tab_crapris_9_100_bulk typ_crapris_9_100_bulk;
   
   TYPE typ_reg_tbrisco_atraso_prejuizo_cc IS
-    RECORD(cdcooper gestaoderisco.tbrisco_atraso_prejuizo_cc.cdcooper%TYPE
-          ,nrdconta gestaoderisco.tbrisco_atraso_prejuizo_cc.nrdconta%TYPE
-          ,nrctremp gestaoderisco.tbrisco_atraso_prejuizo_cc.nrctremp%TYPE
-          ,dtrefere gestaoderisco.tbrisco_atraso_prejuizo_cc.dtrefere%TYPE
-          ,qtdiaatr gestaoderisco.tbrisco_atraso_prejuizo_cc.qtdiaatr%TYPE
+    RECORD(cdcooper gestaoderisco.tbrisco_atraso_prejuizo_conta_corrente.cdcooper%TYPE
+          ,nrdconta gestaoderisco.tbrisco_atraso_prejuizo_conta_corrente.nrdconta%TYPE
+          ,nrctremp gestaoderisco.tbrisco_atraso_prejuizo_conta_corrente.nrctremp%TYPE
+          ,dtrefere gestaoderisco.tbrisco_atraso_prejuizo_conta_corrente.dtrefere%TYPE
+          ,qtdiaatr gestaoderisco.tbrisco_atraso_prejuizo_conta_corrente.qtdiaatr%TYPE
           );
   TYPE typ_tab_tbrisco_atraso_prejuizo_cc IS TABLE OF typ_reg_tbrisco_atraso_prejuizo_cc INDEX BY PLS_INTEGER;
   vr_tab_tbrisco_atraso_prejuizo_cc typ_tab_tbrisco_atraso_prejuizo_cc;
@@ -83,7 +83,7 @@ BEGIN
       
       BEGIN
         FORALL idx IN INDICES OF vr_tab_tbrisco_atraso_prejuizo_cc SAVE EXCEPTIONS
-          INSERT INTO GESTAODERISCO.tbrisco_atraso_prejuizo_cc
+          INSERT INTO GESTAODERISCO.tbrisco_atraso_prejuizo_conta_corrente
                     (cdcooper
                     ,nrdconta
                     ,nrctremp
