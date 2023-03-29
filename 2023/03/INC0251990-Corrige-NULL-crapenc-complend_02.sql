@@ -2,9 +2,9 @@ DECLARE
 
   vr_nmdireto           VARCHAR2(100);
   vr_nmarquiv           VARCHAR2(50) := 'INC0251990_dados.csv';
-  vr_nmarqbkp           VARCHAR2(50) := 'INC0251990_script_ROLLBACK_02.sql';
+  vr_nmarqbkp           VARCHAR2(50) := 'INC0251990_script_ROLLBACK_03.sql';
   vr_nmarqbkpnovo       VARCHAR2(50);
-  vr_nmarqlog           VARCHAR2(50) := 'INC0251990_relatorio_exec_02.txt';
+  vr_nmarqlog           VARCHAR2(50) := 'INC0251990_relatorio_exec_03.txt';
   vr_input_file         UTL_FILE.FILE_TYPE;
   vr_texto_completo     VARCHAR2(32600) := NULL;
   vr_texto_completo_ret VARCHAR2(32600) := NULL;
