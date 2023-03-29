@@ -91,8 +91,7 @@ BEGIN
                          
       DELETE 
         FROM CECRED.CRAPTFC
-       WHERE CDCOOPER = VR_TELEFONE.CDCOOPER
-         AND NRDCONTA = VR_TELEFONE.NRDCONTA;
+       WHERE progress_recid = vr_telefone.progress_recid;
          
       If vr_contador = 500 then
          vr_contador := 0;
