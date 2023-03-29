@@ -31,7 +31,7 @@ DECLARE
   
 BEGIN
   
-  vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/INC0261710';
+  vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/INC0259826';
   
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
                           ,pr_nmarquiv => vr_nmarqbkp
