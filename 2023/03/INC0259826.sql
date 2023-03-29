@@ -82,8 +82,8 @@ BEGIN
                       vr_telefone.IDSITTFC    ||',' ||                        
                       vr_telefone.IDORIGEM    ||',' ||                        
                       vr_telefone.FLGACSMS    ||', to_date(''' ||                        
-                      vr_telefone.DTINSORI    ||''',''dd/mm/yyyy''), to_date( ''' ||                        
-                      vr_telefone.DTREFATU    ||''',''dd/mm/yyyy''),' ||                    
+                      to_char(vr_telefone.DTINSORI,'dd/mm/yyyy')    ||''',''dd/mm/yyyy''), to_date( ''' ||                        
+                      to_char(vr_telefone.DTREFATU,'dd/mm/yyyy')    ||''',''dd/mm/yyyy''),' ||                  
                       nvl(to_char(vr_telefone.INPRINCIPAL),'NULL') ||',' ||                        
                       nvl(to_char(vr_telefone.INWHATSAPP), 'NULL') || ');');                   
                       
