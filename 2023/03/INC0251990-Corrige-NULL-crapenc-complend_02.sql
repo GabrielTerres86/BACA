@@ -1,10 +1,10 @@
 DECLARE
 
   vr_nmdireto           VARCHAR2(100);
-  vr_nmarquiv           VARCHAR2(50) := 'INC0251990_dados.csv';
-  vr_nmarqbkp           VARCHAR2(50) := 'INC0251990_script_ROLLBACK_03.sql';
+  vr_nmarquiv           VARCHAR2(50) := 'RITM0288591_dados.csv';
+  vr_nmarqbkp           VARCHAR2(50) := 'RITM0288591_script_ROLLBACK_03.sql';
   vr_nmarqbkpnovo       VARCHAR2(50);
-  vr_nmarqlog           VARCHAR2(50) := 'INC0251990_relatorio_exec_03.txt';
+  vr_nmarqlog           VARCHAR2(50) := 'RITM0288591_relatorio_exec_03.txt';
   vr_input_file         UTL_FILE.FILE_TYPE;
   vr_texto_completo     VARCHAR2(32600) := NULL;
   vr_texto_completo_ret VARCHAR2(32600) := NULL;
@@ -49,7 +49,7 @@ DECLARE
   
 BEGIN
   
-  vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/INC0251990';
+  vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/RITM0288591';
   
   vr_seqarquiv := 1;
   
