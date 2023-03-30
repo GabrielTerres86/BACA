@@ -31,8 +31,8 @@ DECLARE
                   ,pr_nrctremp IN cecred.tbrecup_acordo_contrato.nrctremp%TYPE) IS
     SELECT a.nrdconta
           ,c.inrisco_acordo
-      FROM tbrecup_acordo           a
-          ,tbrecup_acordo_contrato  c
+      FROM cecred.tbrecup_acordo           a
+          ,cecred.tbrecup_acordo_contrato  c
      WHERE c.nracordo   = a.nracordo
        AND a.cdsituacao = 1
        AND a.cdcooper   = pr_cdcooper
