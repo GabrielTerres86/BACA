@@ -33,7 +33,7 @@ DECLARE
                         ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE) IS
   SELECT par.flglibera
         ,par.dtvigencia_paramet
-    FROM tbcc_param_pessoa_produto par
+    FROM cecred.tbcc_param_pessoa_produto par
    WHERE par.cdcooper       = pr_cdcooper
      AND par.nrdconta       = pr_nrdconta
      AND par.tppessoa       = pr_tppessoa
@@ -127,7 +127,7 @@ BEGIN
         END;                                                      
       ELSE
         BEGIN
-          UPDATE tbcc_param_pessoa_produto par
+          UPDATE cecred.tbcc_param_pessoa_produto par
                SET par.flglibera  = 1
                   ,par.dtvigencia_paramet = NULL
              WHERE par.cdcooper         = vr_cdcooper
