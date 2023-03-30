@@ -22,7 +22,9 @@ DECLARE
         ,ass.nrcpfcnpj_base
     FROM cecred.crapass ass
    WHERE ass.cdcooper = pr_cdcooper
-     AND ass.nrdconta = pr_nrdconta;
+     AND ass.nrdconta = pr_nrdconta
+     AND ass.dtdemiss IS NULL
+     AND ROWNUM = 1;     
   rw_crapass cr_crapass%ROWTYPE;
   
   CURSOR cr_param_conta (pr_cdcooper crapcop.cdcooper%TYPE
