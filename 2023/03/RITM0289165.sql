@@ -12,6 +12,7 @@ DECLARE
   vr_nrdconta        crapepr.nrdconta%type; 
   vr_cont            NUMBER(6) := 0;
   vr_nrdrowid        ROWID;
+  vr_tem_param       BOOLEAN;
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida       EXCEPTION;
   
@@ -23,6 +24,21 @@ DECLARE
    WHERE ass.cdcooper = pr_cdcooper
      AND ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%ROWTYPE;
+  
+  CURSOR cr_param_conta (pr_cdcooper crapcop.cdcooper%TYPE
+                        ,pr_nrdconta crapass.nrdconta%TYPE
+                        ,pr_tppessoa crapass.indnivel%TYPE
+                        ,pr_nrcpfcnpj_base crapass.nrcpfcnpj_base%TYPE) IS
+  SELECT par.flglibera
+        ,par.dtvigencia_paramet
+    FROM tbcc_param_pessoa_produto par
+   WHERE par.cdcooper       = pr_cdcooper
+     AND par.nrdconta       = pr_nrdconta
+     AND par.tppessoa       = pr_tppessoa
+     AND par.nrcpfcnpj_base = pr_nrcpfcnpj_base
+     AND par.cdproduto        = 25
+     AND par.cdoperac_produto = 1;
+  rw_param_conta cr_param_conta%ROWTYPE;  
   
 BEGIN 
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto        
@@ -77,25 +93,52 @@ BEGIN
       CONTINUE;      
     ELSE
       CLOSE cr_crapass;
-    END IF;                           
+    END IF;
+    
+    OPEN cr_param_conta (vr_cdcooper,vr_nrdconta,rw_crapass.inpessoa,rw_crapass.nrcpfcnpj_base);
+    FETCH cr_param_conta INTO rw_param_conta;
+    vr_tem_param := cr_param_conta%FOUND;
+    CLOSE cr_param_conta;                                 
 
     BEGIN                                    
-      INSERT INTO cecred.TBCC_PARAM_PESSOA_PRODUTO(cdcooper
-                                                  ,nrdconta
-                                                  ,tppessoa
-                                                  ,nrcpfcnpj_base
-                                                  ,cdproduto
-                                                  ,cdoperac_produto
-                                                  ,flglibera
-                                                  ,dtvigencia_paramet)
-                                            VALUES(vr_cdcooper
-                                                  ,vr_nrdconta
-                                                  ,rw_crapass.inpessoa
-                                                  ,rw_crapass.nrcpfcnpj_base
-                                                  ,25
-                                                  ,1
-                                                  ,1
-                                                  ,NULL);
+      IF NOT vr_tem_param THEN
+        BEGIN                               
+          INSERT INTO cecred.TBCC_PARAM_PESSOA_PRODUTO(cdcooper
+                                                      ,nrdconta
+                                                      ,tppessoa
+                                                      ,nrcpfcnpj_base
+                                                      ,cdproduto
+                                                      ,cdoperac_produto
+                                                      ,flglibera
+                                                      ,dtvigencia_paramet)
+                                                VALUES(vr_cdcooper
+                                                      ,vr_nrdconta
+                                                      ,rw_crapass.inpessoa
+                                                      ,rw_crapass.nrcpfcnpj_base
+                                                      ,25
+                                                      ,1
+                                                      ,1
+                                                      ,NULL);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar parametrização produto conta: '||SQLERRM;
+        END;                                                      
+      ELSE
+        BEGIN
+          UPDATE tbcc_param_pessoa_produto par
+               SET par.flglibera  = 1
+                  ,par.dtvigencia_paramet = NULL
+             WHERE par.cdcooper         = vr_cdcooper
+               AND par.nrdconta         = vr_nrdconta
+               AND par.tppessoa         = rw_crapass.inpessoa
+               AND par.nrcpfcnpj_base   = rw_crapass.nrcpfcnpj_base
+               AND par.cdproduto        = 25
+               AND par.cdoperac_produto = 1;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar parametrização produto conta: '||SQLERRM;
+        END;             
+      END IF;
                                                   
       INSERT INTO cecred.TBCC_HIST_PARAM_PESSOA_PROD(cdcooper
                                              ,nrdconta
