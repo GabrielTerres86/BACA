@@ -5,7 +5,7 @@ BEGIN
       epr.inliquid = 1,
       epr.vlsdvctr = 0,
       epr.vlsdevat = 0,
-      epr.dtliquid = sysdate
+      epr.dtliquid = to_date(sysdate, 'dd/mm/rrrr')
    where epr.nrdconta = 65692 
      and epr.nrctremp = 87320;
 
