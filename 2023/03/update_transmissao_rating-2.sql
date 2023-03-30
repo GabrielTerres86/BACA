@@ -28,6 +28,7 @@ BEGIN
            SET dhtransmissao = to_date('01/01/2000 08:00:00', 'DD/MM/RRRR HH24:MI:SS')
          WHERE ROWID = vr_tab_ope(idx).dsrowid;
         COMMIT;
+        
       EXCEPTION
        WHEN OTHERS THEN
          dbms_output.put_line('Erro ao Atualizar tbrisco_operacoes');
@@ -45,6 +46,7 @@ BEGIN
            SET dhtransmissao = to_date('01/01/2000 08:00:00', 'DD/MM/RRRR HH24:MI:SS')
          WHERE ROWID = vr_tab_nrc(idx).dsrowid;
         COMMIT;
+        
       EXCEPTION
        WHEN OTHERS THEN
          dbms_output.put_line('Erro ao Atualizar crapnrc');
