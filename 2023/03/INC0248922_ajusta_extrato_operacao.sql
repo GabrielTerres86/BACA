@@ -5,7 +5,7 @@ DECLARE
   vr_aux_arquivo  VARCHAR2(100) := 'difcontab';
   
   vr_cdcooper crapcop.cdcooper%TYPE := 1;
-  vr_nrdconta crapass.nrdconta%TYPE := 11422092; /*conta em DEV = 88577848 |||| conta em PROD = 11422092*/
+  vr_nrdconta crapass.nrdconta%TYPE := 11422092;
   vr_nrborder crapbdt.nrborder%TYPE := 1349566;
   
   vr_nmarq_log      VARCHAR2(200);
@@ -48,7 +48,7 @@ BEGIN
   FETCH btch0001.cr_crapdat into rw_crapdat;
   CLOSE btch0001.cr_crapdat;
   
-  --lanca 2671 - pgto descto titulo (C) no extrato da operacao
+  
   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => vr_cdcooper, 
                                          pr_nrdconta => vr_nrdconta, 
                                          pr_nrborder => vr_nrborder,
@@ -75,7 +75,7 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
   
-  --lanca 2668 - Mora (D) no extrato da operacao
+  
   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => vr_cdcooper, 
                                          pr_nrdconta => vr_nrdconta, 
                                          pr_nrborder => vr_nrborder,
@@ -102,7 +102,7 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
   
-  --lanca 2669 - Multa (D) no extrato da operacao
+  
   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => vr_cdcooper, 
                                          pr_nrdconta => vr_nrdconta, 
                                          pr_nrborder => vr_nrborder,
@@ -129,7 +129,7 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
   
-  --lanca 2667 - Juros remuneratorios (D) no extrato da operacao
+  
   DSCT0003.pc_inserir_lancamento_bordero(pr_cdcooper => vr_cdcooper, 
                                          pr_nrdconta => vr_nrdconta, 
                                          pr_nrborder => vr_nrborder,
