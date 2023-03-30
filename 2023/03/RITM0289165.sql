@@ -77,40 +77,40 @@ BEGIN
       CLOSE cr_crapass;
     END IF;                           
 
-      BEGIN                                    
-        INSERT INTO cecred.TBCC_PARAM_PESSOA_PRODUTO(cdcooper
-                                                    ,nrdconta
-                                                    ,tppessoa
-                                                    ,nrcpfcnpj_base
-                                                    ,cdproduto
-                                                    ,cdoperac_produto
-                                                    ,flglibera
-                                                    ,dtvigencia_paramet)
-                                              VALUES(vr_cdcooper
-                                                    ,vr_nrdconta
-                                                    ,rw_crapass.inpessoa
-                                                    ,rw_crapass.nrcpfcnpj_base
-                                                    ,25
-                                                    ,1
-                                                    ,1
-                                                    ,NULL);
+    BEGIN                                    
+      INSERT INTO cecred.TBCC_PARAM_PESSOA_PRODUTO(cdcooper
+                                                  ,nrdconta
+                                                  ,tppessoa
+                                                  ,nrcpfcnpj_base
+                                                  ,cdproduto
+                                                  ,cdoperac_produto
+                                                  ,flglibera
+                                                  ,dtvigencia_paramet)
+                                            VALUES(vr_cdcooper
+                                                  ,vr_nrdconta
+                                                  ,rw_crapass.inpessoa
+                                                  ,rw_crapass.nrcpfcnpj_base
+                                                  ,25
+                                                  ,1
+                                                  ,1
+                                                  ,NULL);
 
-        gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
-                            ,pr_cdoperad => 1
-                            ,pr_dscritic => ''
-                            ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
-                            ,pr_dstransa => 'Desbloqueio manual de Pre Aprovado - RITM0289165'
-                            ,pr_dttransa => TRUNC(SYSDATE)
-                            ,pr_flgtrans => 1
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
-                            ,pr_idseqttl => 0
-                            ,pr_nmdatela => 'TELA_ATENDA_PREAPV'
-                            ,pr_nrdconta => vr_nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);                                                    
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir parametrizacao produto conta RITM0289165: '||SQLERRM;
-      END;                                                                                                                                   
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                          ,pr_cdoperad => 1
+                          ,pr_dscritic => ''
+                          ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
+                          ,pr_dstransa => 'Desbloqueio manual de Pre Aprovado - RITM0289165'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                          ,pr_idseqttl => 0
+                          ,pr_nmdatela => 'TELA_ATENDA_PREAPV'
+                          ,pr_nrdconta => vr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);                                                    
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Erro ao inserir parametrizacao produto conta RITM0289165: '||SQLERRM;
+    END;                                                                                                                                   
 
     IF vr_dscritic IS NOT NULL THEN
       gene0001.pc_escr_linha_arquivo(vr_ind_arquivr, vr_texto_padrao || 'NOK;' || vr_dscritic);
@@ -123,7 +123,7 @@ BEGIN
        vr_cont := 0;
       COMMIT;   
     END IF;      
-   END LOOP;
+  END LOOP;
    
    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivr); 
    COMMIT;
