@@ -56,7 +56,7 @@ DECLARE
        AND e.cdcooper = r.cdcooper
        AND e.nrdconta = r.nrdconta
        AND e.nrctremp = r.nrctremp
-       AND r.cdcooper IN (1, 8, 10, 12, 16)
+       AND c.flgativo = 1
        AND r.cdcooper = c.cdcooper
        AND r.cdmodali IN (299,499)
        AND r.inddocto = 1
