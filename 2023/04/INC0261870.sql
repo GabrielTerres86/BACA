@@ -11,9 +11,9 @@ declare
  vr_dttransa          cecred.craplgm.dttransa%type;
  vr_hrtransa          cecred.craplgm.hrtransa%type;
  vr_arq_path  VARCHAR2(1000):= gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/inc0261870'; 
- vr_nmarquiv  VARCHAR2(100) := 'Contas_LancFuturoTarifa_individual.txt';
- vr_nmarqbkp  VARCHAR2(100) := 'ROLLBACK_LancFuturoTarifa_individual.txt';
- vr_nmarqcri  VARCHAR2(100) := 'CRITICAS_LancFuturoTarifa_individual.txt';  
+ vr_nmarquiv  VARCHAR2(100) := 'Contas_LancFuturoTarifa.txt';
+ vr_nmarqbkp  VARCHAR2(100) := 'ROLLBACK_LancFuturoTarifa.txt';
+ vr_nmarqcri  VARCHAR2(100) := 'CRITICAS_LancFuturoTarifa.txt';  
  vr_hutlfile utl_file.file_type;
  vr_dstxtlid VARCHAR2(1000);
  vr_contador INTEGER := 0;
