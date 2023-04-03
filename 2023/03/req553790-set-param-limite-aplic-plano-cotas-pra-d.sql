@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crapprm prm
+  UPDATE CECRED.crapprm prm
      SET dsvlrprm = 'D'
    WHERE prm.nmsistem = 'CRED'
      AND prm.cdcooper IN (1, 2, 5, 10, 11, 12, 13, 14)
