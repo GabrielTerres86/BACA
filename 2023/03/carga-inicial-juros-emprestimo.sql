@@ -58,6 +58,7 @@ DECLARE
        AND e.nrctremp = r.nrctremp
        AND r.cdcooper = c.cdcooper
        AND r.cdmodali IN (299,499)
+       AND r.dsinfaux <> 'BNDES'
        AND r.inddocto = 1
        AND r.cdorigem = 3
        AND c.flgativo = 1;
