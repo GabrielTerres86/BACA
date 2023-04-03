@@ -1,5 +1,5 @@
 BEGIN
- update crapprm m 
+ update CECRED.crapprm m 
     set m.dsvlrprm = 'creditoimobiliario@ailos.coop.br'
   where m.cdacesso = 'EMAIL_INTEGRA_PROGNUM';
  commit;
