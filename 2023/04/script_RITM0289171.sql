@@ -1,5 +1,5 @@
 DECLARE
-  vr_aux_ambiente INTEGER       := 2;  
+  vr_aux_ambiente INTEGER       := 3;  
   vr_aux_diretor  VARCHAR2(100) := 'RITM0289171';
   vr_aux_arquivo  VARCHAR2(100) := 'desbloqueiopraprv';   
   vr_handle_regs  UTL_FILE.FILE_TYPE;
