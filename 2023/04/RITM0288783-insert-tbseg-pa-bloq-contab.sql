@@ -119,7 +119,6 @@ BEGIN
 	insert into seguro.tbseg_pa_bloq_contab(cdcooper, cdagenci) values (9,401);
 	insert into seguro.tbseg_pa_bloq_contab(cdcooper, cdagenci) values (9,408);
 	insert into seguro.tbseg_pa_bloq_contab(cdcooper, cdagenci) values (9,409);
-	insert into seguro.tbseg_pa_bloq_contab(cdcooper, cdagenci) values (9,408);
 	insert into seguro.tbseg_pa_bloq_contab(cdcooper, cdagenci) values (9,800);
 	insert into seguro.tbseg_pa_bloq_contab(cdcooper, cdagenci) values (9,999);
 
