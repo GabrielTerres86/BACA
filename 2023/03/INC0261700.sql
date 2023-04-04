@@ -5,7 +5,7 @@ DECLARE
         ,t.nrsolicitacao
         ,t.idsituacao
         ,t.rowid
-     FROM tbcc_portabilidade_envia t
+     FROM cecred.tbcc_portabilidade_envia t
     WHERE t.idsituacao = 5
       AND TRIM(t.nrnu_portabilidade) IS NULL;                                
 
