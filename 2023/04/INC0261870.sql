@@ -44,7 +44,7 @@ declare
          ,craplat.cdopeest
          ,craplat.cdlantar
          ,craplat.insitlat
-     FROM craplat craplat
+     FROM cecred.craplat craplat
     WHERE craplat.cdcooper = pr_cdcooper  
       AND craplat.nrdconta = pr_nrdconta 
       AND craplat.insitlat = 1;
