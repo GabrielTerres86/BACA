@@ -14,7 +14,7 @@ DECLARE
   vr_nrproposta     cecred.crawseg.nrproposta%TYPE;
 
   CURSOR cr_principal IS
-    SELECT decode(d.nrctrato,269339,0,a.flfinanciasegprestamista) flfinanciaseg_emp,
+    SELECT a.flfinanciasegprestamista flfinanciaseg_emp,
            a.flggarad flggarad_emp,
            a.nrctremp,
            a.vlpreemp,
@@ -38,8 +38,7 @@ DECLARE
                          WHERE c.cdcooper = b.cdcooper
                            AND c.nrdconta = b.nrdconta
                            AND c.nrctremp = b.nrctremp)
-       AND d.nrctrato IN (269285,
-                          269339);
+       AND d.nrctrato IN (269285);
 
   PROCEDURE pc_valida_direto(pr_nmdireto IN  VARCHAR2,
                              pr_dscritic OUT CECRED.crapcri.dscritic%TYPE) IS
