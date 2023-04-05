@@ -49,7 +49,7 @@ DECLARE
   vr_dscritic    VARCHAR2(1000);
   vr_des_erro    VARCHAR2(1000);
   vr_excerro EXCEPTION;
-  
+
 
   PROCEDURE registrarVERLOG(pr_cdcooper IN cecred.crawepr.cdcooper%TYPE
                            ,pr_nrdconta IN cecred.crawepr.nrdconta%TYPE
@@ -713,7 +713,7 @@ BEGIN
     END LOOP;
   END IF;
 				   
-  dbms_output.put_line(' ');
+  
   dbms_output.put_line('Script finalizado com Sucesso em ' || to_Char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
 EXCEPTION
   WHEN vr_excerro THEN
