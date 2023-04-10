@@ -70,6 +70,10 @@ BEGIN
  
  DELETE FROM gestaoderisco.tbrisco_juros_desconto_titulo;
  
+ UPDATE gestaoderisco.tbrisco_central_carga SET cdstatus = 7 WHERE cdcooper = 3;
+ 
+ COMMIT;
+ 
  vr_tab_cr_principal_bulk.DELETE;
  OPEN cr_principal;
  FETCH cr_principal BULK COLLECT INTO vr_tab_cr_principal_bulk;
