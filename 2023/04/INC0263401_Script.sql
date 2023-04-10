@@ -1,13 +1,15 @@
 DECLARE
+
   vr_dscritic VARCHAR2(1000);
+  
 BEGIN
 
   BEGIN
     DELETE FROM tbgen_batch_relatorio_wrk
-     WHERE cdcooper = pr_cdcooper
-       AND cdprograma = vr_cdprogra
+     WHERE cdcooper = 3
+       AND cdprograma = 'CRPS670'
        AND dsrelatorio IN ('CRAPLOT_CET', 'CTRL_ARQ', 'DADOS_ARQ')
-       AND dtmvtolt = rw_crapdat.dtmvtolt;
+       AND dtmvtolt = '10/04/2023';
   END;
 
   BEGIN
@@ -15,7 +17,7 @@ BEGIN
        SET insituacao = 2
      WHERE c.cdcooper = 3
        AND c.cdprogra = 'CRPS670'
-       AND c.dtmvtolt >= '01/01/2023'
+       AND c.dtmvtolt = '10/04/2023'
        AND c.nrexecucao = 1
        AND c.tpagrupador = 1
        AND c.insituacao = 1;
