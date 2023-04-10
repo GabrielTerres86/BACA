@@ -68,6 +68,8 @@ BEGIN
  
  DELETE FROM gestaoderisco.tbrisco_juros_emprestimo;
  
+ DELETE FROM gestaoderisco.tbrisco_juros_desconto_titulo;
+ 
  vr_tab_cr_principal_bulk.DELETE;
  OPEN cr_principal;
  FETCH cr_principal BULK COLLECT INTO vr_tab_cr_principal_bulk;
