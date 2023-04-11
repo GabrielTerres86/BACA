@@ -183,7 +183,7 @@ DECLARE
           ,p.vlsdeved
           ,p.vldevatu
           ,p.dtfimvig
-          (Case When c.dtliquid <= '31/03/2023' and c.inliquid = 1 then 1 else 0 end) inliquid
+          ,(Case When c.dtliquid <= '31/03/2023' and c.inliquid = 1 then 1 else 0 end) inliquid
           ,c.dtmvtolt data_emp
           ,p.nrproposta
           ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
