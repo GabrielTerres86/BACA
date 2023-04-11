@@ -52,7 +52,7 @@ DECLARE
   vr_arquivo_txt         utl_file.file_type;
   vr_nmarqnov            VARCHAR2(50);
   vr_nmdir               VARCHAR2(4000) := CECRED.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS')||'cpd/bacas/INC0263083';
-  vr_nmarq               VARCHAR2(100)  := 'ROLLBACK_INC0263083.sql';
+  vr_nmarq               VARCHAR2(100);
   vr_ind_arq             utl_file.file_type;
   vr_linha               VARCHAR2(32767);
   vr_cdsitseg            NUMBER;
@@ -151,7 +151,7 @@ DECLARE
                         pr_vlminimo IN NUMBER,
                         pr_idadelim IN NUMBER,
                         pr_dtmvtolt IN DATE) IS
-    
+
     SELECT p.idseqtra
           ,p.cdcooper
           ,p.nrdconta
@@ -183,7 +183,7 @@ DECLARE
           ,p.vlsdeved
           ,p.vldevatu
           ,p.dtfimvig
-          (Case When c.dtliquid <= '31/03/2023' and c.inliquid = 1 then 1 else 0 end) inliquid
+          ,(Case When c.dtliquid <= '31/03/2023' and c.inliquid = 1 then 1 else 0 end) inliquid
           ,c.dtmvtolt data_emp
           ,p.nrproposta
           ,lpad(decode(p.cdcooper , 5,1, 7,2, 10,3,  11,4, 14,5, 9,6, 16,7, 2,8, 8,9, 6,10, 12,11, 13,12, 1,13  )   ,6,'0') cdcooperativa
@@ -490,23 +490,24 @@ DECLARE
       RAISE vr_exc_saida;
     END IF;
 
-    CECRED.GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdir
-                                   ,pr_nmarquiv => vr_nmarq
-                                   ,pr_tipabert => 'W'
-                                   ,pr_utlfileh => vr_ind_arq
-                                   ,pr_des_erro => vr_dscritic);
-
-    IF vr_dscritic IS NOT NULL THEN
-       vr_dscritic := vr_dscritic ||'  Não pode abrir arquivo '|| vr_nmdir || vr_nmarq;
-       RAISE vr_exc_saida;
-    END IF;
-
-    CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
-
     vr_destinatario_email := CECRED.gene0001.fn_param_sistema('CRED', 0, 'ENVIA_SEG_PRST_EMAIL');
 
     FOR rw_crapcop IN cr_crapcop LOOP
-    
+      vr_nmarq  := rw_crapcop.nmrescop || '_ROLLBACK_INC0263083.sql';
+      
+      CECRED.GENE0001.pc_abre_arquivo(pr_nmdireto => vr_nmdir
+                                     ,pr_nmarquiv => vr_nmarq
+                                     ,pr_tipabert => 'W'
+                                     ,pr_utlfileh => vr_ind_arq
+                                     ,pr_des_erro => vr_dscritic);
+
+      IF vr_dscritic IS NOT NULL THEN
+         vr_dscritic := vr_dscritic ||'  Não pode abrir arquivo '|| vr_nmdir || vr_nmarq;
+         RAISE vr_exc_saida;
+      END IF;
+
+      CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'BEGIN');
+
       SELECT nmsegura INTO vr_nmsegura FROM CECRED.crapcsg WHERE cdcooper = rw_crapcop.cdcooper AND cdsegura = 514;
 
       vr_tab_crrl815.delete;
@@ -514,7 +515,7 @@ DECLARE
       vr_tipo_registro.delete;
       vr_totais.delete;
       vr_tab_sldevpac.delete;
-      
+
       vr_tipo_registro(0).tpregist := 'NOT FOUND';
       vr_tipo_registro(1).tpregist := 'ADESAO';
       vr_tipo_registro(2).tpregist := 'CANCELAMENTO';
@@ -632,10 +633,10 @@ DECLARE
                              pr_nmarqlog           => NULL,
                              pr_destinatario_email => NULL,
                              pr_idprglog           => vr_idprglog);
-                             
+
       vr_index_815 := 0;
       vr_seqtran := 0;
-      
+
       FOR rw_prestamista IN cr_prestamista(pr_cdcooper => rw_crapcop.cdcooper,
                                            pr_vlminimo => vr_vlminimo,
                                            pr_idadelim => vr_tab_nrdeanos,
@@ -649,9 +650,9 @@ DECLARE
         vr_dtdevend   := rw_prestamista.dtdevend;
         vr_dtinivig   := rw_prestamista.dtinivig;
         vr_dtfimvig   := rw_prestamista.dtfimvig;
-        vr_flgnvenv   := FALSE;      
+        vr_flgnvenv   := FALSE;
         vr_cdsitseg   := 1;
-                                              
+
         IF vr_dtinivig < '01/03/2023' THEN
           vr_tpregist := 3;
         ELSE
@@ -1353,7 +1354,7 @@ DECLARE
         vr_seqtran := vr_seqtran + 1;
       END LOOP;
 
-   
+
       vr_seqtran := vr_seqtran - 1;
 
       cecred.pc_log_programa(pr_dstiplog           => 'O',
@@ -1765,11 +1766,13 @@ DECLARE
                              pr_destinatario_email => NULL,
                              pr_idprglog           => vr_idprglog);
 
+      CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' COMMIT;');
+      CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' END; ');
+      CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'/ ');
+      CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq );
+      
+      COMMIT;
     END LOOP;
-    CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' COMMIT;');
-    CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' END; ');
-    CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'/ ');
-    CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq );
 
     cecred.pc_log_programa(pr_dstiplog           => 'O',
                            pr_cdprograma         => vr_cdprogra,
