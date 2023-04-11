@@ -208,7 +208,7 @@ DECLARE
                 WHERE j.cdcooper = p.cdcooper
                   AND j.nrdconta = p.nrdconta
                   AND j.nrctremp = p.nrctremp
-                  AND j.dtrefere = TO_DATE('31/03/2023','DD/MM/RRRR')
+                  AND j.dtrefere = TO_DATE('31/01/2023','DD/MM/RRRR')
                   AND ROWNUM = 1), p.vldevatu) vldevatu
           ,p.dtfimvig
           ,c.inliquid
