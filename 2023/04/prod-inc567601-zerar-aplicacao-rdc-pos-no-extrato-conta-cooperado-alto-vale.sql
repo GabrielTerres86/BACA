@@ -6,7 +6,7 @@ DECLARE
    rw_crapdat      BTCH0001.cr_crapdat%ROWTYPE;
 
    CURSOR cr_craprda IS
-    select 16 cdcooper, 549879 nrdconta, 1 nraplica, 0.79 vllanmto from dual;
+    select 16 cdcooper, 546879 nrdconta, 1 nraplica, 0.79 vllanmto from dual;
    rw_craprda cr_craprda%ROWTYPE;     
       
 
