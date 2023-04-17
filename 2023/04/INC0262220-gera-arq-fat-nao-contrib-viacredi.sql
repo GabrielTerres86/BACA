@@ -843,7 +843,6 @@ DECLARE
                 ,dtdenvio = vr_dtmvtolt
                 ,vlprodut = vr_vlprodvl
                 ,dtrefcob = vr_ultimoDia
-                ,dtdevend = vr_dtdevend
                 ,dtfimvig = vr_dtfimvig
            WHERE cdcooper = rw_crapcop.cdcooper
              AND nrdconta = rw_prestamista.nrdconta
@@ -1080,24 +1079,7 @@ DECLARE
                              pr_cdcooper   => rw_crapcop.cdcooper,
                              pr_tpexecucao => 2,
                              pr_idprglog   => vr_idprglog);
-
-      
-      vr_ultimodiaMes := trunc(SYSDATE,'MONTH') -1 ;
-
-      vr_dtmvtolt_yymmdd := to_char(vr_ultimodiaMes, 'yyyymmdd');
-      vr_nmarqdat        := vr_dtmvtolt_yymmdd||'_'||lpad(rw_crapcop.cdcooper,2,0)||'_PRESTAMISTA.txt';
-      vr_linhadet        := '';
-
-      CECRED.gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio,
-                                      pr_nmarquiv => vr_nmarqdat,
-                                      pr_tipabert => 'W',
-                                      pr_utlfileh => vr_arquivo_txt,
-                                      pr_des_erro => vr_dscritic);
-
-      IF vr_dscritic IS NOT NULL THEN
-         vr_cdcritic := 0;
-         RAISE vr_exc_erro;
-      END IF;
+            
 
       cecred.pc_log_programa(pr_dstiplog           => 'O',
                              pr_cdprograma         => vr_cdprogra,
