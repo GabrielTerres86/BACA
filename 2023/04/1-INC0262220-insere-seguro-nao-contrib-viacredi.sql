@@ -192,7 +192,7 @@ BEGIN
                               tpmodali,
                               flfinanciasegprestamista,
                               flgsegma)
-                       values(rw_crawseg.dtmvtolt,
+                       values(to_date('01/09/2022','dd/mm/yyyy'),
                               rw_crawseg.nrdconta,
                               vr_nrctrseg,
                               rw_crawseg.tpseguro,
