@@ -130,7 +130,7 @@ BEGIN
   dbms_lob.open(vr_des_critic_xml, dbms_lob.lob_readwrite);
   vr_texto_cri_completo := NULL;
 
-  vr_dtmvtolt := sistema.datascooperativa(1).dtmvtolt;
+  
 
   CECRED.gene0001.pc_abre_arquivo(pr_nmdireto => vr_arq_path
                           ,pr_nmarquiv => vr_nmarquiv
@@ -169,6 +169,8 @@ BEGIN
           CONTINUE;
         END IF;
         
+        vr_dtmvtolt := sistema.datascooperativa(vr_cdcooper).dtmvtolt;
+        
         vr_dstextab := null;
     
         CADASTRO.Obterdstextab(pr_cdcooper => vr_cdcooper
@@ -206,14 +208,14 @@ BEGIN
                  and h.nrdconta = rg_crapass.nrdconta
                  and h.idcampo = 2
                  and h.tpoperacao = 2
-                 and h.dsvalor_novo = 4
+                 and trim(h.dsvalor_novo) = '4'
                  and h.dhalteracao = (select max(h1.dhalteracao)
                                         from cecred.tbcc_conta_historico h1
-                                       where h.cdcooper = rg_crapass.cdcooper
-                                         and h.nrdconta = rg_crapass.nrdconta
-                                         and h.idcampo = 2
-                                         and h.tpoperacao = 2
-                                         and h.dsvalor_novo = 4);
+                                       where h1.cdcooper = rg_crapass.cdcooper
+                                         and h1.nrdconta = rg_crapass.nrdconta
+                                         and h1.idcampo = 2
+                                         and h1.tpoperacao = 2
+                                         and trim(h1.dsvalor_novo) = '4');
             EXCEPTION
               WHEN NO_DATA_FOUND THEN
                 vr_cdsitdct := 4;
