@@ -21,7 +21,7 @@ DECLARE
           ,ass.nrdconta
           ,ass.inpessoa
           ,ass.nrcpfcnpj_base
-     FROM crapass ass
+     FROM cecred.crapass ass
     WHERE ass.cdcooper = pr_cdcooper
       AND ass.nrcpfcnpj_base = pr_nrcpfcnpj;
    rw_crapass cr_crapass%ROWTYPE;  
@@ -79,7 +79,7 @@ BEGIN
           IF cr_crapass%NOTFOUND THEN
             CLOSE cr_crapass;
             gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                          ,pr_des_text => vr_vet_campos(1) || ';' || vr_vet_campos(3) || ';' || 'Conta n„o encontrada.');
+                                          ,pr_des_text => vr_vet_campos(1) || ';' || vr_vet_campos(3) || ';' || 'Conta n√£o encontrada.');
             CONTINUE;                      
           END IF;
           CLOSE cr_crapass;
