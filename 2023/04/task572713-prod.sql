@@ -19,7 +19,7 @@ DECLARE
   pr_nrdconta NUMBER(8) := 16461029;
   pr_cdagenci NUMBER(2) := 10;
   pr_vllanmto NUMBER(4,2) := 1.00;
-  vr_nrdolote     craplot.nrdolote%TYPE := 900039;
+  vr_nrdolote     craplot.nrdolote%TYPE := 800039;
 
 BEGIN
      
