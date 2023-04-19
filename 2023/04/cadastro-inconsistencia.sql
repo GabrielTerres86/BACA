@@ -15,7 +15,9 @@ DECLARE
   
   vr_idinconsist cecred.tbgen_inconsist_grp.idinconsist_grp%TYPE;
 BEGIN
-
+  
+  INSERT INTO cecred.crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM) values ('CRED', 0, 'PROCESS_CARTAO_VIP', 'Processa VIP junto com cartoes (1), processar na crps310 (0)', '1');
+  
   INSERT INTO cecred.tbgen_inconsist_grp
     (idinconsist_grp,
      nminconsist_grp,
