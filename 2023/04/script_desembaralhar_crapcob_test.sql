@@ -14,7 +14,6 @@ begin
                    AND ceb.nrconven = cco.nrconven
                    ) LOOP  
      
-        -- update para desembaralhar base de dados
         UPDATE crapcob cob SET nrdctabb = rw.nrdctabb, nrnosnum = to_char(cob.nrdconta,'fm00000000') || to_char(cob.nrdocmto,'fm000000000')
          WHERE cob.cdcooper = rw.cdcooper
            AND cob.nrdconta = rw.nrdconta
