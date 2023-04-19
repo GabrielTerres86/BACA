@@ -1,8 +1,3 @@
--- Created on 17/04/2023 by F0030248 
-declare 
-  -- Local variables here
-  i integer;
-
 begin
   
   FOR cop IN (SELECT cdcooper FROM crapcop 
