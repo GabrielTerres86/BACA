@@ -1,0 +1,7 @@
+BEGIN
+  UPDATE cecred.crapcob t 
+     SET t.nrdident = 0
+   WHERE ROWID IN ('AAJ30aAAAAAAJdWAAA','AAJ30aAAAAAAzCzAAM','AAJ30aAAAAAAs+JAAK');
+ 
+  COMMIT;
+END;
