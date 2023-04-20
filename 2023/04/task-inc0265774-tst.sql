@@ -5,7 +5,8 @@ BEGIN
      AND nrdconta = 91315212
      AND nraplica = 1;
   COMMIT;
+EXCEPTION  
 WHEN OTHERS THEN
-    SISTEMA.excecaoInterna(pr_compleme => 'INC0265670');
+    SISTEMA.excecaoInterna(pr_compleme => 'INC026574');
     ROLLBACK;    
 END;     
