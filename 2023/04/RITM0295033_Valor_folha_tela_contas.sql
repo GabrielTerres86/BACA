@@ -244,6 +244,8 @@ BEGIN
     
     IF NVL(vr_vlref, 0) > 0 AND NVL(vr_vlref, 0) > NVL(rg_colab.vlsalari, 0) THEN
       
+      vr_dtmvtolt := SISTEMA.datascooperativa(rg_colab.cdcooper).dtmvtolt;
+      
       BEGIN
         
         UPDATE CECRED.crapttl 
