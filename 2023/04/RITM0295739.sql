@@ -7,9 +7,9 @@ DECLARE
   vr_vldcotasGeral       cecred.crapcot.vldcotas%type;
   vr_dtmvtolt            cecred.crapdat.dtmvtolt%type;
   vr_arq_path            VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/RITM0295739';
-  vr_nmarquiv            VARCHAR2(100) := 'Contas_RITM0295739_DEV.txt';
-  vr_nmarqbkp            VARCHAR2(100) := 'RITM0295739_script_rollback_DEV.sql';
-  vr_nmarqcri            VARCHAR2(100) := 'RITM0295739_script_log_DEV.txt';
+  vr_nmarquiv            VARCHAR2(100) := 'Contas_RITM0295739.txt';
+  vr_nmarqbkp            VARCHAR2(100) := 'RITM0295739_script_rollback.sql';
+  vr_nmarqcri            VARCHAR2(100) := 'RITM0295739_script_log.txt';
 
   vr_hutlfile            utl_file.file_type;
   vr_dstxtlid            VARCHAR2(1000);
