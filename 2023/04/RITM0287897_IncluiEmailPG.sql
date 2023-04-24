@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crapprm prm
+  UPDATE cecred.crapprm prm
      SET prm.dsvlrprm = prm.dsvlrprm || ';fabrica.servicos@ailos.coop.br'
    WHERE prm.nmsistem = 'CRED'
      AND prm.cdacesso = 'CRPS693_EMAIL';

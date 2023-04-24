@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE tbcobran_param_protesto tpp
+  UPDATE cecred.tbcobran_param_protesto tpp
      SET tpp.dsemail_cobranca = tpp.dsemail_cobranca || ';' || 'contabilidade01@ailos.coop.br',
          tpp.dsemail_ieptb    = tpp.dsemail_ieptb || ';' || 'conciliacao@cartoriosdeprotesto.br';
   COMMIT;         
