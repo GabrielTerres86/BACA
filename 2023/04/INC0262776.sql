@@ -60,9 +60,9 @@ DECLARE
   vr_arq_path            VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/INC0262776';
 
 
-  vr_nmarquiv            VARCHAR2(100) := 'Contas_INC0262776_DEV.txt';
-  vr_nmarqbkp            VARCHAR2(100) := 'INC0262776_script_rollback_DEV.sql';
-  vr_nmarqcri            VARCHAR2(100) := 'INC0262776_script_log_DEV.txt';
+  vr_nmarquiv            VARCHAR2(100) := 'Contas_INC0262776.txt';
+  vr_nmarqbkp            VARCHAR2(100) := 'INC0262776_script_rollback.sql';
+  vr_nmarqcri            VARCHAR2(100) := 'INC0262776_script_log.txt';
 
   vr_hutlfile            utl_file.file_type;
   vr_dstxtlid            VARCHAR2(1000);
