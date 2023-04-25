@@ -11,7 +11,6 @@ begin
                    AND bdt.insitbdt = 3
                    AND tdb.cdcooper = bdt.cdcooper
                    AND tdb.nrborder = bdt.nrborder
-                   AND tdb.insittit = 4
                    AND cob.cdcooper = tdb.cdcooper
                    AND cob.nrdconta = tdb.nrdconta
                    AND cob.nrcnvcob = tdb.nrcnvcob
