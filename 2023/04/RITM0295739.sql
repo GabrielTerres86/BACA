@@ -7,17 +7,17 @@ DECLARE
   vr_vldcotasGeral       cecred.crapcot.vldcotas%type;
   vr_dtmvtolt            cecred.crapdat.dtmvtolt%type;
   vr_arq_path            VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/RITM0295739';
-  vr_nmarquiv            VARCHAR2(100) := 'Contas_RITM0295739.txt';
-  vr_nmarqbkp            VARCHAR2(100) := 'RITM0295739_script_rollback.sql';
-  vr_nmarqcri            VARCHAR2(100) := 'RITM0295739_script_log.txt';
+  vr_nmarquiv            VARCHAR2(100) := 'Contas_RITM0295739_DEV.txt';
+  vr_nmarqbkp            VARCHAR2(100) := 'RITM0295739_script_rollback_DEV.sql';
+  vr_nmarqcri            VARCHAR2(100) := 'RITM0295739_script_log_DEV.txt';
 
   vr_hutlfile            utl_file.file_type;
   vr_dstxtlid            VARCHAR2(1000);
   vr_contador            INTEGER := 0;
   vr_qtdctatt            INTEGER := 0;
   vr_flagfind            BOOLEAN := FALSE;
-  vr_tab_linhacsv        gene0002.typ_split;
-  vr_vet_dados           tipoSplit.typ_split;
+  vr_tab_linhacsv        cecred.gene0002.typ_split;
+  vr_vet_dados           SISTEMA.tipoSplit.typ_split;
   vr_dstextab            varchar2(4000);
   vr_dsdrowid            VARCHAR2(50);
 
@@ -126,7 +126,7 @@ DECLARE
         RAISE vr_exc_saida;
       END IF;
 
-      vr_vet_dados := quebraString(pr_string => vr_dstextab, pr_delimit => ';');
+      vr_vet_dados := SISTEMA.quebraString(pr_string => vr_dstextab, pr_delimit => ';');
 
       cr_crapass := COTASCAPITAL.obterDadosAssociadoBB(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
 
@@ -301,7 +301,7 @@ DECLARE
               
               vr_dsdrowid := null;
               
-              INSERT INTO craplct
+              INSERT INTO CECRED.craplct
               (cdcooper
               ,cdagenci
               ,cdbccxlt
@@ -396,7 +396,7 @@ DECLARE
               ELSE
                 vr_cdhistor_insert := 2080;
               END IF;
-              INSERT INTO craplct
+              INSERT INTO CECRED.craplct
                 (cdcooper
                 ,cdagenci
                 ,cdbccxlt
@@ -476,7 +476,7 @@ DECLARE
             BEGIN
               vr_dsdrowid := null;
               
-              INSERT INTO craplct
+              INSERT INTO CECRED.craplct
                 (cdcooper
                 ,cdagenci
                 ,cdbccxlt
@@ -574,7 +574,7 @@ DECLARE
               
               vr_dsdrowid := null;
               
-              INSERT INTO craplct
+              INSERT INTO CECRED.craplct
                 (cdcooper
                 ,cdagenci
                 ,cdbccxlt
@@ -774,7 +774,7 @@ DECLARE
           
           vr_dsdrowid := null;
           
-          INSERT INTO crapalt
+          INSERT INTO CECRED.crapalt
             (nrdconta
             ,dtaltera
             ,cdoperad
@@ -956,9 +956,9 @@ begin
         vr_contador := vr_contador + 1;
         vr_flagfind := FALSE;
 
-        vr_tab_linhacsv := gene0002.fn_quebra_string(vr_dstxtlid,';');
-        vr_cdcooper := gene0002.fn_char_para_number(vr_tab_linhacsv(1));
-        vr_nrdconta := gene0002.fn_char_para_number(vr_tab_linhacsv(2));
+        vr_tab_linhacsv := CECRED.gene0002.fn_quebra_string(vr_dstxtlid,';');
+        vr_cdcooper := CECRED.gene0002.fn_char_para_number(vr_tab_linhacsv(1));
+        vr_nrdconta := CECRED.gene0002.fn_char_para_number(vr_tab_linhacsv(2));
         
         vr_dtmvtolt := sistema.datascooperativa(vr_cdcooper).dtmvtolt;
 
