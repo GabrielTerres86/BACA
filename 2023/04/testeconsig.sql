@@ -22,7 +22,7 @@ DECLARE
   vr_dscritic   VARCHAR2(4000); 
   vr_exc_saida  EXCEPTION;  
 
-  vr_rootmicros   VARCHAR2(4000) := gene0001.fn_param_sistema('CRED', 1, 'ROOT_MICROS');
+  vr_rootmicros   VARCHAR2(4000) := gene0001.fn_param_sistema('CRED', 2, 'ROOT_MICROS');
   vr_nmdireto     VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/RITM0295362';
   vr_arq_leitura  VARCHAR2(100) := '/CONSIGNADO_ACENTRA_TEST.csv';  
   vr_ind_arquiv   utl_file.file_type;
