@@ -81,7 +81,7 @@ BEGIN
 
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_dsdireto 
                           ,pr_nmarquiv => vr_nmarquivo_saida 
-                          ,pr_tipabert => 'A' /*Abre um arquivo e se existirem informacoes, posiciona na ultima linha sem limpa-las.*/
+                          ,pr_tipabert => 'A'
                           ,pr_utlfileh => vr_ind_arqlog 
                           ,pr_des_erro => pr_dscritic);
                               
