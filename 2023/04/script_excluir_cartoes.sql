@@ -1,1 +1,1 @@
-BEGINDELETE FROM crapcrd c  WHERE c.cdcooper = 11   AND c.nrdconta = 99917483; DELETE FROM crawcrd w  WHERE w.cdcooper = 11   AND w.nrdconta = 99917483; COMMIT;END;
+BEGINDELETE FROM crapcrd c  WHERE c.cdcooper = 11   AND c.nrdconta in (99011166, 99011174, 99011131, 99011140, 99011158); DELETE FROM crawcrd w  WHERE w.cdcooper = 11   AND w.nrdconta in (99011166, 99011174, 99011131, 99011140, 99011158); COMMIT;END;
