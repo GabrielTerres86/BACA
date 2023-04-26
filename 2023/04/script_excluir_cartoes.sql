@@ -1,0 +1,1 @@
+BEGINDELETE FROM crapcrd c  WHERE c.cdcooper = 11   AND c.nrdconta = 99917483; DELETE FROM crawcrd w  WHERE w.cdcooper = 11   AND w.nrdconta = 99917483; COMMIT;END;
