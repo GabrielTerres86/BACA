@@ -1721,6 +1721,9 @@ BEGIN
                                                     vr_cdcritic ||
                                                     ' dscritic: ' ||
                                                     vr_dscritic);
+      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
+      
       CONTINUE;
     END IF;
     IF vr_inBloqueioDebito = 1 THEN
@@ -1742,6 +1745,10 @@ BEGIN
                                                     vr_cdcritic ||
                                                     ' dscritic: ' ||
                                                     vr_dscritic);
+      
+      pr_dscritic := vr_dscritic;
+      pr_cdcritic := vr_cdcritic;
+      
       CONTINUE;
     END IF;
   
@@ -1812,6 +1819,7 @@ BEGIN
       IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
         --
         vr_vlsldisp := 0;
+        pr_dscritic := 'Contrato possui acordo';
         --
       END IF;
     
@@ -1828,6 +1836,7 @@ BEGIN
       -- Tratamento para impedir lancamentos em contas monitoradas
       IF vr_id_conta_monitorada = 1 THEN
         vr_vlsldisp := 0;
+        pr_dscritic := 'Conta monitorada';
       END IF;
     
       -- Recebe o saldo devedor da parcela
@@ -1886,6 +1895,8 @@ BEGIN
       IF NVL(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
         -- Se for um erro previsto de negócio, só pula o registro.
         IF fun_identifica_tipo_critica(vr_cdcritic) <> 2 THEN
+          pr_dscritic := vr_dscritic;
+          pr_cdcritic := vr_cdcritic;
           CONTINUE;
         END IF;
         -- Somente em casos de erros não tratados iremos parar o processo.
@@ -1943,6 +1954,7 @@ BEGIN
       IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
         --
         vr_vlsldisp := 0;
+        pr_dscritic := 'Contrato possui acordo';
         --
       END IF;
     
@@ -1959,6 +1971,7 @@ BEGIN
       -- Tratamento para impedir lancamentos em contas monitoradas
       IF vr_id_conta_monitorada = 1 THEN
         vr_vlsldisp := 0;
+        pr_dscritic := 'Conta monitorada';
       END IF;
     
       -- Se NAO possuir saldo, pula o registro
@@ -1976,6 +1989,10 @@ BEGIN
                                             ,pr_dscritic => vr_dscritic); --> Descricao Erro
       -- Se ocorreu erro
       IF vr_des_reto <> 'OK' THEN
+        
+        pr_dscritic := vr_dscritic;
+        pr_cdcritic := vr_cdcritic;
+        
         CONTINUE;
       END IF;
     
@@ -2032,6 +2049,10 @@ BEGIN
       IF NVL(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
         -- Se for um erro previsto de negócio, só pula o registro.
         IF fun_identifica_tipo_critica(vr_cdcritic) <> 2 THEN
+          
+          pr_dscritic := vr_dscritic;
+          pr_cdcritic := vr_cdcritic;
+           
           CONTINUE;
         END IF;
         -- Somente em casos de erros não tratados iremos parar o processo.
@@ -2129,6 +2150,7 @@ EXCEPTION
     --ROLLBACK;
   
 END CRPS724_PAGAMENTO;
+
     
 BEGIN
   
