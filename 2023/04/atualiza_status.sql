@@ -139,7 +139,7 @@ DECLARE
         vr_cdcritic := 651;
         RAISE vr_exc_saida;
       ELSE
-        vr_nrctasic := gene0002.fn_mask(rw_crapcop2.cdagesic,'9999');
+        vr_nrctasic := cecred.gene0002.fn_mask(rw_crapcop2.cdagesic,'9999');
        CLOSE cr_crapcop2;
       END IF;
 
@@ -181,9 +181,9 @@ DECLARE
       END IF;
             
         vr_dstexarq := 'F' || vr_resultado ||
-                       gene0002.fn_mask(vr_nrctasic,'9999') ||
-                       gene0002.fn_mask(pr_nrctacns,'999999') ||
-                       gene0002.fn_mask('','zzzzzzzz') ||
+                       cecred.gene0002.fn_mask(vr_nrctasic,'9999') ||
+                       cecred.gene0002.fn_mask(pr_nrctacns,'999999') ||
+                       cecred.gene0002.fn_mask('','zzzzzzzz') ||
                        TO_CHAR(pr_dtmvtolt,'yyyy') ||
                        TO_CHAR(pr_dtmvtolt,'mm') ||
                        TO_CHAR(pr_dtmvtolt,'dd') ||
@@ -218,7 +218,7 @@ DECLARE
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
-        pr_dscritic:= NVL(vr_dscritic, gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic));
+        pr_dscritic:= NVL(vr_dscritic, cecred.gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic));
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado em pc_gera_crapndb --> '||SQLERRM;
