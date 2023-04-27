@@ -103,13 +103,13 @@ DECLARE
   BEGIN
     DECLARE
 
-      vr_nrctasic crapcop.nrctasic%TYPE;
+      vr_nrctasic cecred.crapcop.nrctasic%TYPE;
       vr_dstexarq VARCHAR2(200) := '';
       
       vr_resultado VARCHAR2(25);
 
-      vr_cdcritic crapcri.cdcritic%TYPE := 0;
-      vr_critica  crapcri.cdcritic%TYPE := 0;
+      vr_cdcritic cecred.crapcri.cdcritic%TYPE := 0;
+      vr_critica  cecred.crapcri.cdcritic%TYPE := 0;
       vr_dscritic VARCHAR2(4000);
 
       vr_exc_erro EXCEPTION;
@@ -117,15 +117,15 @@ DECLARE
 
     CURSOR cr_crapcop2 IS
       SELECT cop.cdagesic
-        FROM crapcop cop
+        FROM cecred.crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop2 cr_crapcop2%ROWTYPE;
 
-    CURSOR cr_crapscn (pr_cdempres crapscn.cdempres%TYPE) IS
+    CURSOR cr_crapscn (pr_cdempres cecred.crapscn.cdempres%TYPE) IS
       SELECT scn.qtdigito
             ,scn.cdempres
             ,scn.tppreenc
-        FROM crapscn scn
+        FROM cecred.crapscn scn
        WHERE scn.cdempres = pr_cdempres;
      rw_crapscn cr_crapscn%ROWTYPE;
 
