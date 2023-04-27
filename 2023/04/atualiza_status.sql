@@ -221,7 +221,7 @@ DECLARE
         pr_dscritic:= NVL(vr_dscritic, cecred.gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic));
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro não tratado em pc_gera_crapndb --> '||SQLERRM;
+        pr_dscritic := 'Erro não tratado em pc_gera_crapndb '||SQLERRM;
     END;
 
   END pc_gera_crapndb;  
@@ -319,7 +319,7 @@ EXCEPTION
                            'SQLERRM: '|| SQLERRM);
       ROLLBACK;
     WHEN OTHERS THEN            
-      vr_dscritic := 'Erro não tratado --> '||SQLERRM;
+      vr_dscritic := 'Erro não tratado '||SQLERRM;
       DBMS_OUTPUT.put_line('vr_dscritic: '||vr_dscritic);
       ROLLBACK;      
 END;
