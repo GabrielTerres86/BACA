@@ -97,7 +97,7 @@ DECLARE
                             ,pr_cdagenci  IN cecred.crapass.cdagenci%TYPE        
                             ,pr_cdseqtel  IN cecred.craplau.cdseqtel%TYPE        
                             ,pr_cdhistor  IN cecred.craplau.cdhistor%TYPE        
-                            ,pr_cdcritic  IN OUT crapcri.cdcritic%TYPE    
+                            ,pr_cdcritic  IN OUT cecred.crapcri.cdcritic%TYPE    
                             ,pr_dscritic     OUT VARCHAR2                 
                             ,pr_rowid        OUT ROWID) IS             
   BEGIN
