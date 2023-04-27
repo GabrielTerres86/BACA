@@ -1,9 +1,7 @@
 declare 
 
-  -- VARIAVEIS
   vr_exc_erro     EXCEPTION;
   
-   -- Tratamento de erros vars
   vr_dscritic     VARCHAR2(4000);
   vr_cdcritic     NUMBER;
   vr_stmtaux      VARCHAR2(4000);
@@ -89,48 +87,40 @@ declare
         pr_dscritic := vr_dscritic;
   END;                 
                
-  /* Procedimento para criar registros na crapndb */
-  PROCEDURE pc_gera_crapndb (pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
-                            ,pr_dtmvtolt  IN DATE                         --> Data do movimento
-                            ,pr_nrdconta  IN crapass.nrdconta%TYPE        --> Numero da conta
-                            ,pr_cdempres  IN craplau.cdempres%TYPE        --> Código da empresa
-                            ,pr_nrdocmto  IN craplcm.nrdocmto%TYPE        --> Documento
-                            ,pr_nrctacns  IN crapass.nrctacns%TYPE        --> Conta consórcio
-                            ,pr_vllanaut  IN craplau.vllanaut%TYPE        --> Valor do lancemento
-                            ,pr_cdagenci  IN crapass.cdagenci%TYPE        --> Agencia do cooperado PA
-                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
-                            ,pr_cdhistor  IN craplau.cdhistor%TYPE        --> Codigo do historico
-                            ,pr_cdcritic  IN OUT crapcri.cdcritic%TYPE    --> Codigo da critica de erro
-                            ,pr_dscritic     OUT VARCHAR2                 --> descrição do erro se ocorrer
+  PROCEDURE pc_gera_crapndb (pr_cdcooper  IN crapcop.cdcooper%TYPE        
+                            ,pr_dtmvtolt  IN DATE                         
+                            ,pr_nrdconta  IN crapass.nrdconta%TYPE        
+                            ,pr_cdempres  IN craplau.cdempres%TYPE        
+                            ,pr_nrdocmto  IN craplcm.nrdocmto%TYPE        
+                            ,pr_nrctacns  IN crapass.nrctacns%TYPE        
+                            ,pr_vllanaut  IN craplau.vllanaut%TYPE        
+                            ,pr_cdagenci  IN crapass.cdagenci%TYPE        
+                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        
+                            ,pr_cdhistor  IN craplau.cdhistor%TYPE        
+                            ,pr_cdcritic  IN OUT crapcri.cdcritic%TYPE    
+                            ,pr_dscritic     OUT VARCHAR2                 
                             ,pr_rowid        OUT ROWID) IS             
   BEGIN
     DECLARE
 
-      -- VARIAVEIS
       vr_nrctasic crapcop.nrctasic%TYPE;
       vr_dstexarq VARCHAR2(200) := '';
       
-      -- VARIAVEIS PARA CAULCULO DE DIGITOS A COMPLETAR COM ZEROS OU ESPAÇOS
       vr_resultado VARCHAR2(25);
 
-    -- VARIAVEIS DE ERRO
       vr_cdcritic crapcri.cdcritic%TYPE := 0;
       vr_critica  crapcri.cdcritic%TYPE := 0;
       vr_dscritic VARCHAR2(4000);
 
-      -- VARIAVEIS DE EXCECAO
       vr_exc_erro EXCEPTION;
       vr_exc_saida EXCEPTION;
 
-    -- CURSORES
-    -- Busca dados da cooperativa
     CURSOR cr_crapcop2 IS
       SELECT cop.cdagesic
         FROM crapcop cop
        WHERE cop.cdcooper = pr_cdcooper;
     rw_crapcop2 cr_crapcop2%ROWTYPE;
 
-    -- Buscar dados da empresa conveniada
     CURSOR cr_crapscn (pr_cdempres crapscn.cdempres%TYPE) IS
       SELECT scn.qtdigito
             ,scn.cdempres
@@ -141,34 +131,24 @@ declare
 
    BEGIN
 
-      -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop2;
       FETCH cr_crapcop2 INTO rw_crapcop2;
 
-      -- Se nao encontrar
       IF cr_crapcop2%NOTFOUND THEN
-        -- Fechar o cursor pois havera raise
         CLOSE cr_crapcop2;
-        -- Montar mensagem de critica
         vr_cdcritic := 651;
         RAISE vr_exc_saida;
       ELSE
-       -- gravar agencia do sicredi na cooperativa em variavel
         vr_nrctasic := gene0002.fn_mask(rw_crapcop2.cdagesic,'9999');
        CLOSE cr_crapcop2;
       END IF;
 
-      -- tributos do convenio SICREDI
       OPEN cr_crapscn (pr_cdempres => pr_cdempres);
       FETCH cr_crapscn INTO rw_crapscn;
-      -- SE NAO ENCONTRAR REGISTRO
       IF cr_crapscn%NOTFOUND THEN
-        --apenas fecha cursor
         CLOSE cr_crapscn;
       END IF;
 
-      -- fazer o calculo de quantos digitos devera completar com espacos ou zeros
-      -- Atribuir resultado com a quantidade de digitos da base
       IF rw_crapscn.tppreenc = 1 THEN
         IF rw_crapscn.qtdigito <> 0 THEN
           vr_resultado := LPAD(pr_nrdocmto,rw_crapscn.qtdigito,'0');
@@ -190,15 +170,14 @@ declare
       END IF;
 
       IF LENGTH(vr_resultado) < 25 THEN
-        -- completar com 25 espaços se resultado for inferior a 25 poscoes
+
         vr_resultado := RPAD(vr_resultado,25,' ');
       END IF;
 
-      /* regra tipo de critica */
       IF NVL(pr_cdcritic,0) IN (64, 9, 454) THEN
-         vr_critica := 15;    /** Conta corrente invalida  **/
+         vr_critica := 15;  
       ELSE
-         vr_critica := 1;     /** Insuficiencias de fundos **/
+         vr_critica := 1;   
       END IF;
             
         vr_dstexarq := 'F' || vr_resultado ||
@@ -214,7 +193,6 @@ declare
                        RPAD(' ',10) || '0';
       
         BEGIN
-          -- INSERE REGISTRO NA TABELA DE REGISTROS DE DEBITO EM CONTA NAO EFETUADOS
           INSERT INTO crapndb(dtmvtolt,
                               nrdconta,
                               cdhistor,
@@ -224,14 +202,13 @@ declare
                        VALUES(pr_dtmvtolt,
                               pr_nrdconta,
                               Nvl(pr_cdhistor, 1019),
-                              0,           -- 0 false
+                              0,          
                               pr_cdcooper,
                               vr_dstexarq) 
                               returning
                               rowid
                               into pr_rowid;
             
-        -- VERIFICA SE HOUVE PROBLEMA NA INCLUSÃO DO REGISTRO
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Problema ao inserir na tabela CRAPNDB: ' || sqlerrm;
@@ -243,7 +220,6 @@ declare
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= NVL(vr_dscritic, gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic));
       WHEN OTHERS THEN
-        -- Retorna o erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado em pc_gera_crapndb --> '||SQLERRM;
     END;
@@ -317,7 +293,6 @@ begin
 
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);
             
-      -- Atualiza registro de Lancamento Automatico
       BEGIN
         UPDATE craplau
            SET insitlau = 3
@@ -348,3 +323,4 @@ EXCEPTION
       DBMS_OUTPUT.put_line('vr_dscritic: '||vr_dscritic);
       ROLLBACK;      
 end;
+/
