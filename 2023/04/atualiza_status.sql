@@ -87,16 +87,16 @@ DECLARE
         pr_dscritic := vr_dscritic;
   END;                 
                
-  PROCEDURE pc_gera_crapndb (pr_cdcooper  IN crapcop.cdcooper%TYPE        
+  PROCEDURE pc_gera_crapndb (pr_cdcooper  IN cecred.crapcop.cdcooper%TYPE        
                             ,pr_dtmvtolt  IN DATE                         
-                            ,pr_nrdconta  IN crapass.nrdconta%TYPE        
-                            ,pr_cdempres  IN craplau.cdempres%TYPE        
-                            ,pr_nrdocmto  IN craplcm.nrdocmto%TYPE        
-                            ,pr_nrctacns  IN crapass.nrctacns%TYPE        
-                            ,pr_vllanaut  IN craplau.vllanaut%TYPE        
-                            ,pr_cdagenci  IN crapass.cdagenci%TYPE        
-                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        
-                            ,pr_cdhistor  IN craplau.cdhistor%TYPE        
+                            ,pr_nrdconta  IN cecred.crapass.nrdconta%TYPE        
+                            ,pr_cdempres  IN cecred.craplau.cdempres%TYPE        
+                            ,pr_nrdocmto  IN cecred.craplcm.nrdocmto%TYPE        
+                            ,pr_nrctacns  IN cecred.crapass.nrctacns%TYPE        
+                            ,pr_vllanaut  IN cecred.craplau.vllanaut%TYPE        
+                            ,pr_cdagenci  IN cecred.crapass.cdagenci%TYPE        
+                            ,pr_cdseqtel  IN cecred.craplau.cdseqtel%TYPE        
+                            ,pr_cdhistor  IN cecred.craplau.cdhistor%TYPE        
                             ,pr_cdcritic  IN OUT crapcri.cdcritic%TYPE    
                             ,pr_dscritic     OUT VARCHAR2                 
                             ,pr_rowid        OUT ROWID) IS             
