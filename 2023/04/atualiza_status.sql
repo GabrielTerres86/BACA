@@ -1,4 +1,4 @@
-declare 
+DECLARE 
 
   vr_exc_erro     EXCEPTION;
   
@@ -6,10 +6,10 @@ declare
   vr_cdcritic     NUMBER;
   vr_stmtaux      VARCHAR2(4000);
   vr_des_erro     VARCHAR2(4000);
-  vr_tab_erro     GENE0001.typ_tab_erro;
+  vr_tab_erro     CECRED.GENE0001.typ_tab_erro;
 
   vr_dtrefere     DATE;
-  vr_nrcrcard     craplau.nrcrcard%TYPE;
+  vr_nrcrcard     CECRED.craplau.nrcrcard%TYPE;
   vr_cdagenci     NUMBER;
   vr_nrdocmto     VARCHAR2(25); 
   
@@ -193,7 +193,7 @@ declare
                        RPAD(' ',10) || '0';
       
         BEGIN
-          INSERT INTO crapndb(dtmvtolt,
+          INSERT INTO CECRED.crapndb(dtmvtolt,
                               nrdconta,
                               cdhistor,
                               flgproce,
@@ -294,7 +294,7 @@ begin
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,vr_linha);
             
       BEGIN
-        UPDATE craplau
+        UPDATE CECRED.craplau
            SET insitlau = 3
               ,dtdebito = vr_dtrefere
          WHERE ROWID = rw_craplau.rowid;
@@ -322,5 +322,5 @@ EXCEPTION
       vr_dscritic := 'Erro não tratado --> '||SQLERRM;
       DBMS_OUTPUT.put_line('vr_dscritic: '||vr_dscritic);
       ROLLBACK;      
-end;
+END;
 /
