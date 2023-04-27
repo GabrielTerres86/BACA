@@ -559,8 +559,6 @@ DECLARE
         vr_vlapagar     := rw_crappep.vlsdvpar;
         vr_vlsomato     := 0;
         
-        dbms_output.put_line('Saldo devedor da parcela: ' || vr_vlapagar);
-
         -- Setar o flag para FALSE, negando existencia de acao judicial, antes da verificação
         vr_idacaojd := FALSE;
         vr_inBloqueioDebito := 0;
@@ -1139,7 +1137,6 @@ DECLARE
         --COMMIT; --##REMOVER POIS COMMIT VAI SER VIA BACA
         
         pr_vlsobras := pr_vlsobras - vr_vlsomato;
-        dbms_output.put_line('Valor Pago: ' || vr_vlsomato);
 
       END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
@@ -2150,7 +2147,6 @@ EXCEPTION
     --ROLLBACK;
   
 END CRPS724_PAGAMENTO;
-
     
 BEGIN
   
@@ -2350,8 +2346,14 @@ BEGIN
         vr_pago_total := vr_pago_total + vr_pago;
         
         vr_cotas := vr_vlrsobra;
-                
+        
+        dbms_output.put_line('Valor Pago: ' || vr_pago);           
         dbms_output.put_line('Sobrou de COTAS: ' || vr_cotas);
+        
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
+                                 ,pr_nmdcampo => 'Valor Pago: '
+                                 ,pr_dsdadant => ' '
+                                 ,pr_dsdadatu => vr_pago);        
         
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
                                  ,pr_nmdcampo => 'Sobrou de COTAS: '
@@ -2564,8 +2566,14 @@ BEGIN
           vr_pago_total := vr_pago_total + vr_pago;
                                  
           vr_cotas := vr_vlrsobra;
-                    
+ 
+          dbms_output.put_line('Valor Pago: ' || vr_pago);                       
           dbms_output.put_line('Sobrou de COTAS: ' || vr_cotas);
+          
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
+                                   ,pr_nmdcampo => 'Valor Pago: '
+                                   ,pr_dsdadant => ' '
+                                   ,pr_dsdadatu => vr_pago);
           
           gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
                                    ,pr_nmdcampo => 'Sobrou de COTAS: '
@@ -2700,8 +2708,14 @@ BEGIN
         vr_pago_total := vr_pago_total + vr_pago;
                    
         vr_cotas := vr_vlrsobra;
-            
+        
+        dbms_output.put_line('Valor Pago: ' || vr_pago);    
         dbms_output.put_line('Sobrou de COTAS: ' || vr_cotas); 
+        
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
+                                 ,pr_nmdcampo => 'Valor Pago: '
+                                 ,pr_dsdadant => ' '
+                                 ,pr_dsdadatu => vr_pago);         
         
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
                                  ,pr_nmdcampo => 'Sobrou de COTAS: '
@@ -2766,22 +2780,14 @@ BEGIN
     gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowidlog
                              ,pr_nmdcampo => 'Sobra de Cotas'
                              ,pr_dsdadant => ' '
-                             ,pr_dsdadatu => vr_cotas);                                       
-  
-                                /**LOG MOCK*/
-                                    BEGIN
-                                      UPDATE tabela_planilha y
-                                      SET Y.VALORPAGO = nvl(Y.VALORPAGO,0) + vr_pago_total
-                                      WHERE y.coop  = vr_tab_contrato(vr_indsobra).cdcooper
-                                        and y.conta = vr_tab_contrato(vr_indsobra).nrdconta;
-                                    END;
-                                 /**LOG MOCK*/   
+                             ,pr_dsdadatu => vr_cotas);                                         
                                     
   vr_indsobra := vr_tab_contrato.NEXT(vr_indsobra);
   END LOOP;        
---COMMIT;  
+COMMIT;  
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
-    dbms_output.put_line('ERRO BACA: ' || SQLERRM ||vr_dscritic);                                                             
+    dbms_output.put_line('ERRO BACA: ' || SQLERRM ||vr_dscritic);
+    CECRED.pc_internal_exception(pr_cdcooper => 3);                                                               
 END;
