@@ -19,17 +19,9 @@ DECLARE
        and p.cdcooper = w.cdcooper and p.nrdconta = w.nrdconta and p.NRCTREMP = w.NRCTREMP
        and a.cdcooper = w.cdcooper and a.nrdconta = w.nrdconta 
        and d.cdcooper = w.cdcooper 
-       and not exists (SELECT 1
-                         FROM cecred.crapcpa cpa,
-                              cecred.tbepr_carga_pre_aprv car 
-                        WHERE cpa.cdcooper = w.cdcooper 
-                          AND cpa.tppessoa = a.INPESSOA 
-                          AND cpa.nrcpfcnpj_base = a.NRCPFCNPJ_BASE 
-                          AND cpa.iddcarga = car.idcarga 
-                          AND car.indsituacao_carga = 2 
-                          AND car.flgcarga_bloqueada = 0                           
-						  AND NVL(car.dtfinal_vigencia,TRUNC(d.DTMVTOLT)) >= TRUNC(d.DTMVTOLT)
-                          AND cpa.cdsituacao = 'A');
+       and EMPR0002.fn_idcarga_pre_aprovado(w.cdcooper,
+                                        a.inpessoa,
+                                        a.nrcpfcnpj_base) = 0;
    rw_cooperados cr_cooperados%ROWTYPE;                         
 BEGIN
   INSERT INTO cecred.tbepr_carga_pre_aprv(cdcooper
@@ -56,9 +48,9 @@ BEGIN
                                   ,2
                                   ,0
                                   ,0
-                                  ,6
+                                  ,2
                                   ,0
-                                  ,6
+                                  ,2
                                   ,'1')
                           RETURNING idcarga 
                                INTO vr_idcarga;
