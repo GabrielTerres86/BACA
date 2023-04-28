@@ -102,12 +102,7 @@ BEGIN
       ,vr_nrdocmto
       ,vr_nrseqdig_lot
       ,vr_vllanmto);
-  
-    UPDATE cecred.crapcot
-       SET vldcotas = vldcotas + vr_vllanmto
-     WHERE cdcooper = vr_cdcooper
-       AND nrdconta = vr_nrdconta;
-  
+      
   EXCEPTION
     WHEN OTHERS THEN
       vr_dscritic := 'Não foi possível efetuar o saque parcial.' || SQLERRM;
