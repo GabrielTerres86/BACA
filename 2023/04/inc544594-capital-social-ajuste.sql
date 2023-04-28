@@ -2,7 +2,7 @@ DECLARE
   vr_cdcooper     craplct.cdcooper%TYPE := 12;
   vr_nrdconta     craplct.nrdconta%TYPE := 99935163;
   vr_vllanmto     craplct.vllanmto%TYPE := 94.55;
-  vr_dtmvtolt     crapdat.dtmvtolt%TYPE := SYSDATE;
+  vr_dtmvtolt     crapdat.dtmvtolt%TYPE := TRUNC(SYSDATE);
   vr_cdcritic     crapcri.cdcritic%TYPE;
   vr_dscritic     crapcri.dscritic%TYPE;
   vr_exc_erro     EXCEPTION;
