@@ -1,0 +1,16 @@
+begin
+  
+ update crapcot a
+    set vldcotas = 1
+ where cdcooper = 12
+   and nrdconta = 99935163;   
+
+insert into craplct (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRCTRPLA, QTLANMFX, NRAUTDOC, NRSEQUNI, CDCOOPER, DTLIBERA, DTCRDCTA,  CDOPEORI, CDAGEORI, DTINSORI)
+values (to_date('12-01-2023', 'dd-mm-yyyy'), 1, 100, 600039, 99935163, 3, 2417, 88, 94.55, 64777, 0.0000, 0, 0, 12, null, null,  ' ', 0, null);
+
+insert into craplct (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRCTRPLA, QTLANMFX, NRAUTDOC, NRSEQUNI, CDCOOPER, DTLIBERA, DTCRDCTA,  CDOPEORI, CDAGEORI, DTINSORI)
+values (to_date('12-01-2023', 'dd-mm-yyyy'), 1, 100, 600039, 99935163, 4, 2417, 99, 94.55, 64777, 0.0000, 0, 0, 12, null, null,  ' ', 0, null);
+
+commit;
+
+end;   
