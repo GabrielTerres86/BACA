@@ -1,28 +1,31 @@
 BEGIN
 
-	INSERT INTO cecred.crapaca
-		(nmdeacao
-		,nmpackag
-		,nmproced
-		,lstparam
-		,nrseqrdr)
-	VALUES
-		('OBTER_LINK_AILOSR'
-		,NULL
-		,'gestaoderisco.OBTER_LINK_AILOSR'
-		,'pr_tela'
-		,(SELECT NRSEQRDR
-			 FROM craprdr
-			WHERE upper(nmprogra) = 'ATENDA'));
-	
-	insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'AIMARO_AILOSR_RATMOV','Redirecionamento do Aimaro para o Ailos+ da tela RatMov','/home/application/riscocredito/rating' );
+	  INSERT INTO cecred.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('OBTER_LINK_AILOSR'
+    ,NULL
+    ,'gestaoderisco.obterLinkAilosR'
+    ,'pr_nmdetela'
+    ,(SELECT NRSEQRDR
+       FROM craprdr
+      WHERE upper(nmprogra) = 'ATENDA'));
 
-	insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'AIMARO_AILOSR_CADRIS','Redirecionamento do Aimaro para o Ailos+ da tela CadRis','/home/application/riscocredito/risco-credito' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'URL_BASE_AILOSR_DEV','URL base do Front Ailos+ DEV','https://frontailosmais-dev.ailos.coop.br');
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'URL_BASE_AILOSR_HOMOL','URL base do Front Ailos+ HML','https://frontailosmais-hml.ailos.coop.br');
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'URL_BASE_AILOSR_PROD','URL base do Front Ailos+ PRD','https://frontailosmais.ailos.coop.br');
 
-	insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'AIMARO_AILOSR_GRUPECON','Redirecionamento do Aimaro para o Ailos+ da tela Grupo Economico','/home/application/riscocredito/grupo-economico' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'DIR_RISCO_CRED_AILOSR','Diretorio de risco no Front Ailos+ DEV/HML/PRD','/home/application/riscocredito/');
 
-	insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'AIMARO_AILOSR_RISCOS','Redirecionamento do Aimaro para o Ailos+ da tela Riscos','/home/application/riscocredito/risco-credito' );
-
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'ATENDA_OCR_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela Ocorrencias Riscos','risco-credito' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CADRIS_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CadRis','risco-credito' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CONTAS_GECO_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CONTAS - Grupo Economico','grupo-economico' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'RATMOV_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela RatMov','rating' );
+    
 	COMMIT;
 
 EXCEPTION
