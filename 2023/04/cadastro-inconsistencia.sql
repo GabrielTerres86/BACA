@@ -26,9 +26,9 @@ BEGIN
      tpperiodicidade_email)
   VALUES
     ((SELECT MAX(idinconsist_grp) + 1 FROM cecred.tbgen_inconsist_grp),
-     'Carga de Cartoes da Central de Risco',
+     'Carga de Central de Risco Ailos+',
      2,
-     'Erro na carga de cartoes',
+     'Erro na carga de Central de Risco',
      1)
   RETURNING idinconsist_grp INTO vr_idinconsist;
 
