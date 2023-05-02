@@ -57,9 +57,9 @@ DECLARE
           ,t.cdmotdem as cdmotdem_old
           ,a.cdmotdem as cdmotdem_new
       FROM CECRED.CRAPASS t
-         ,(select 13 as cdcooper, decode(pr_globalname, vc_bdprod, 176818,99823128) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+         ,(select 13 as cdcooper, decode(vr_globalname, vc_bdprod, 176818,99823128) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-           select 16 as cdcooper, decode(pr_globalname, vc_bdprod, 957194,99042746) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           select 16 as cdcooper, decode(vr_globalname, vc_bdprod, 957194,99042746) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
           ) a
      WHERE 1=1
        AND t.cdcooper = a.cdcooper
