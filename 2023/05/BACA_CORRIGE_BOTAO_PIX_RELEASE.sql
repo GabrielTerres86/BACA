@@ -6,5 +6,6 @@ BEGIN
 	tnmc.dsmensagem_acao_mobile = 'Pix'
 	WHERE tnmc.cdmensagem = 5460
 	AND tnmc.cdorigem_mensagem = 13;
-
+	
+	COMMIT;
 END;
