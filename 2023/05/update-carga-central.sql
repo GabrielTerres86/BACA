@@ -1,0 +1,4 @@
+BEGIN
+  UPDATE GESTAODERISCO.tbrisco_central_carga c SET cdstatus = 7 WHERE c.DTREFERE = '02/05/2023' AND c.TPPRODUTO = 98;
+  COMMIT;
+END;
