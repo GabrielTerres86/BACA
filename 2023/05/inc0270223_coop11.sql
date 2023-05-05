@@ -140,7 +140,7 @@ begin
             ,c.dsdircop
             ,c.nmrescop
             ,(SELECT dat.dtmvtolt
-                FROM crapdat dat 
+                FROM cecred.crapdat dat 
                 WHERE dat.cdcooper = c.cdcooper) dtmvtolt         
         FROM cecred.crapcop c
        WHERE c.flgativo = 1 
@@ -1692,27 +1692,22 @@ begin
       vr_typ_saida VARCHAR2(3);
       vr_des_saida VARCHAR2(1000);
     BEGIN
-      -- Primeiro garantimos que o diretorio exista
       IF NOT gene0001.fn_exis_diretorio(pr_nmdireto) THEN
-        -- Efetuar a criação do mesmo
         gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' ||
                                                       pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
                                     pr_des_saida   => vr_des_saida);
-        --Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic := 'CRIAR DIRETORIO ARQUIVO --> Nao foi possivel criar o diretorio para gerar os arquivos. ' ||
                          vr_des_saida;
           RAISE vr_exc_erro;
         END IF;
-        -- Adicionar permissão total na pasta
         gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' ||
                                                       pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
                                     pr_des_saida   => vr_des_saida);
-        --Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic := 'PERMISSAO NO DIRETORIO --> Nao foi possivel adicionar permissao no diretorio dos arquivos. ' ||
                          vr_des_saida;
@@ -2045,14 +2040,12 @@ begin
                           vr_texto_rollback,
                           'END;' || chr(13),
                           FALSE);
-
-  -- Fecha o arquivo          
+         
   gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           chr(13),
                           TRUE);
 
-  -- Grava o arquivo de rollback
   GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3
                                      ,
                                       pr_cdprogra  => 'ATENDA'
@@ -2074,7 +2067,6 @@ begin
                                      ,
                                       pr_des_erro  => vr_dscritic);
 
-  -- Liberando a memória alocada pro CLOB    
   dbms_lob.close(vr_dados_rollback);
   dbms_lob.freetemporary(vr_dados_rollback);
       COMMIT;    
@@ -2127,4 +2119,5 @@ begin
                                  pr_des_erro    => vr_dscritic);
 
   END;
+  commit;
 end;
