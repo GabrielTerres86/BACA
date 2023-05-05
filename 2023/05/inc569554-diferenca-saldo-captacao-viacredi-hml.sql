@@ -115,7 +115,13 @@ BEGIN
     ,vr_vllanmto
     ,vr_dtfimper
     ,0);
-
+  
+  UPDATE CECRED.CRAPRDA RDA
+     SET RDA.VLSLFMES = VLSLFMES + vr_vllanmto
+   WHERE RDA.CDCOOPER = vr_cdcooper
+     AND RDA.NRDCONTA = vr_nrdconta
+     AND RDA.NRAPLICA = vr_nraplica;
+  
   vr_nrdocmto := CECRED.SEQCAPT_CRAPLAP_NRSEQDIG.nextval;
   vr_nraplica := 9;
   vr_vllanmto := 49.23;
@@ -177,7 +183,13 @@ BEGIN
     ,vr_vllanmto
     ,vr_dtfimper
     ,0);
-
+  
+  UPDATE CECRED.CRAPRDA RDA
+     SET RDA.VLSLFMES = VLSLFMES + vr_vllanmto
+   WHERE RDA.CDCOOPER = vr_cdcooper
+     AND RDA.NRDCONTA = vr_nrdconta
+     AND RDA.NRAPLICA = vr_nraplica;
+  
   COMMIT;
 EXCEPTION
   WHEN vr_excsaida THEN
