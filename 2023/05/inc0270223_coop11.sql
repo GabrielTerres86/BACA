@@ -1,3 +1,4 @@
+begin
    DECLARE  
    pr_cdcooper crapcop.cdcooper%TYPE := 11;
    pr_cdcritic crapcri.cdcritic%TYPE; 
@@ -141,7 +142,7 @@
             ,(SELECT dat.dtmvtolt
                 FROM crapdat dat 
                 WHERE dat.cdcooper = c.cdcooper) dtmvtolt         
-        FROM cedred.crapcop c
+        FROM cecred.crapcop c
        WHERE c.flgativo = 1 
          AND c.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -152,7 +153,7 @@
       SELECT seg.idseqtra,
              seg.nrctrseg,
              seg.nrproposta
-        FROM cedred.tbseg_prestamista seg
+        FROM cecred.tbseg_prestamista seg
        WHERE seg.cdcooper = pr_cdcooper
          AND seg.nrdconta = pr_nrdconta
          AND seg.nrctremp = pr_nrctrato;
@@ -189,7 +190,7 @@
       pr_nrproposta := SEGU0003.FN_NRPROPOSTA(1); 
          
       BEGIN            
-        UPDATE cedred.tbseg_prestamista g 
+        UPDATE cecred.tbseg_prestamista g 
            SET g.nrproposta = pr_nrproposta
          WHERE g.cdapolic = pr_cdapolic;    
       EXCEPTION
@@ -200,7 +201,7 @@
       
          
       BEGIN             
-        UPDATE cedred.crawseg g  
+        UPDATE cecred.crawseg g  
            SET g.nrproposta = pr_nrproposta 
          WHERE g.cdcooper = pr_cdcooper 
            AND g.nrdconta = pr_nrdconta 
@@ -236,7 +237,7 @@
                                   ,pr_dscritic OUT VARCHAR2) IS    
       CURSOR cr_proposta IS
       SELECT a.nrproposta, COUNT(a.nrproposta) qtd
-        FROM cedred.tbseg_prestamista a 
+        FROM cecred.tbseg_prestamista a 
        WHERE a.cdcooper = pr_cdcooper
          AND a.tpregist IN (1,2,3)
        GROUP by a.nrproposta
@@ -249,7 +250,7 @@
              ,a.nrdconta
              ,a.nrctrseg
              ,a.nrproposta
-         FROM cedred.tbseg_prestamista a
+         FROM cecred.tbseg_prestamista a
         WHERE a.nrproposta = pr_nrproposta;
         
       CURSOR cr_proposta_zerada IS
@@ -258,20 +259,20 @@
             ,a.cdapolic
             ,a.nrdconta
             ,a.nrctrseg
-        FROM cedred.tbseg_prestamista a 
+        FROM cecred.tbseg_prestamista a 
        WHERE a.cdcooper = pr_cdcooper
          AND a.tpregist IN (1, 2, 3)           
          AND nvl(a.nrproposta,'0') = '0';
           
       CURSOR cr_registros IS
       SELECT a.*
-        FROM cedred.tbseg_prestamista a,
+        FROM cecred.tbseg_prestamista a,
              (SELECT MAX(IDSEQTRA) AS IDSEQTRA,
                      cdcooper,
                      nrdconta,
                      nrctremp,
                      COUNT(nrctremp)
-                FROM cedred.tbseg_prestamista c
+                FROM cecred.tbseg_prestamista c
                WHERE c.cdcooper = pr_cdcooper
                  AND c.tpregist in (1, 3)
                GROUP BY cdcooper, nrdconta, nrctremp
@@ -291,7 +292,7 @@
 
           BEGIN            
                                           
-            UPDATE cedred.tbseg_prestamista g 
+            UPDATE cecred.tbseg_prestamista g 
                SET g.nrproposta = vr_nrproposta
              WHERE g.cdapolic = rw_tbseg_prestamista.cdapolic;  
                                      
@@ -302,7 +303,7 @@
           END;
            
           BEGIN                     
-            UPDATE cedred.crawseg g 
+            UPDATE cecred.crawseg g 
                SET g.nrproposta = vr_nrproposta
              WHERE g.cdcooper = rw_tbseg_prestamista.cdcooper
                AND g.nrdconta = rw_tbseg_prestamista.nrdconta
@@ -322,7 +323,7 @@
         vr_nrproposta := SEGU0003.FN_NRPROPOSTA(1); 
           
         BEGIN            
-          UPDATE cedred.tbseg_prestamista g 
+          UPDATE cecred.tbseg_prestamista g 
              SET g.nrproposta = vr_nrproposta
            WHERE g.cdapolic = rw_proposta_zerada.cdapolic;
         EXCEPTION
@@ -332,7 +333,7 @@
         END;
          
         BEGIN            
-          UPDATE cedred.crawseg g 
+          UPDATE cecred.crawseg g 
              SET g.nrproposta = vr_nrproposta
            WHERE g.cdcooper = rw_proposta_zerada.cdcooper
              AND g.nrdconta = rw_proposta_zerada.nrdconta
@@ -393,9 +394,9 @@
                       ,ass.cdcooper
                       ,epr.dtmvtolt
                       ,ass.dtnasctl                              
-                  FROM cedred.crapepr epr
-                      ,cedred.crapass ass
-                      ,cedred.craplcr lcr
+                  FROM cecred.crapepr epr
+                      ,cecred.crapass ass
+                      ,cecred.craplcr lcr
                  WHERE ass.cdcooper = pr_cdcooper
                    AND ass.cdcooper = epr.cdcooper
                    AND ass.nrdconta = epr.nrdconta
@@ -409,8 +410,8 @@
                    AND lcr.tpcuspr = 1
                ) EPR 
          WHERE NOT EXISTS(SELECT seg.idseqtra
-                            FROM cedred.tbseg_prestamista seg,
-                                 cedred.crapseg s
+                            FROM cecred.tbseg_prestamista seg,
+                                 cecred.crapseg s
                            WHERE seg.cdcooper = epr.cdcooper
                              AND seg.nrdconta = epr.nrdconta
                              AND seg.nrctremp = epr.nrctremp
@@ -422,7 +423,7 @@
                                                      
       CURSOR cr_param_prst IS
         SELECT p.*
-          FROM cedred.tbseg_parametros_prst p
+          FROM cecred.tbseg_parametros_prst p
          WHERE p.cdcooper = pr_cdcooper
            AND p.tpcustei = 1
            AND p.tppessoa = 1 
@@ -559,9 +560,9 @@
                      ,DECODE(t.cdsexotl, 2, '2', 1, '1', '1') cdsexotl_ttl 
                      ,p.cdsexotl cdsexotl_tbseg
                      ,p.cdapolic
-                FROM cedred.tbseg_prestamista p
-                    ,cedred.crapepr e
-                    ,cedred.crapttl t
+                FROM cecred.tbseg_prestamista p
+                    ,cecred.crapepr e
+                    ,cecred.crapttl t
                WHERE p.cdcooper = pr_cdcooper
                  AND e.cdcooper = p.cdcooper
                  AND e.nrdconta = p.nrdconta
@@ -583,7 +584,7 @@
           BEGIN 
           gene0002.pc_escreve_xml(vr_dados_rollback,
                               vr_texto_rollback,
-                              'UPDATE cedred.tbseg_prestamista      ' || chr(13) ||
+                              'UPDATE cecred.tbseg_prestamista      ' || chr(13) ||
                               '   SET vldevatu =   ' ||   rw_prestamista.vldevatu   ||chr(13) ||                                                           
                               '   , tpregist =   ' ||   rw_prestamista.tpregist   ||chr(13) ||                                                           
                               ' WHERE CDCOOPER = ' || rw_prestamista.CDCOOPER || chr(13) ||
@@ -592,7 +593,7 @@
                               '   AND nrctremp = ' || rw_prestamista.nrctremp || chr(13) ||';' || chr(13),
                               FALSE);
                         
-            UPDATE cedred.tbseg_prestamista p
+            UPDATE cecred.tbseg_prestamista p
                SET p.vldevatu = rw_prestamista.SaldoAtualizado
                  , p.dtnasctl = rw_prestamista.dtnasctl
                  , p.tpregist  = rw_prestamista.Tiporeg
@@ -666,8 +667,8 @@
                      ,pr_nrctremp  IN tbseg_prestamista.nrctremp%TYPE
                      ,pr_nrctrseg  IN tbseg_prestamista.nrctrseg%TYPE) IS
         SELECT t.* 
-          FROM cedred.tbseg_prestamista t,
-               cedred.crapseg s 
+          FROM cecred.tbseg_prestamista t,
+               cecred.crapseg s 
          WHERE t.cdcooper = s.cdcooper
            AND t.nrdconta = s.nrdconta
            AND t.nrctrseg = s.nrctrseg
@@ -694,7 +695,7 @@
           FETCH cr_prest INTO rw_prest;
           IF cr_prest%FOUND THEN
             BEGIN 
-              UPDATE cedred.tbseg_prestamista
+              UPDATE cecred.tbseg_prestamista
                  SET tpregist = 1,
                      dtinivig = trunc(SYSDATE,'MONTH')-1,
                      nrproposta = VR_NRPROPOSTA 
@@ -703,7 +704,7 @@
                  AND nrctremp = rw_prest.nrctremp
                  AND nrctrseg = rw_prest.nrctrseg;  
             
-             UPDATE cedred.crawseg w
+             UPDATE cecred.crawseg w
                 SET w.nrproposta = VR_NRPROPOSTA
               WHERE w.cdcooper = rw_prest.cdcooper
                 AND w.nrdconta = rw_prest.nrdconta
@@ -867,11 +868,11 @@
                 ,w.nrctrliq##9
                 ,w.nrctrliq##10
                 , s.cdsitseg
-            FROM cedred.tbseg_prestamista p
-                ,cedred.crapepr c
-                ,cedred.crapseg s
-                ,cedred.crawepr w
-                ,cedred.crapass a
+            FROM cecred.tbseg_prestamista p
+                ,cecred.crapepr c
+                ,cecred.crapseg s
+                ,cecred.crawepr w
+                ,cecred.crapass a
            WHERE p.cdcooper = pr_cdcooper
              AND c.cdcooper = p.cdcooper
              AND c.nrdconta = p.nrdconta
@@ -900,7 +901,7 @@
                  pp.nrapolic,
                  pp.pielimit,
                  pp.ifttlimi
-            FROM cedred.tbseg_parametros_prst pp
+            FROM cecred.tbseg_parametros_prst pp
            WHERE pp.cdcooper = pr_cdcooper
              AND pp.tppessoa = 1 
              AND pp.cdsegura = segu0001.busca_seguradora
@@ -912,7 +913,7 @@
                           pr_nrctrseg crawseg.nrctrseg%TYPE,
                           pr_nrctrato crawseg.nrctrato%TYPE) IS
           SELECT c.flggarad, c.nrendres, c.flfinanciasegprestamista
-            FROM cedred.crawseg c
+            FROM cecred.crawseg c
            WHERE c.cdcooper = pr_cdcooper
              AND c.nrdconta = pr_nrdconta
              AND c.nrctrseg = pr_nrctrseg
@@ -923,8 +924,8 @@
                                  pr_nrdconta  crawepr.nrdconta%TYPE,
                                  pr_nrctremp  crawepr.nrctremp%TYPE) IS
           SELECT w.nrctremp
-            FROM cedred.crapepr e,
-                 cedred.crawepr w
+            FROM cecred.crapepr e,
+                 cecred.crawepr w
            WHERE w.cdcooper = pr_cdcooper
              AND w.nrdconta = pr_nrdconta
              AND w.cdcooper = e.cdcooper
@@ -952,7 +953,7 @@
         
         SELECT nmrescop
           INTO vr_nmrescop
-          FROM cedred.crapcop
+          FROM cecred.crapcop
          WHERE cdcooper = pr_cdcooper;
         
 
@@ -972,7 +973,7 @@
         vr_senha    := rw_seg_parametro_prst.senhaftp;
           
         BEGIN
-          UPDATE cedred.tbseg_parametros_prst p
+          UPDATE cecred.tbseg_parametros_prst p
              SET p.seqarqu = vr_nrsequen
            WHERE p.idseqpar = rw_seg_parametro_prst.idseqpar;
           COMMIT;
@@ -1262,7 +1263,7 @@
           BEGIN 
           gene0002.pc_escreve_xml(vr_dados_rollback,
                               vr_texto_rollback,
-                              'UPDATE cedred.tbseg_prestamista      ' || chr(13) ||
+                              'UPDATE cecred.tbseg_prestamista      ' || chr(13) ||
                               '   SET tpregist =   ' ||   rw_prestamista.tpregist   ||chr(13) ||                                                           
                               ' WHERE CDCOOPER = ' || rw_prestamista.CDCOOPER || chr(13) ||
                               '   AND nrdconta = ' || rw_prestamista.nrdconta || chr(13) ||
@@ -1270,7 +1271,7 @@
                               '   AND nrctremp = ' || rw_prestamista.nrctremp || chr(13) ||';' || chr(13),
                               FALSE);
             
-            UPDATE cedred.tbseg_prestamista
+            UPDATE cecred.tbseg_prestamista
                SET tpregist = vr_tpregist
                   ,dtdenvio = vr_dtmvtolt
                   ,dtrefcob = vr_ultimoDia
@@ -1290,7 +1291,7 @@
             BEGIN
           gene0002.pc_escreve_xml(vr_dados_rollback,
                               vr_texto_rollback,
-                              'UPDATE cedred.crapseg      ' || chr(13) ||
+                              'UPDATE cecred.crapseg      ' || chr(13) ||
                               '   SET cdsitseg =   ' ||   rw_prestamista.cdsitseg   ||chr(13) ||                                                           
                               '   , dtcancel =   ' ||   rw_prestamista.dtcancel   ||chr(13) ||                                                           
                               '   , cdmotcan =   ' ||   rw_prestamista.cdmotcan   ||chr(13) ||                                                                                                                       
@@ -1299,7 +1300,7 @@
                               '   AND nrctrseg = ' || rw_prestamista.nrctrseg || chr(13) || 
                               '   AND tpseguro = ' || '4' || chr(13) ||';' || chr(13),
                               FALSE);              
-              UPDATE cedred.crapseg c
+              UPDATE cecred.crapseg c
                  SET c.cdsitseg = vr_tpregist,
                      c.dtcancel = vr_dtmvtolt,
                      c.cdmotcan = vr_cdmotcan
@@ -1475,11 +1476,11 @@
              ,p.vldevatu
              ,p.nrproposta
              ,decode(s.cdagenci,90,decode(w.cdagenci,90,a.cdagenci,w.cdagenci),s.cdagenci) cdagenci
-         FROM cedred.crapass a
-             ,cedred.crapseg s
-             ,cedred.crawepr w
-             ,cedred.crapepr c
-             ,cedred.tbseg_prestamista p
+         FROM cecred.crapass a
+             ,cecred.crapseg s
+             ,cecred.crawepr w
+             ,cecred.crapepr c
+             ,cecred.tbseg_prestamista p
         WHERE p.cdcooper = pr_cdcooper    
           AND p.cdcooper = c.cdcooper
           AND p.nrdconta = c.nrdconta
@@ -1511,7 +1512,7 @@
       END pc_xml_tag;
       
       BEGIN        
-        SELECT nmrescop INTO vr_nmrescop FROM cedred.crapcop  WHERE cdcooper = pr_cdcooper;       
+        SELECT nmrescop INTO vr_nmrescop FROM cecred.crapcop  WHERE cdcooper = pr_cdcooper;       
          
         vr_nmdircop := gene0001.fn_diretorio(pr_tpdireto => 'C', pr_cdcooper => pr_cdcooper);
         vr_ultimoDia :=  trunc(SYSDATE,'MONTH'); 
@@ -1758,7 +1759,7 @@
       CLOSE cr_crapcop;
     END IF;
  
-    SELECT nmsegura INTO vr_nmsegura FROM cedred.crapcsg WHERE cdcooper = pr_cdcooper AND cdsegura = 514; 
+    SELECT nmsegura INTO vr_nmsegura FROM cecred.crapcsg WHERE cdcooper = pr_cdcooper AND cdsegura = 514; 
   
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop INTO rw_crapcop;
@@ -2126,3 +2127,4 @@
                                  pr_des_erro    => vr_dscritic);
 
   END;
+end;
