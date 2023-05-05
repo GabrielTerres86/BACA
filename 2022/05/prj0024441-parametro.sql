@@ -1,7 +1,7 @@
 BEGIN
 
 	INSERT INTO crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm) 
-                 VALUES ('CRED', 0, 'MLC_ATIVO', 'Flag que determina se o fluxo de modernização de liquidação da cobrança (MLC) está ativo', 'N');
+                 VALUES ('CRED', 0, 'MLC_ATIVO', 'Flag que determina se o fluxo de modernização de liquidação da cobrança (MLC) está ativo', '0');
 
   COMMIT;
 
