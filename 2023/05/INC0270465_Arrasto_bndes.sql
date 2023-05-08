@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-230
 DECLARE  
 
   vr_dtrefere    DATE := to_date('30/04/2023','DD/MM/RRRR');
@@ -230,6 +228,3 @@ EXCEPTION
     pc_fechar_arquivos;
     
 END;
-0
-1
-pr_dsnivris
