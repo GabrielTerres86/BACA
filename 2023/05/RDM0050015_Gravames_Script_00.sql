@@ -1027,5 +1027,6 @@ BEGIN
 	UPDATE CECRED.crapbpr b  SET b.flgregct = 1,b.flgregim = 1 WHERE b.cdcooper = 16 AND b.nrdconta = 500208 AND b.nrctrpro = 668279 AND b.idseqbem = '1';
 	UPDATE CECRED.crapbpr b  SET b.flgregct = 1,b.flgregim = 1 WHERE b.cdcooper = 16 AND b.nrdconta = 532827 AND b.nrctrpro = 668700 AND b.idseqbem = '1';
 
+	COMMIT;
   
 END;

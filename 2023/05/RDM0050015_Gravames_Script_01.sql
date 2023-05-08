@@ -271,5 +271,6 @@ BEGIN
   UPDATE crapbpr b  SET b.flgregct = 1 WHERE b.cdcooper = 12 AND b.nrdconta = 26140 AND b.nrctrpro = 73196 AND b.idseqbem = '1';
   UPDATE crapbpr b  SET b.flgregct = 1 WHERE b.cdcooper = 16 AND b.nrdconta = 507482 AND b.nrctrpro = 192599 AND b.idseqbem = '5';
 
+  COMMIT;
   
 END;
