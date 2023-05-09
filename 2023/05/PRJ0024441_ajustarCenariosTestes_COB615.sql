@@ -113,7 +113,7 @@ BEGIN
      SET t.dtferiad = to_date('11/01/2023', 'dd/mm/yyyy')
        , t.tpferiad = 0
    WHERE t.cdcidade IN (4109,16300,1212) 
-     AND t.dtferiad = '09/01/2023';
+     AND t.dtferiad = to_date('09/01/2023', 'dd/mm/yyyy');
   
   COMMIT;
   
