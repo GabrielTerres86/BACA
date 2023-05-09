@@ -103,7 +103,6 @@ BEGIN
        , t.vldescto = (t.nrdocmto / 100)
    WHERE ROWID IN ('AAJ30aAAAAAA01mAAY','AAJ30aAAAAAA01lAAG','AAJ30aAAAAAAusBAAM','AAJ30aAAAAAAuA6AAt');
   
-  -- Boleto vencido, com desconto, com juros e sem multa
   UPDATE crapcob t 
      SET t.tpdmulta = 3 
        , t.vlrmulta = 0
