@@ -75,52 +75,61 @@ BEGIN
   ELSE
     CLOSE cr_craplap;
   END IF;
-
-  SELECT A.DTFIMPER
-    INTO vr_dtfimper
-    FROM CECRED.CRAPRDA A
-   WHERE A.CDCOOPER = vr_cdcooper
-     AND A.NRDCONTA = vr_nrdconta
-     AND A.NRAPLICA = vr_nraplica;
-
-  INSERT INTO craplap
-    (cdcooper
-    ,dtmvtolt
-    ,cdagenci
-    ,cdbccxlt
-    ,nrdolote
-    ,nrdconta
-    ,nraplica
-    ,nrdocmto
-    ,txaplica
-    ,txaplmes
-    ,cdhistor
-    ,nrseqdig
-    ,vllanmto
-    ,dtrefere
-    ,vlrendmm)
-  VALUES
-    (vr_cdcooper
-    ,rw_crapdat.dtmvtolt
-    ,vr_cdagenci
-    ,vr_cdbccxlt
-    ,vr_nrdolote
-    ,vr_nrdconta
-    ,vr_nraplica
-    ,vr_nrdocmto + 555000
-    ,rw_craplap.txaplica
-    ,rw_craplap.txaplica
-    ,vr_cdhistor
-    ,NVL(vr_nrdocmto, 0) + 1
-    ,vr_vllanmto
-    ,vr_dtfimper
-    ,0);
   
-  UPDATE CECRED.CRAPRDA RDA
-     SET RDA.VLSLFMES = VLSLFMES + vr_vllanmto
-   WHERE RDA.CDCOOPER = vr_cdcooper
-     AND RDA.NRDCONTA = vr_nrdconta
-     AND RDA.NRAPLICA = vr_nraplica;
+  BEGIN
+   SELECT A.DTFIMPER
+     INTO vr_dtfimper
+     FROM CECRED.CRAPRDA A
+    WHERE A.CDCOOPER = vr_cdcooper
+      AND A.NRDCONTA = vr_nrdconta
+      AND A.NRAPLICA = vr_nraplica
+      AND A.INSAQTOT = 0;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      vr_dtfimper := null;
+  END;
+  
+  IF vr_dtfimper IS NOT NULL THEN
+    INSERT INTO craplap
+      (cdcooper
+      ,dtmvtolt
+      ,cdagenci
+      ,cdbccxlt
+      ,nrdolote
+      ,nrdconta
+      ,nraplica
+      ,nrdocmto
+      ,txaplica
+      ,txaplmes
+      ,cdhistor
+      ,nrseqdig
+      ,vllanmto
+      ,dtrefere
+      ,vlrendmm)
+    VALUES
+      (vr_cdcooper
+      ,rw_crapdat.dtmvtolt
+      ,vr_cdagenci
+      ,vr_cdbccxlt
+      ,vr_nrdolote
+      ,vr_nrdconta
+      ,vr_nraplica
+      ,vr_nrdocmto + 555000
+      ,rw_craplap.txaplica
+      ,rw_craplap.txaplica
+      ,vr_cdhistor
+      ,NVL(vr_nrdocmto, 0) + 1
+      ,vr_vllanmto
+      ,vr_dtfimper
+      ,0);
+    
+    UPDATE CECRED.CRAPRDA RDA
+       SET RDA.VLSLFMES = VLSLFMES + vr_vllanmto
+     WHERE RDA.CDCOOPER = vr_cdcooper
+       AND RDA.NRDCONTA = vr_nrdconta
+       AND RDA.NRAPLICA = vr_nraplica;
+  END IF;
+  
   
   vr_nrdocmto := CECRED.SEQCAPT_CRAPLAP_NRSEQDIG.nextval;
   vr_nraplica := 9;
@@ -144,51 +153,59 @@ BEGIN
     CLOSE cr_craplap;
   END IF;
 
-  SELECT A.DTFIMPER
-    INTO vr_dtfimper
-    FROM CECRED.CRAPRDA A
-   WHERE A.CDCOOPER = vr_cdcooper
-     AND A.NRDCONTA = vr_nrdconta
-     AND A.NRAPLICA = vr_nraplica;
-
-  INSERT INTO craplap
-    (cdcooper
-    ,dtmvtolt
-    ,cdagenci
-    ,cdbccxlt
-    ,nrdolote
-    ,nrdconta
-    ,nraplica
-    ,nrdocmto
-    ,txaplica
-    ,txaplmes
-    ,cdhistor
-    ,nrseqdig
-    ,vllanmto
-    ,dtrefere
-    ,vlrendmm)
-  VALUES
-    (vr_cdcooper
-    ,rw_crapdat.dtmvtolt
-    ,vr_cdagenci
-    ,vr_cdbccxlt
-    ,vr_nrdolote
-    ,vr_nrdconta
-    ,vr_nraplica
-    ,vr_nrdocmto + 555000
-    ,rw_craplap.txaplica
-    ,rw_craplap.txaplica
-    ,vr_cdhistor
-    ,NVL(vr_nrdocmto, 0) + 1
-    ,vr_vllanmto
-    ,vr_dtfimper
-    ,0);
+  BEGIN
+   SELECT A.DTFIMPER
+     INTO vr_dtfimper
+     FROM CECRED.CRAPRDA A
+    WHERE A.CDCOOPER = vr_cdcooper
+      AND A.NRDCONTA = vr_nrdconta
+      AND A.NRAPLICA = vr_nraplica
+      AND A.INSAQTOT = 0;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      vr_dtfimper := null;
+  END;
   
-  UPDATE CECRED.CRAPRDA RDA
-     SET RDA.VLSLFMES = VLSLFMES + vr_vllanmto
-   WHERE RDA.CDCOOPER = vr_cdcooper
-     AND RDA.NRDCONTA = vr_nrdconta
-     AND RDA.NRAPLICA = vr_nraplica;
+  IF vr_dtfimper IS NOT NULL THEN
+    INSERT INTO craplap
+      (cdcooper
+      ,dtmvtolt
+      ,cdagenci
+      ,cdbccxlt
+      ,nrdolote
+      ,nrdconta
+      ,nraplica
+      ,nrdocmto
+      ,txaplica
+      ,txaplmes
+      ,cdhistor
+      ,nrseqdig
+      ,vllanmto
+      ,dtrefere
+      ,vlrendmm)
+    VALUES
+      (vr_cdcooper
+      ,rw_crapdat.dtmvtolt
+      ,vr_cdagenci
+      ,vr_cdbccxlt
+      ,vr_nrdolote
+      ,vr_nrdconta
+      ,vr_nraplica
+      ,vr_nrdocmto + 555000
+      ,rw_craplap.txaplica
+      ,rw_craplap.txaplica
+      ,vr_cdhistor
+      ,NVL(vr_nrdocmto, 0) + 1
+      ,vr_vllanmto
+      ,vr_dtfimper
+      ,0);
+    
+    UPDATE CECRED.CRAPRDA RDA
+       SET RDA.VLSLFMES = VLSLFMES + vr_vllanmto
+     WHERE RDA.CDCOOPER = vr_cdcooper
+       AND RDA.NRDCONTA = vr_nrdconta
+       AND RDA.NRAPLICA = vr_nraplica;
+  END IF;
   
   COMMIT;
 EXCEPTION
