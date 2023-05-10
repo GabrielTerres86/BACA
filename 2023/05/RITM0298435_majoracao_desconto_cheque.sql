@@ -29,7 +29,7 @@ DECLARE
          ,lim.nrctrlim
          ,lim.tpctrlim
          ,lim.vllimite
-     FROM craplim lim
+     FROM cecred.craplim lim
     WHERE lim.cdcooper = pr_cdcooper
       AND lim.nrctrlim = pr_nrctrlim
       AND lim.tpctrlim = pr_tpctrlim
@@ -109,14 +109,14 @@ BEGIN
         END IF; 
   
         BEGIN
-          UPDATE craplim lim
+          UPDATE cecred.craplim lim
              SET lim.vllimite = vr_vet_campos(2)
            WHERE lim.nrctrlim = rw_craplim.nrctrlim
              AND lim.nrdconta = rw_craplim.nrdconta
              AND lim.cdcooper = rw_craplim.cdcooper
              AND lim.tpctrlim = rw_craplim.tpctrlim;
                     
-          UPDATE crawlim lim
+          UPDATE cecred.crawlim lim
              SET lim.vllimite = vr_vet_campos(2)
            WHERE lim.nrctrlim = rw_craplim.nrctrlim
              AND lim.nrdconta = rw_craplim.nrdconta
