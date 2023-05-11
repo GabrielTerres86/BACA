@@ -6,7 +6,7 @@ DECLARE
   
   CURSOR cr_crapcop IS
     SELECT c.cdcooper
-      FROM crapcop c
+      FROM cecred.crapcop c
      WHERE c.flgativo = 1;
   rw_crapcop cr_crapcop%ROWTYPE;
   
@@ -17,10 +17,10 @@ DECLARE
           ,ris.nrctremp
           ,ris.dtrefere
           ,NVL(ris.qtdiaatr, 0) qtdiaatr
-      FROM crapris ris
-          ,crapepr e
+      FROM cecred.crapris ris
+          ,cecred.crapepr e
      WHERE ris.dtrefere = (SELECT MAX(dtrefere)
-                             FROM crapris ris2
+                             FROM cecred.crapris ris2
                             WHERE ris2.nrdconta = ris.nrdconta
                               AND ris2.cdcooper = ris.cdcooper
                               AND ris2.cdorigem = ris.cdorigem
@@ -34,7 +34,7 @@ DECLARE
        AND ris.cdcooper = pr_cdcooper
        AND ((ris.nrctremp = ris.nrdconta) OR
            (ris.nrctremp = (SELECT t.nrctaant
-                               FROM craptco t
+                               FROM cecred.craptco t
                               WHERE t.cdcooper = ris.cdcooper
                                 AND t.nrdconta = ris.nrdconta)))
        AND ris.cdorigem = 1
