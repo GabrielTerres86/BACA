@@ -32,7 +32,7 @@ DECLARE
                    ,pr_nrdconta IN craplap.nrdconta%TYPE
                    ,pr_nraplica IN craplap.nraplica%TYPE) IS
     SELECT lap.txaplica
-      FROM craplap lap
+      FROM CECRED.craplap lap
      WHERE lap.cdcooper = pr_cdcooper
        AND lap.nrdconta = pr_nrdconta
        AND lap.nraplica = pr_nraplica
@@ -90,7 +90,7 @@ BEGIN
   END;
   
   IF vr_dtfimper IS NOT NULL THEN
-    INSERT INTO craplap
+    INSERT INTO CECRED.craplap
       (cdcooper
       ,dtmvtolt
       ,cdagenci
@@ -167,7 +167,7 @@ BEGIN
   END;
   
   IF vr_dtfimper IS NOT NULL THEN
-    INSERT INTO craplap
+    INSERT INTO CECRED.craplap
       (cdcooper
       ,dtmvtolt
       ,cdagenci
