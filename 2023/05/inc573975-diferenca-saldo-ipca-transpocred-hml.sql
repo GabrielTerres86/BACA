@@ -24,7 +24,7 @@ DECLARE
                    ,pr_nrdconta IN craplap.nrdconta%TYPE
                    ,pr_nraplica IN craplap.nraplica%TYPE) IS
     SELECT lap.txaplica
-      FROM craplap lap
+      FROM CECRED.craplap lap
      WHERE lap.cdcooper = pr_cdcooper
        AND lap.nrdconta = pr_nrdconta
        AND lap.nraplica = pr_nraplica
@@ -50,7 +50,7 @@ BEGIN
   vr_nraplica := 1;
   vr_vllanmto := 293.48;
   
-  INSERT INTO craplac
+  INSERT INTO CECRED.craplac
     (cdcooper
     ,dtmvtolt
     ,cdagenci
@@ -79,7 +79,7 @@ BEGIN
   vr_nraplica := 3;
   vr_vllanmto := 395.03;
   
-  INSERT INTO craplac
+  INSERT INTO CECRED.craplac
     (cdcooper
     ,dtmvtolt
     ,cdagenci
