@@ -25,7 +25,7 @@ BEGIN
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CADRIS_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CadRis','risco' );
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CONTAS_GECO_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CONTAS - Grupo Economico','grupo-economico' );
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'RATMOV_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela RatMov','rating' );
-    
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'ATENDA_GECO_OCR_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CONTAS - Grupo Economico','grupo-economico' );
 	COMMIT;
 
 EXCEPTION
