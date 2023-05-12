@@ -21,8 +21,8 @@ BEGIN
 
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'DIR_RISCO_CRED_AILOSR','Diretorio de risco no Front Ailos+ DEV/HML/PRD','/home/application/riscocredito/');
 
-    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'ATENDA_OCR_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela Ocorrencias Riscos','risco-credito' );
-    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CADRIS_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CadRis','risco-credito' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'ATENDA_OCR_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela Ocorrencias Riscos','risco' );
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CADRIS_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CadRis','risco' );
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CONTAS_GECO_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CONTAS - Grupo Economico','grupo-economico' );
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'RATMOV_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela RatMov','rating' );
     
