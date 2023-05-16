@@ -1,6 +1,6 @@
 BEGIN
   BEGIN
-    UPDATE TBDOMIC_LIQTRANS_ARQUIVO TLA
+    UPDATE CECRED.TBDOMIC_LIQTRANS_ARQUIVO TLA
        SET TLA.NMARQUIVO_GERADO  = NULL
           ,TLA.DHARQUIVO_GERADO  = NULL
           ,TLA.NMARQUIVO_RETORNO = NULL
@@ -270,7 +270,7 @@ BEGIN
   END;
 
   BEGIN
-    UPDATE TBDOMIC_LIQTRANS_LANCTO TLL
+    UPDATE CECRED.TBDOMIC_LIQTRANS_LANCTO TLL
        SET TLL.INSITUACAO      = 0
           ,TLL.DHPROCESSAMENTO = NULL
      WHERE TLL.IDARQUIVO IN (732127,
@@ -538,16 +538,16 @@ BEGIN
   END;
 
   BEGIN
-    UPDATE TBDOMIC_LIQTRANS_PDV TLP
+    UPDATE CECRED.TBDOMIC_LIQTRANS_PDV TLP
        SET TLP.CDOCORRENCIA         = NULL
           ,TLP.DHRETORNO            = NULL
           ,TLP.CDOCORRENCIA_RETORNO = NULL
           ,TLP.DSERRO               = NULL
           ,TLP.DSOCORRENCIA_RETORNO = NULL
      WHERE IDCENTRALIZA IN (SELECT idcentraliza
-                              FROM tbdomic_liqtrans_centraliza
+                              FROM CECRED.tbdomic_liqtrans_centraliza
                              WHERE idlancto IN (SELECT idlancto
-                                                  FROM tbdomic_liqtrans_lancto
+                                                  FROM CECRED.tbdomic_liqtrans_lancto
                                                  WHERE idarquivo IN (732127,
                                                                      732128,
                                                                      732129,
