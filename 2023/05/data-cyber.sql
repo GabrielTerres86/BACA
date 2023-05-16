@@ -18,6 +18,7 @@ BEGIN
            WHERE b.cdcooper = a.cdcooper)
    WHERE a.cdcooper = 8
      AND a.dtdbaixa IS NULL;
+
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
