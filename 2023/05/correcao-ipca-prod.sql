@@ -40,9 +40,9 @@ DECLARE
        AND lac.nraplica = rac.nraplica
        AND lac.cdcooper = 1
        AND rac.cdprodut = 1057
-       AND (lac.dtmvtolt BETWEEN '19/12/2022' AND '24/02/2023' AND lac.cdhistor = 3333)
+       AND (lac.dtmvtolt BETWEEN to_date('19/12/2022','DD/MM/RRRR') AND to_date('24/02/2023','DD/MM/RRRR') AND lac.cdhistor = 3333)
        AND EXTRACT(DAY FROM rac.dtmvtolt) BETWEEN 01 AND 14
-       AND rac.dtmvtolt < '19/12/2022';
+       AND rac.dtmvtolt < to_date('19/12/2022','DD/MM/RRRR');
   rw_craprac cr_craprac%ROWTYPE;
 
   CURSOR cr_craplac(pr_cdcooper NUMBER
@@ -104,6 +104,7 @@ DECLARE
   
     IF pr_flagupdate = 1
     THEN
+      vr_nrdocmto := 1;/*
       UPDATE cecred.craprac
          SET craprac.vlbasant = pr_vlbasapl
             ,craprac.vlsldant = pr_vlsldatl
@@ -112,7 +113,7 @@ DECLARE
             ,craprac.dtatlsld = pr_dtmvtolt
        WHERE craprac.cdcooper = pr_cdcooper
          AND craprac.nrdconta = pr_nrdconta
-         AND craprac.nraplica = pr_nraplica;
+         AND craprac.nraplica = pr_nraplica;*/
     END IF;
   EXCEPTION
     WHEN OTHERS THEN
