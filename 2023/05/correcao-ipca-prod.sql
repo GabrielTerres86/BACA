@@ -104,7 +104,6 @@ DECLARE
   
     IF pr_flagupdate = 1
     THEN
-      vr_nrdocmto := 1;/*
       UPDATE cecred.craprac
          SET craprac.vlbasant = pr_vlbasapl
             ,craprac.vlsldant = pr_vlsldatl
@@ -113,7 +112,7 @@ DECLARE
             ,craprac.dtatlsld = pr_dtmvtolt
        WHERE craprac.cdcooper = pr_cdcooper
          AND craprac.nrdconta = pr_nrdconta
-         AND craprac.nraplica = pr_nraplica;*/
+         AND craprac.nraplica = pr_nraplica;
     END IF;
   EXCEPTION
     WHEN OTHERS THEN
