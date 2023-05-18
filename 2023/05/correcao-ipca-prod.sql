@@ -40,9 +40,9 @@ DECLARE
        AND lac.nraplica = rac.nraplica
        AND lac.cdcooper = 1
        AND rac.cdprodut = 1057
-       AND (lac.dtmvtolt BETWEEN '19/12/2022' AND '24/02/2023' AND lac.cdhistor = 3333)
+       AND (lac.dtmvtolt BETWEEN to_date('19/12/2022','DD/MM/RRRR') AND to_date('24/02/2023','DD/MM/RRRR') AND lac.cdhistor = 3333)
        AND EXTRACT(DAY FROM rac.dtmvtolt) BETWEEN 01 AND 14
-       AND rac.dtmvtolt < '19/12/2022';
+       AND rac.dtmvtolt < to_date('19/12/2022','DD/MM/RRRR');
   rw_craprac cr_craprac%ROWTYPE;
 
   CURSOR cr_craplac(pr_cdcooper NUMBER
