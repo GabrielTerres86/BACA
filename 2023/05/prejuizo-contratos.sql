@@ -10,7 +10,7 @@ declare
     SELECT cop.cdcooper
       FROM crapcop cop
      WHERE cop.cdcooper <> 3
-       AND cop.flgativo = 1 -- Seleciona cooperativas ativas - 09/01/2019 - PRB00040466
+       AND cop.flgativo = 1
   ORDER BY cop.cdcooper;
 begin
   FOR rw_crapcop IN cr_crapcop LOOP      
@@ -21,8 +21,7 @@ begin
                        ,pr_cdcritic => vr_cdcritic
                        ,pr_dscritic => vr_dscritic);
                        
-      IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN 
-      -- Montar mensagem de critica
+      IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN       
          vr_dscritic := vr_dscritic ||
                      ' Retorno pc_crps780';                                         
          RAISE vr_exc_erro_tratado; 
