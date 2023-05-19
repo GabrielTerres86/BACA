@@ -4,7 +4,7 @@ DECLARE
   rw_crapcop cr_crapcop%ROWTYPE;
 BEGIN
   FOR rw_crapcop IN cr_crapcop LOOP
-    UPDATE crapprm
+    UPDATE cecred.crapprm
        SET dsvlrprm = dsvlrprm || ';0'
      WHERE cdcooper = rw_crapcop.cdcooper
        AND UPPER(nmsistem) = 'CRED' 
