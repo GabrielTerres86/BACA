@@ -43,12 +43,10 @@ BEGIN
     VALUES
       (rw_cop.cdcooper, vr_idinconsist, 4);
     
-    FOR rw_email IN cr_email(pr_cdcooper => rw_cop.cdcooper) LOOP
-      INSERT INTO cecred.tbgen_inconsist_email_grp
-        (cdcooper, idinconsist_grp, dsendereco_email)
-      VALUES
-        (rw_cop.cdcooper, vr_idinconsist, rw_email.dsendereco_email);
-    END LOOP;
+    INSERT INTO cecred.tbgen_inconsist_email_grp
+      (cdcooper, idinconsist_grp, dsendereco_email)
+    VALUES
+      (rw_cop.cdcooper, vr_idinconsist, 'recuperacaodecredito@ailos.coop.br');
     
   END LOOP;
   
