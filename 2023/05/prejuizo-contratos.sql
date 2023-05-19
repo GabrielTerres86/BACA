@@ -8,7 +8,7 @@ declare
   
   CURSOR cr_crapcop IS
     SELECT cop.cdcooper
-      FROM crapcop cop
+      FROM cecred.crapcop cop
      WHERE cop.cdcooper <> 3
        AND cop.flgativo = 1
   ORDER BY cop.cdcooper;
