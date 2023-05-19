@@ -20,14 +20,16 @@ begin
                        ,pr_infimsol => vr_infimsol
                        ,pr_cdcritic => vr_cdcritic
                        ,pr_dscritic => vr_dscritic);
-                       
+                                              
       IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN       
          vr_dscritic := vr_dscritic ||
                      ' Retorno pc_crps780';                                         
-         RAISE vr_exc_erro_tratado; 
-      END IF;                            
+         RAISE vr_exc_erro_tratado;          
+      END IF;                                  
   END LOOP;
+  COMMIT;
   EXCEPTION 
     WHEN vr_exc_erro_tratado THEN 
-      RAISE vr_exc_erro_tratado;   
+      ROLLBACK;
+      RAISE_application_error(-20500, vr_dscritic);   
 end;
