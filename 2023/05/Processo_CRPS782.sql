@@ -41,7 +41,7 @@ DECLARE
                    wrk.nrctremp,
                    wrk.tpparcel,
                    dbms_lob.substr(wrk.dsxml, 1000, 1) dsxml
-              from tbgen_batch_relatorio_wrk wrk
+              from cecred.tbgen_batch_relatorio_wrk wrk
              where wrk.cdprograma = 'CRPS782'
                and wrk.dsrelatorio = 'CONSEGUINADO_782'
                and wrk.tpparcel = 1) tab
@@ -99,7 +99,7 @@ begin
     END IF;
   
     BEGIN
-      UPDATE tbgen_batch_relatorio_wrk
+      UPDATE cecred.tbgen_batch_relatorio_wrk
          SET tpparcel = 3
        where CDCOOPER = rw_atualote_wrk.cdcooper
          and cdprograma = 'CRPS782'
