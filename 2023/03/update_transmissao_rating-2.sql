@@ -8,6 +8,7 @@ DECLARE
   TYPE typ_ope IS TABLE OF cr_ope%ROWTYPE INDEX BY PLS_INTEGER;
   vr_tab_ope typ_ope;
   
+  
   CURSOR cr_nrc IS
     SELECT ROWID dsrowid
       FROM cecred.crapnrc

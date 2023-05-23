@@ -1,5 +1,6 @@
 DECLARE
 
+
   vr_exc_erro      EXCEPTION;
 
   vr_desclob       CLOB;
