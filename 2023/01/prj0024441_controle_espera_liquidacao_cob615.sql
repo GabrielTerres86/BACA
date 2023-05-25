@@ -18,7 +18,7 @@ BEGIN
    ,dsobservacao)
  VALUES
    (to_date('26/05/2023', 'DD/MM/RRRR')
-   ,1 --1=Liquidação COB615 processada
+   ,1
    ,'Implantacao MLC');
 
   COMMIT;
