@@ -286,7 +286,7 @@ DECLARE
       IF cr_portab%FOUND THEN
         pc_escreve_xml_critica(to_char(sysdate,vr_dsmasklog)||' - '
                        || 'PCPS0002.pc_proc_xml_APCS104'
-                       || ' --> NU Portabilidade já existe na base de dados: '||rg_dadosret.nrnuport || chr(10));
+                       || ' >>> NU Portabilidade já existe na base de dados: '||rg_dadosret.nrnuport || chr(10));
         CLOSE cr_portab;
         CONTINUE;
       END IF;
@@ -419,7 +419,7 @@ DECLARE
           vr_dscritic := 'Erro ao inserir registro de portabilidade: '||SQLERRM;
           vr_dscritic := to_char(sysdate,vr_dsmasklog)||' - '
                            || 'PCPS0002.pc_proc_xml_APCS102'
-                           || ' --> Erro ao incluir registro de portabilidade: '||rg_dadosret.nrnuport||' - ' ||SQLERRM;
+                           || ' >>> Erro ao incluir registro de portabilidade: '||rg_dadosret.nrnuport||' - ' ||SQLERRM;
           RAISE vr_exc_erro;
       END;
       pc_escreve_xml_critica('Arquivo ' || vr_nmarquiv || ' - Inserido ' || sql%rowcount || ' registro.' || chr(10));   
@@ -444,7 +444,6 @@ BEGIN
   dbms_lob.open(vr_des_critic_xml, dbms_lob.lob_readwrite);
   vr_texto_cri_completo := NULL;
   
-  ---------- 101
   cecred.gene0001.pc_lista_arquivos(pr_path     => vr_arq_path
                                    ,pr_pesq     => vr_prefarq101
                                    ,pr_listarq  => vr_listaArq101
@@ -470,7 +469,6 @@ BEGIN
     pc_escreve_xml_critica('Sem arquivos APCS101'||chr(10)); 
   END IF;  
 
-  ---------- 103  
   pc_escreve_xml_critica('###################### Início loop Registros APCS103* - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));
   FOR rg_103 in (SELECT t.rowid
                        ,t.dtretorno
@@ -541,7 +539,6 @@ BEGIN
   pc_escreve_xml_critica('###################### Fim loop Registros APCS103* - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));
                                                               
 
-  ---------- 102
   vr_dscriticGeral := null;
   cecred.gene0001.pc_lista_arquivos(pr_path     => vr_arq_path
                                    ,pr_pesq     => vr_prefarq102
@@ -568,7 +565,6 @@ BEGIN
     pc_escreve_xml_critica('Sem arquivos APCS102' ||chr(10)); 
   END IF;         
 
-  ---------- 104
   pc_escreve_xml_critica('###################### Início ajustes arquivo APCS104_05463212_20230519_00064' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10)); 
 
   vr_rollback104 := null;
@@ -808,7 +804,6 @@ BEGIN
   pc_escreve_xml_critica('###################### Fim ajustes arquivo APCS104_05463212_20230519_00060' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));   
 
 
-  ---------- 108
   pc_escreve_xml_critica('###################### Início loop Registros APCS108_05463212_20230519_00073 - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));  
   for rg_108 in (select t.nrnu_portabilidade
                        ,t.idsituacao
@@ -921,7 +916,6 @@ BEGIN
   end loop;
   pc_escreve_xml_critica('###################### Fim loop Registros APCS108_05463212_20230519_00073 - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));  
                                 
-  ---------- 201
   pc_escreve_xml_critica('###################### Início loop Registros APCS201_05463212_20230519_00551 - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));  
   FOR rg_201 in cr_201 LOOP
     pc_escreve_xml_rollback('UPDATE cecred.tbcc_portab_env_contestacao t' || chr(10) ||
@@ -942,7 +936,6 @@ BEGIN
   END LOOP;                                                     
   pc_escreve_xml_critica('###################### Fim loop Registros APCS201_05463212_20230519_00551 - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));  
   
-  ---------- 301  
   pc_escreve_xml_critica('###################### Início loop Registros APCS301_05463212_20230519_00508 - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));  
   for rg_301 in (select t.idsituacao
                        ,t.dtretorno
