@@ -939,13 +939,11 @@ BEGIN
   pc_escreve_xml_critica('###################### Início loop Registros APCS301_05463212_20230519_00508 - ' || to_char(sysdate,'dd/mm/yyyy hh24:mm:ss') || chr(10));  
   for rg_301 in (select t.idsituacao
                        ,t.dtretorno
-                       ,t.nmarquivo_resposta
                        ,t.nrnu_portabilidade
-                    from cecred.tbcc_portabilidade_recebe t
+                    from cecred.tbcc_portab_regularizacao t
                    where t.nrnu_portabilidade in (202208230000239135781,202304170000257461011,202303200000255206525))loop
-    pc_escreve_xml_rollback('UPDATE cecred.tbcc_portabilidade_recebe t ' || chr(10) ||
+    pc_escreve_xml_rollback('UPDATE cecred.tbcc_portab_regularizacao t ' || chr(10) ||
                             '   SET t.idsituacao = ' || NVL(to_char(rg_301.idsituacao),'NULL') || chr(10) ||
-                            '      ,t.nmarquivo_resposta = ''' || NVL(rg_301.nmarquivo_resposta,'') || '''' || chr(10) ||
                             case
                               when rg_301.dtretorno IS NULL THEN
                                 '      ,t.dtretorno = NULL'
@@ -953,10 +951,9 @@ BEGIN
                                 '      ,t.dtretorno = to_date('''||to_char(rg_301.dtretorno,'dd/mm/yyyy')||''',''dd/mm/yyyy'')'
                             end || chr(10) || 
                             ' WHERE t.nrnu_portabilidade = ' || rg_301.nrnu_portabilidade || ';' || chr(10) || chr(10));
-    UPDATE cecred.tbcc_portabilidade_recebe t
+    UPDATE cecred.tbcc_portab_regularizacao t
        SET t.idsituacao = 1
           ,t.dtretorno = NULL
-          ,t.nmarquivo_resposta = NULL
      WHERE t.nrnu_portabilidade = rg_301.nrnu_portabilidade;
     pc_escreve_xml_critica('Registro Portabilidade ' || rg_301.nrnu_portabilidade || ' - Atualizado ' || sql%rowcount || ' registros.' || chr(10));
   end loop;
