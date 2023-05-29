@@ -5,9 +5,7 @@ BEGIN
   SELECT (max(cdmensagem) + 1)
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
-
-  --TRANSACAO_PIX_DADOS_MANUAL_SEM_TARIFA = 59
-  
+ 
   INSERT INTO tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
@@ -55,8 +53,6 @@ BEGIN
   SELECT (max(cdmensagem) + 1)
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
-    
-  --TRANSACAO_PIX_DADOS_MANUAL_COM_TARIFA = 60
 
   INSERT INTO tbgen_notif_msg_cadastro
     (cdmensagem,
@@ -105,9 +101,7 @@ BEGIN
   SELECT (max(cdmensagem) + 1)
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
-    
-  --RecebimentoPorDadosManuais = 61 
-  
+ 
   INSERT INTO tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
