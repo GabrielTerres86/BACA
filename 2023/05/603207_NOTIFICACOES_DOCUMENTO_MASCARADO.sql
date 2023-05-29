@@ -5,7 +5,7 @@ BEGIN
   SELECT (max(cdmensagem) + 1)
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
- 
+
   INSERT INTO tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
@@ -22,9 +22,9 @@ BEGIN
   VALUES
     (codigoMensagem,
      13,
-     'VocÃª enviou um Pix',
-     'VocÃª enviou um Pix de R$ #ValorPix. A transaÃ§Ã£o jÃ¡ foi concluÃ­da.',
-     'Cooperado, <br><br>VocÃª enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>CPF/CNPJ: #DocumentoRecebedor<br>Valor do pagamento: #ValorPix <br>InstituiÃ§Ã£o: #Instituicao <br> IdentificaÃ§Ã£o: #Identificacao <br>DescriÃ§Ã£o: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.',
+     'Você enviou um Pix',
+     'Você enviou um Pix de R$ #ValorPix. A transação já foi concluída.',
+     'Cooperado, <br><br>Você enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>CPF/CNPJ: #DocumentoRecebedor<br>Valor do pagamento: #ValorPix <br>Instituição: #Instituicao <br> Identificação: #Identificacao <br>Descrição: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.',
      16,
      0,
      1,
@@ -44,11 +44,11 @@ BEGIN
   VALUES
     (13,
      59,
-     'PIX - VocÃª enviou um Pix',
+     'PIX - Você enviou um Pix',
      codigoMensagem,
      1,
      0,
-     '<br>#NomeRecebedor - Nome do Recebedor<br>#DocumentoRecebedor - CPF/CNPJ<br>#ValorPix - Valor do pagamento (Ex.: 5000,00)<br>#Instituicao - Nome da InstituiÃ§Ã£o<br>#Identificacao - IdentificaÃ§Ã£o do Pix<br>#Descricao - DescriÃ§Ã£o do Pagamento');
+     '<br>#NomeRecebedor - Nome do Recebedor<br>#DocumentoRecebedor - CPF/CNPJ<br>#ValorPix - Valor do pagamento (Ex.: 5000,00)<br>#Instituicao - Nome da Instituição<br>#Identificacao - Identificação do Pix<br>#Descricao - Descrição do Pagamento');
 
   SELECT (max(cdmensagem) + 1)
     into codigoMensagem
@@ -70,9 +70,9 @@ BEGIN
   VALUES
     (codigoMensagem,
      13,
-     'VocÃª enviou um Pix',
-     'VocÃª enviou um Pix de R$ #ValorPix. A transaÃ§Ã£o jÃ¡ foi concluÃ­da.',
-     'Cooperado, <br><br>VocÃª enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>CPF/CNPJ: #DocumentoRecebedor<br>Valor do pagamento: #ValorPix <br>Valor da tarifa: #ValorTarifaPix <br>InstituiÃ§Ã£o: #Instituicao <br> IdentificaÃ§Ã£o: #Identificacao <br>DescriÃ§Ã£o: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.',
+     'Você enviou um Pix',
+     'Você enviou um Pix de R$ #ValorPix. A transação já foi concluída.',
+     'Cooperado, <br><br>Você enviou um Pix.<br><br>Recebedor: #NomeRecebedor <br>CPF/CNPJ: #DocumentoRecebedor<br>Valor do pagamento: #ValorPix <br>Valor da tarifa: #ValorTarifaPix <br>Instituição: #Instituicao <br> Identificação: #Identificacao <br>Descrição: #Descricao <br><br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente.',
      16,
      0,
      1,
@@ -92,16 +92,16 @@ BEGIN
   VALUES
     (13,
      60,
-     'PIX - VocÃª enviou um Pix',
+     'PIX - Você enviou um Pix',
      codigoMensagem,
      1,
      0,
-     '<br>#NomeRecebedor - Nome do Recebedor<br>#DocumentoRecebedor - CPF/CNPJ<br>#ValorPix - Valor do pagamento (Ex.: 5000,00)<br>#ValorTarifaPix# - Valor da tarifa (Ex.: 5,00)<br>Instituicao - Nome da InstituiÃ§Ã£o<br>#Identificacao - IdentificaÃ§Ã£o do Pix<br>#Descricao - DescriÃ§Ã£o do Pagamento');
+     '<br>#NomeRecebedor - Nome do Recebedor<br>#DocumentoRecebedor - CPF/CNPJ<br>#ValorPix - Valor do pagamento (Ex.: 5000,00)<br>#ValorTarifaPix# - Valor da tarifa (Ex.: 5,00)<br>Instituicao - Nome da Instituição<br>#Identificacao - Identificação do Pix<br>#Descricao - Descrição do Pagamento');
 
   SELECT (max(cdmensagem) + 1)
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
- 
+
   INSERT INTO tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
@@ -118,9 +118,9 @@ BEGIN
   VALUES
     (codigoMensagem,
      13,
-     'VocÃª recebeu um Pix',
-     'VocÃª recebeu um crÃ©dito Pix de #valorpix. O valor jÃ¡ estÃ¡ em sua conta.',
-     'Cooperado,</br></br>VocÃª recebeu um crÃ©dito Pix.</br></br>Pagador: #nomepagador </br>CPF/CNPJ : #documentopagador</br>Valor: #valorpix </br>InstituiÃ§Ã£o: #psppagador </br>IdentificaÃ§Ã£o: #identificacao </br>DescriÃ§Ã£o: #descricao </br></br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente</br></br>',
+     'Você recebeu um Pix',
+     'Você recebeu um crédito Pix de #valorpix. O valor já está em sua conta.',
+     'Cooperado,</br></br>Você recebeu um crédito Pix.</br></br>Pagador: #nomepagador </br>CPF/CNPJ : #documentopagador</br>Valor: #valorpix </br>Instituição: #psppagador </br>Identificação: #identificacao </br>Descrição: #descricao </br></br>Acesse o comprovante no App Ailos ou confira o extrato da sua conta corrente</br></br>',
      16,
      0,
      1,
@@ -140,11 +140,11 @@ BEGIN
   VALUES
     (13,
      61,
-     'PIX - Recebimento de crÃ©dito Pix',
+     'PIX - Recebimento de crédito Pix',
      codigoMensagem,
      1,
      0,
-     '</br>#valorpix - Valor do Pix (Ex.: 45,00)</br>#nomepagador - Nome do pagador</br>#documentopagador - CPF/CNPJ</br>#psppagador - PSP do pagador </br>#identificacao - IdentificaÃ§Ã£o</br>#descricao - DescriÃ§Ã£o');
+     '</br>#valorpix - Valor do Pix (Ex.: 45,00)</br>#nomepagador - Nome do pagador</br>#documentopagador - CPF/CNPJ</br>#psppagador - PSP do pagador </br>#identificacao - Identificação</br>#descricao - Descrição');
 
   COMMIT;
 END;
