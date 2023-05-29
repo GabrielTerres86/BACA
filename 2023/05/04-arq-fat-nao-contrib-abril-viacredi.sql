@@ -1319,7 +1319,7 @@ DECLARE
           cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                             ,pr_ind_tipo_log => 2 
                                             ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
+                                                        || vr_cdprogra || ' -> '
                                                         || 'Movimentacao de diretorio retornou erro: '||vr_dscritic);
         END IF;
         vr_interacao := 0;
@@ -1342,7 +1342,7 @@ DECLARE
             cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                               ,pr_ind_tipo_log => 2 
                                               ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
+                                                          || vr_cdprogra || ' -> '
                                                           || 'Processamento de ftp retornou erro: '||vr_dscritic);
           END IF;
         ELSE
@@ -1352,7 +1352,7 @@ DECLARE
             btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                       ,pr_ind_tipo_log => 2 
                                       ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
+                                                          || vr_cdprogra || ' -> '
                                                           || 'Localizar o arquivo de ftp retornou erro: '||vr_dscritic);
         END IF; 
             

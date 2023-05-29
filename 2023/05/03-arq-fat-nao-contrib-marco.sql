@@ -2370,7 +2370,7 @@ DECLARE
           if (vr_vlenviad = 0 or rw_prestamista.inliquid = 1) and vr_tpregist IN (1,3) then 
             vr_tpregist := 2;
           elsif (vr_vlenviad = 0 or rw_prestamista.inliquid = 1) and rw_prestamista.tpregist in( 1,2) then 
-            vr_tpregist:= 2; --0
+            vr_tpregist:= 2;
              BEGIN 
                
                vr_linha := ' UPDATE CECRED.tbseg_prestamista p '
@@ -2893,7 +2893,7 @@ DECLARE
           cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                             ,pr_ind_tipo_log => 2 
                                             ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                        || vr_cdprogra || ' --> '
+                                                        || vr_cdprogra || ' -> '
                                                         || 'Movimentacao de diretorio retornou erro: '||vr_dscritic);
         END IF;
         vr_interacao := 0;
@@ -2916,7 +2916,7 @@ DECLARE
             cecred.btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                               ,pr_ind_tipo_log => 2 
                                               ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
+                                                          || vr_cdprogra || ' -> '
                                                           || 'Processamento de ftp retornou erro: '||vr_dscritic);
           END IF;
         ELSE
@@ -2926,7 +2926,7 @@ DECLARE
             btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                       ,pr_ind_tipo_log => 2 
                                       ,pr_des_log      => to_char(SYSDATE,'hh24:mi:ss')||' - '
-                                                          || vr_cdprogra || ' --> '
+                                                          || vr_cdprogra || ' -> '
                                                           || 'Localizar o arquivo de ftp retornou erro: '||vr_dscritic);
         END IF; 
             
