@@ -938,6 +938,16 @@ BEGIN
    update cecred.tbseg_prestamista    
       set tpregist = 0
     where nrproposta = '770349686023A01';  
+	
+   update tbseg_prestamista pp
+	  set pp.dtrecusa = to_date('25/05/2022','dd/mm/yyyy'),
+		  pp.tprecusa = 'Proposta com irregularidades.',
+		  pp.cdmotrec = 143,
+		  pp.situacao = 0
+	where pp.cdcooper =1
+	  and pp.nrdconta = 9599835
+	  and pp.nrctrseg  in(375874)
+	  and pp.nrproposta = '770349686023' 	
 
   COMMIT;
 
