@@ -62,7 +62,7 @@ DECLARE
        AND o.cdcooper = r.cdcooper 
        and o.nrdconta = r.nrdconta 
        and o.nrctremp = r.nrctremp 
-       AND o.cdcooper IN (2,3,5,6,7,9,11,13,14)
+       AND o.cdcooper IN (2,3,5,6,7,8,9,10,11,12,13,14)
        and o.inrisco_melhora > 0
        and o.tpctrato = 90
        and o.flencerrado = 0;
