@@ -64,7 +64,7 @@ DECLARE
        and o.nrctremp = r.nrctremp 
        AND o.cdcooper IN (1)
        and o.inrisco_melhora > 0
-       and o.tpctrato = 90
+       and o.tpctrato IN (90, 1)
        and o.flencerrado = 0;
   rw_principal cr_principal%ROWTYPE;
   
