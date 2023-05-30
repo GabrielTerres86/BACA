@@ -5,7 +5,6 @@ BEGIN
   VALUES
     (4
     ,'PIX');
-  --
   INSERT INTO PAGAMENTO.TA_BAIXA_OPERACIONAL
     (cdbaixa_operacional
     ,dsbaixa_operacional)
@@ -18,7 +17,6 @@ BEGIN
   VALUES
     (12
     ,'Baixa Parcial Interbancária – Liquidação via COMPE');
-  --
   INSERT INTO PAGAMENTO.TBPAGTO_MOTIVO_CANCELAMENTO_BAIXA
     (cdmotivo_cancelamento_baixa
     ,dsmotivo_cancelamento_baixa)
