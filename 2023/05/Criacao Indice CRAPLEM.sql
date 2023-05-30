@@ -1,7 +1,3 @@
-
 begin
     CREATE INDEX "CECRED"."CRAPLEM##CRAPLEM10" ON "CECRED"."CRAPLEM" ("NRCTREMP", "NRDCONTA") online;
 end;
-/
-
-
