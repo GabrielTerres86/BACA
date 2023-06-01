@@ -6,7 +6,7 @@ BEGIN
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
 
-  INSERT INTO tbgen_notif_msg_cadastro
+  INSERT INTO CECRED.tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
      dstitulo_mensagem,
@@ -54,7 +54,7 @@ BEGIN
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
 
-  INSERT INTO tbgen_notif_msg_cadastro
+  INSERT INTO CECRED.tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
      dstitulo_mensagem,
@@ -102,7 +102,7 @@ BEGIN
     into codigoMensagem
     FROM CECRED.tbgen_notif_msg_cadastro;
 
-  INSERT INTO tbgen_notif_msg_cadastro
+  INSERT INTO CECRED.tbgen_notif_msg_cadastro
     (cdmensagem,
      cdorigem_mensagem,
      dstitulo_mensagem,
