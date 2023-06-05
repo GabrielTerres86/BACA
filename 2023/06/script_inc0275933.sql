@@ -1139,14 +1139,27 @@ begin
           IF rw_crawseg.flggarad = 1 THEN     
             IF rw_crawseg.flfinanciasegprestamista = 1 THEN
               
-              CECRED.SEGU0003.pc_ret_parc_sem_seg(pr_cdcooper                 => rw_prestamista.cdcooper,
-                                                  pr_nrdconta                 => rw_prestamista.nrdconta,
-                                                  pr_nrctremp                 => rw_prestamista.nrctremp,
-                                                  pr_flggarad                 => rw_crawseg.flggarad,
-                                                  pr_flfinanciasegprestamista => rw_crawseg.flfinanciasegprestamista,
-                                                  pr_vlseguro                 => rw_prestamista.vlprodut,
-                                                  pr_nmdatela                 => 'PC_ENVIA_ARQ_SEG_PRST',
-                                                  pr_vlparcel                 => vr_vlparcela);
+              if (rw_prestamista.nrdconta = 566071) and(rw_prestamista.nrctremp=458317) then
+                  vr_vlparcela := 1204.44; 
+              end if;
+              
+              if (rw_prestamista.nrdconta = 899275) and(rw_prestamista.nrctremp=458263) then
+                  vr_vlparcela := 752.82; 
+              end if ;   
+
+               
+               IF (rw_prestamista.nrdconta = 467910) and(rw_prestamista.nrctremp=458320) THEN 
+                  vr_vlparcela := 1205.02; 
+               ELSE
+                  CECRED.SEGU0003.pc_ret_parc_sem_seg(pr_cdcooper                 => rw_prestamista.cdcooper,
+                                                      pr_nrdconta                 => rw_prestamista.nrdconta,
+                                                      pr_nrctremp                 => rw_prestamista.nrctremp,
+                                                      pr_flggarad                 => rw_crawseg.flggarad,
+                                                      pr_flfinanciasegprestamista => rw_crawseg.flfinanciasegprestamista,
+                                                      pr_vlseguro                 => rw_prestamista.vlprodut,
+                                                      pr_nmdatela                 => 'PC_ENVIA_ARQ_SEG_PRST',
+                                                      pr_vlparcel                 => vr_vlparcela);
+                END IF;
             END IF;
             
             vr_vlcaptiftt := vr_vlparcela;            
