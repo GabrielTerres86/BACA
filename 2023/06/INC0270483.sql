@@ -20,7 +20,7 @@ DECLARE
          ,craplat.cdopeest
          ,craplat.cdlantar
          ,craplat.insitlat
-     FROM craplat craplat
+     FROM cecred.craplat craplat
     WHERE craplat.cdcooper = pr_cdcooper  
       AND craplat.nrdconta = pr_nrdconta 
       AND craplat.insitlat = 1;
@@ -134,7 +134,7 @@ BEGIN
                                        ,pr_dsdadant => rg_crapsld.vliofmes
                                        ,pr_dsdadatu => 0);  
 	  
-	  UPDATE craplat lat
+	  UPDATE cecred.craplat lat
          SET lat.insitlat = vc_insitlat
             ,lat.cdmotest = vc_cdmotest 
             ,lat.dtdestor = rw_crapdat.dtmvtolt
