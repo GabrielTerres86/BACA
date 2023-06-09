@@ -22,14 +22,14 @@ Declare
           ,contas.cdcooper
           ,contas.valor
       from CECRED.crapsld a
-          ,(select 1 as cdcooper, 96356090 as nrdconta, 14500 as valor from dual) contas
+          ,(select 1 as cdcooper, 3643840 as nrdconta, 14500 as valor from dual) contas
      WHERE a.nrdconta = contas.nrdconta
        AND a.cdcooper = contas.cdcooper;
 
   CURSOR cr_crapsda is
     SELECT a.nrdconta, a.vlsddisp, a.dtmvtolt, contas.valor, contas.cdcooper
       from CECRED.crapsda a
-          ,(select 1 as cdcooper, 96356090 as nrdconta, 14500 as valor from dual) contas
+          ,(select 1 as cdcooper, 3643840 as nrdconta, 14500 as valor from dual) contas
      WHERE a.nrdconta = contas.nrdconta
        AND a.cdcooper = contas.cdcooper
        AND a.dtmvtolt BETWEEN vc_dtinicioCRAPSDA AND TRUNC(SYSDATE)
