@@ -1,3 +1,3 @@
-UPDATE cecred.gnconve gn
-   SET gn.FLGATIVO = 1
- WHERE gn.cdconven IN (212,246,249,213,248);
+UPDATE cecred.gnconve
+   SET FLGATIVO = 1
+ WHERE cdconven IN (212,246,249,213,248);
