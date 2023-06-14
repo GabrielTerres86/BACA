@@ -55,6 +55,13 @@ BEGIN
   v_dados(v_dados.last()).vr_vllanmto := 3389.34;
   v_dados(v_dados.last()).vr_cdhistor := 3918;
 
+  v_dados.extend();
+  v_dados(v_dados.last()).vr_cdcooper := 11;
+  v_dados(v_dados.last()).vr_nrdconta := 818461;
+  v_dados(v_dados.last()).vr_nrctremp := 213958;
+  v_dados(v_dados.last()).vr_vllanmto := 148.74;
+  v_dados(v_dados.last()).vr_cdhistor := 3919;
+
   FOR x IN NVL(v_dados.first(), 1) .. nvl(v_dados.last(), 0) LOOP
   
     OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => v_dados(x).vr_cdcooper);
