@@ -39,6 +39,16 @@ BEGIN
          AND nrctremp = 6232273
          AND nrparepr IN (1, 2, 3, 4, 5);
 
+  UPDATE cecred.crapepr
+     SET dtultpag = NULL
+        ,qtprepag = 0
+        ,vlsdeved = 7385.76
+        ,vlpapgat = 0
+        ,vlppagat = 0
+   WHERE cdcooper = 1
+         AND nrdconta = 12857939
+         AND nrctremp = 6232273;
+
   vr_nrparepr := 1;
   vr_vllanmto := 887.66;
 
