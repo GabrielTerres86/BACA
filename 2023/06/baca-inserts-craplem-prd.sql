@@ -1,14 +1,14 @@
 DECLARE
-  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_cdcritic CECRED.crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(10000);
   vr_exc_saida EXCEPTION;
   rw_crapdat CECRED.BTCH0001.cr_crapdat%ROWTYPE;
 
-  vr_cdcooper crapcop.cdcooper%TYPE;
-  vr_nrdconta crapass.nrdconta%TYPE;
-  vr_nrctremp craplem.nrctremp%TYPE;
-  vr_vllanmto craplem.vllanmto%TYPE;
-  vr_cdhistor craplem.cdhistor%TYPE;
+  vr_cdcooper CECRED.crapcop.cdcooper%TYPE;
+  vr_nrdconta CECRED.crapass.nrdconta%TYPE;
+  vr_nrctremp CECRED.craplem.nrctremp%TYPE;
+  vr_vllanmto CECRED.craplem.vllanmto%TYPE;
+  vr_cdhistor CECRED.craplem.cdhistor%TYPE;
 
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                    ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
