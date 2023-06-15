@@ -54,9 +54,9 @@ update cecred.crawseg set vlpremio = 697.52 where cdcooper = 14 and nrdconta = 3
 update cecred.crapseg set vlpremio = 697.52 where cdcooper = 14 and nrdconta = 353841 and nrctrseg = 74952 and tpseguro = 4;
 update cecred.tbseg_prestamista set vlprodut = 697.52 where cdcooper = 14 and nrdconta = 353841 and nrctrseg = 74952 and nrctremp = 110079;
 
-update cecred.crawseg set vlpremio = 1337.98 where cdcooper = 14 and nrdconta = 16315499 and nrctrseg = 73224 and nrctrato = 105814 and tpseguro = 4;
-update cecred.crapseg set vlpremio = 1337.98 where cdcooper = 14 and nrdconta = 16315499 and nrctrseg = 73224 and tpseguro = 4;
-update cecred.tbseg_prestamista set vlprodut = 1337.98 where cdcooper = 14 and nrdconta = 16315499 and nrctrseg = 73224 and nrctremp = 105814;
+update cecred.crawseg set vlpremio = 1377.98 where cdcooper = 14 and nrdconta = 16315499 and nrctrseg = 73224 and nrctrato = 105814 and tpseguro = 4;
+update cecred.crapseg set vlpremio = 1377.98 where cdcooper = 14 and nrdconta = 16315499 and nrctrseg = 73224 and tpseguro = 4;
+update cecred.tbseg_prestamista set vlprodut = 1377.98 where cdcooper = 14 and nrdconta = 16315499 and nrctrseg = 73224 and nrctremp = 105814;
 
 update cecred.crawseg set vlpremio = 290.53 where cdcooper = 14 and nrdconta = 14435 and nrctrseg = 73122 and nrctrato = 106776 and tpseguro = 4;
 update cecred.crapseg set vlpremio = 290.53 where cdcooper = 14 and nrdconta = 14435 and nrctrseg = 73122 and tpseguro = 4;
