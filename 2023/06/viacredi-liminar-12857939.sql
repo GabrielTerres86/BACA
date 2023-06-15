@@ -5,7 +5,7 @@ DECLARE
   rw_crapdat CECRED.BTCH0001.cr_crapdat%ROWTYPE;
 
   vr_cdcooper cecred.crapcop.cdcooper%TYPE := 1;
-  vr_nrdconta cecred.crapass.nrdconta%TYPE := 87142007;
+  vr_nrdconta cecred.crapass.nrdconta%TYPE := 12857939;
   vr_nrctremp cecred.craplem.nrctremp%TYPE := 6232273;
   vr_cdhistor cecred.craplem.cdhistor%TYPE := 1705;
   vr_vllanmto cecred.craplem.vllanmto%TYPE;
@@ -35,7 +35,7 @@ BEGIN
         ,vlpagiof = 0
         ,vlsdvatu = 0
    WHERE cdcooper = 1
-         AND nrdconta = 87142007
+         AND nrdconta = 12857939
          AND nrctremp = 6232273
          AND nrparepr IN (1, 2, 3, 4, 5);
 
