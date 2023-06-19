@@ -1,5 +1,5 @@
 Begin
-  UPDATE tbconv_registro_remessa_pagfor 
+  UPDATE cecred.tbconv_registro_remessa_pagfor 
      SET nmarquivo_inclusao_serpro       = 'K3244.K05438BA.B0850040.D230614.H235356',
          dhinclusao_processamento_serpro = to_date('14/06/2023 23:57:00','DD/MM/YYYY HH24:mi:ss'),
          idremessa_serpro                = 40 
