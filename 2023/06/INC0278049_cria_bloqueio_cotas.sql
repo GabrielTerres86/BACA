@@ -1,6 +1,5 @@
 begin 
 
-  -- Inserir o registro do bloqueio
   INSERT INTO cecred.crapblj(cdcooper
                             ,nrdconta
                             ,nrcpfcgc
@@ -20,24 +19,24 @@ begin
                             ,dsinfadc
                             ,vlresblq
                             ,hrblqini)
-                     VALUES(1                      -- cdcooper
-                           ,10951300               -- nrdconta
-                           ,14462075000107         -- nrcpfcgc
+                     VALUES(1                      
+                           ,10951300               
+                           ,14462075000107         
                            ,4
-                           ,3                      -- cdtipmov
-                           ,0                      -- flblcrft
-                           ,TRUNC(SYSDATE)         -- dtblqini
-                           ,null                   -- dtblqfim
-                           ,1893.48                -- vlbloque
-                           ,1                      -- cdopdblq /* Operador Bloqueio    */
-                           ,NULL                              -- cdopddes /* Operador Desbloqueio */
-                           ,'Primeira Vara Civel da Comarca de Blumenau'  -- dsjuizem
-                           ,'BLOQUEIO DE CAPITAL ATE R$ 1.893,48'         -- dsresord
-                           ,TRUNC(SYSDATE)                                -- dtenvres
-                           ,'310044068089'                                -- nroficio
-                           ,'50000427542014824000'                   -- nrproces
-                           ,''                      -- dsinfadc
-                           ,0                       -- vlresblq
+                           ,3                      
+                           ,0                      
+                           ,TRUNC(SYSDATE)         
+                           ,null                   
+                           ,1893.48                
+                           ,1                      
+                           ,NULL                   
+                           ,'Primeira Vara Civel da Comarca de Blumenau'
+                           ,'BLOQUEIO DE CAPITAL ATE R$ 1.893,48'       
+                           ,TRUNC(SYSDATE)                              
+                           ,'310044068089'                              
+                           ,'50000427542014824000'                   
+                           ,''                      
+                           ,0                       
                            ,To_Number(To_Char(systimestamp,'SSSSS')));
                              
    commit;
