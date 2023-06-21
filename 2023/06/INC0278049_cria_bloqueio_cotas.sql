@@ -33,7 +33,7 @@ begin
                            ,NULL                              -- cdopddes /* Operador Desbloqueio */
                            ,'Primeira Vara Civel da Comarca de Blumenau'  -- dsjuizem
                            ,'BLOQUEIO DE CAPITAL ATE R$ 1.893,48'         -- dsresord
-                           ,'19/06/2023'                                  -- dtenvres
+                           ,TRUNC(SYSDATE)                                -- dtenvres
                            ,'310044068089'                                -- nroficio
                            ,'50000427542014824000'                   -- nrproces
                            ,''                      -- dsinfadc
