@@ -32,7 +32,7 @@ DECLARE
                           ,pr_nrctrlim IN craplim.nrctrlim%TYPE) IS
     SELECT lim.nrdconta,
            lim.cddlinha
-      FROM craplim lim
+      FROM cecred.craplim lim
      WHERE lim.cdcooper = pr_cdcooper
        AND lim.nrctrlim = pr_nrctrlim
        AND lim.tpctrlim = 1;
@@ -144,7 +144,7 @@ DECLARE
        AND lim.tpctrlim = 1;
 
     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                  ,pr_des_text => 'UPDATE craplim lim '    ||
+                                  ,pr_des_text => 'UPDATE cecred.craplim lim '    ||
                                                   '   SET lim.cddlinha = ' || rw_craplim.cddlinha ||
                                                   ' WHERE lim.cdcooper = ' || rw_craplim.cdcooper ||
                                                   '   AND lim.nrdconta = ' || rw_craplim.nrdconta ||
@@ -153,7 +153,7 @@ DECLARE
                                                   ';');
 
     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle
-                                  ,pr_des_text => 'UPDATE crawlim lim '    ||
+                                  ,pr_des_text => 'UPDATE cecred.crawlim lim '    ||
                                                   '   SET lim.cddlinha = ' || rw_craplim.cddlinha ||
                                                   ' WHERE lim.cdcooper = ' || rw_craplim.cdcooper ||
                                                   '   AND lim.nrdconta = ' || rw_craplim.nrdconta ||
