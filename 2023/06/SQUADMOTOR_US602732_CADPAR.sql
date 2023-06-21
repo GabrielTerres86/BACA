@@ -22,9 +22,9 @@ BEGIN
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
  
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (aux_cdpartar_add, 'US606698 - Variaveis JSON (1-Ligado/0-Desligado)', 2, 13);
+  values (aux_cdpartar_add, 'US602732 - Variaveis JSON (1-Ligado/0-Desligado)', 2, 13);
   insert into crapbat (CDBATTAR, NMIDENTI, CDPROGRA, TPCADAST, CDCADAST)
-  values ('US606698', 'US606698 - Variaveis JSON (1-Ligado/0-Desligado)', ' ', 2, aux_cdpartar_add);
+  values ('US602732', 'US602732 - Variaveis JSON (1-Ligado/0-Desligado)', ' ', 2, aux_cdpartar_add);
            
   insert into crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (aux_cdpartar_add, 1,  '0');
