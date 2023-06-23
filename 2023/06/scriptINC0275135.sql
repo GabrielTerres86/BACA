@@ -13,13 +13,13 @@ DECLARE
        a.cdcooper,
        a.nrdconta,
        a.idlancto
-  from craplau a
+  from cecred.craplau a
  where a.CDHISTOR = 1234
    and a.DTDEBITO is null
    and a.INSITLAU = 1
    and a.DTMVTOPG < trunc(sysdate)
    and not exists (select 1
-          from TBCNS_REPIQUE b
+          from cecred.TBCNS_REPIQUE b
          where b.Cdsitlct in (1, 3)
            and b.idlancto = a.idlancto);
 
@@ -32,8 +32,8 @@ DECLARE
       vr_typ_saida VARCHAR2(3);
       vr_des_saida VARCHAR2(1000);
     BEGIN
-      IF NOT gene0001.fn_exis_diretorio(pr_nmdireto) THEN
-        gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' ||
+      IF NOT cecred.gene0001.fn_exis_diretorio(pr_nmdireto) THEN
+        cecred.gene0001.pc_OSCommand_Shell(pr_des_comando => 'mkdir ' ||
                                                       pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
@@ -43,7 +43,7 @@ DECLARE
                          vr_des_saida;
           RAISE vr_exc_erro;
         END IF;
-        gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' ||
+        cecred.gene0001.pc_OSCommand_Shell(pr_des_comando => 'chmod 777 ' ||
                                                       pr_nmdireto ||
                                                       ' 1> /dev/null',
                                     pr_typ_saida   => vr_typ_saida,
@@ -61,7 +61,7 @@ DECLARE
   END;
 
 BEGIN
-  vr_rootmicros     := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
+  vr_rootmicros     := cecred.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto       := vr_rootmicros|| 'cpd/bacas';  
   pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0275135',
                    pr_dscritic => vr_dscritic);
@@ -76,12 +76,12 @@ BEGIN
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);
 
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           '-- Programa para rollback das informacoes' ||
                           chr(13),
                           FALSE);
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           'BEGIN' || chr(13),
                           FALSE);
@@ -89,12 +89,12 @@ BEGIN
   vr_nmarqbkp := 'ROLLBACK_INC0275135' || to_char(sysdate, 'hh24miss') ||
                  '.sql';
   for rw_cons in cr_conslautom loop
-      update craplau aa 
+      update cecred.craplau aa 
          set aa.insitlau = 3, 
              aa.dtdebito= (select a.dtmvtolt from cecred.crapdat a where a.cdcooper = rw_cons.CDCOOPER)  
       where aa.idlancto = rw_cons.idlancto;    
       
-      gene0002.pc_escreve_xml(vr_dados_rollback,
+      cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                               vr_texto_rollback,
                               'UPDATE cedred.craplau      ' || chr(13) ||
                               '   SET insitlau =   ' || rw_cons.insitlau    ||chr(13) || 
@@ -103,21 +103,21 @@ BEGIN
                               FALSE);
     
   end loop;
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           'COMMIT;' || chr(13),
                           FALSE);
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           'END;' || chr(13),
                           FALSE);
 
-  gene0002.pc_escreve_xml(vr_dados_rollback,
+  cecred.gene0002.pc_escreve_xml(vr_dados_rollback,
                           vr_texto_rollback,
                           chr(13),
                           TRUE);
 
-  GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3
+  cecred.GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => 3
                                      ,
                                       pr_cdprogra  => 'ATENDA'
                                      ,
