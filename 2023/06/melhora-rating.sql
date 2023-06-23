@@ -26,16 +26,17 @@ DECLARE
   vr_inrisco_atraso          cecred.crapris.innivris%TYPE;
   
   vr_contrato        cecred.crapris.nrctremp%TYPE;
-  vr_cooper          cecred.crapepr.cdcooper%TYPE;
+  vr_cdcooper          cecred.crapepr.cdcooper%TYPE;
   vr_inrisco_melhora INTEGER;
+  vr_progress cecred.crapass.progress_recid%TYPE;
   
-  CURSOR cr_crapepr(pr_cdcooper IN cecred.crapepr.cdcooper%TYPE
-                   ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
-    SELECT e.nrdconta
-      FROM cecred.crapepr e
-     WHERE e.cdcooper = pr_cdcooper
-       AND e.nrctremp = pr_nrctremp;
-  rw_crapepr cr_crapepr%ROWTYPE;
+  CURSOR cr_crapass(pr_cdcooper IN cecred.crapass.cdcooper%TYPE
+                   ,pr_progress IN cecred.crapass.progress_recid%TYPE) IS
+    SELECT a.nrdconta 
+      FROM cecred.crapass a
+     WHERE a.cdcooper = pr_cdcooper
+       AND a.progress_recid = pr_progress;
+  rw_crapass cr_crapass%ROWTYPE;
   
   CURSOR cr_crapris(pr_cdcooper IN cecred.crapris.cdcooper%TYPE
                    ,pr_nrdconta IN cecred.crapris.nrdconta%TYPE
@@ -73,45 +74,43 @@ BEGIN
   vr_dttransa    := trunc(sysdate);
   vr_hrtransa    := CECRED.GENE0002.fn_busca_time;
   
-  FOR i IN 1 .. 3 LOOP
+  FOR i IN 1 .. 2 LOOP
   
     IF i = 1 THEN
       vr_contrato := 108450; 
-      vr_cooper := 5;
-      vr_inrisco_melhora := 4;
+      vr_cdcooper := 5;
+      vr_inrisco_melhora := 3;
+      vr_progress := 794688;
     ELSIF i = 2 THEN
       vr_contrato := 102762;
-      vr_cooper := 14;
-      vr_inrisco_melhora := 4;
-    ELSE
-      vr_contrato := 4329759;
-      vr_cooper := 1;
-      vr_inrisco_melhora := 2;
+      vr_cdcooper := 14;
+      vr_inrisco_melhora := 3;
+      vr_progress := 507578;
     END IF;
  
 
-    OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cooper);
+    OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
             
-    OPEN cr_crapepr(pr_cdcooper => vr_cooper
-                   ,pr_nrctremp => vr_contrato);
-    FETCH cr_crapepr INTO rw_crapepr;
-    IF cr_crapepr%NOTFOUND THEN
-      CLOSE cr_crapepr;
+    OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                   ,pr_progress => vr_progress);
+    FETCH cr_crapass INTO rw_crapass;
+    IF cr_crapass%NOTFOUND THEN
+      CLOSE cr_crapass;
       raise_application_error(-20100, 'Erro: Conta nao encontrada');
     ELSE
-      vr_nrdconta := rw_crapepr.nrdconta;
-      CLOSE cr_crapepr;
+      vr_nrdconta := rw_crapass.nrdconta;
+      CLOSE cr_crapass;
     END IF;
               
-    OPEN cr_crapris(pr_cdcooper => vr_cooper
+    OPEN cr_crapris(pr_cdcooper => vr_cdcooper
                    ,pr_nrdconta => vr_nrdconta
                    ,pr_nrctremp => vr_contrato);
     FETCH cr_crapris INTO rw_crapris;
     CLOSE cr_crapris;
               
-    cecred.RISC0004.pc_grava_risco_melhora(pr_cdcooper            => vr_cooper
+    cecred.RISC0004.pc_grava_risco_melhora(pr_cdcooper            => vr_cdcooper
                                           ,pr_nrdconta            => vr_nrdconta
                                           ,pr_nrctremp            => vr_contrato
                                           ,pr_tpctrato            => rw_crapris.tpctrato
@@ -122,10 +121,23 @@ BEGIN
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-            
+    
+    UPDATE cecred.tbrisco_operacoes a 
+       SET a.inrisco_rating = 4
+     WHERE a.cdcooper = vr_cdcooper
+       AND a.nrdconta = vr_nrdconta
+       AND a.nrctremp = vr_contrato;
+    
+    IF i = 1 THEN
+      UPDATE cecred.crawepr e
+       SET e.dsnivori = 'C'
+     WHERE e.cdcooper = vr_cdcooper
+       AND e.nrdconta = vr_nrdconta
+       AND e.nrctremp = vr_contrato;
+    END IF;
     vr_nrdrowid := NULL;
             
-    CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cooper
+    CECRED.GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper
                                ,pr_cdoperad => 1
                                ,pr_dscritic => vr_dscritic
                                ,pr_dsorigem => 'AIMARO'
@@ -155,7 +167,7 @@ BEGIN
                             '      ,o.dtrisco_melhora                  = to_date(''' || nvl(to_char(rw_crapris.dtrisco_melhora), '') || ''', ''DD/MM/RRRR'')' || chr(13) || 
                             '      ,o.qtparcelas_controle_riscomelhora = ' || nvl(to_char(rw_crapris.qtparcelas_controle_riscomelhora), 'null') || chr(13) || 
                             '      ,o.cdcritica_melhora                = ' || nvl(to_char(rw_crapris.cdcritica_melhora), 'null') || chr(13) || 
-                            ' WHERE o.cdcooper = '|| vr_cooper || chr(13) || 
+                            ' WHERE o.cdcooper = '|| vr_cdcooper || chr(13) || 
                             '   AND o.nrdconta = ' || vr_nrdconta     || chr(13) || 
                             '   AND o.nrctremp = '|| vr_contrato || 
                             ';' ||chr(13)||chr(13), FALSE); 
@@ -164,7 +176,7 @@ BEGIN
                            ,vr_texto_rollback
                            ,'UPDATE cecred.crawepr w' || chr(13) || 
                             '   SET w.dsnivris  = ' || nvl(to_char(cecred.RISC0004.fn_traduz_risco(innivris => rw_crapris.inrisco_melhora)), 'null') || chr(13) || 
-                            ' WHERE w.cdcooper = '||vr_cooper|| chr(13) || 
+                            ' WHERE w.cdcooper = '||vr_cdcooper|| chr(13) || 
                             '   AND w.nrdconta = ' || vr_nrdconta     || chr(13) || 
                             '   AND w.nrctremp = '|| vr_contrato || 
                             ';' ||chr(13)||chr(13), FALSE); 
