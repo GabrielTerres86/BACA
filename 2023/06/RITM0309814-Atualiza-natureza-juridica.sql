@@ -37,12 +37,14 @@ DECLARE
     
   rg_crapjur            cr_crapjur%ROWTYPE;
   
+  
   CURSOR cr_natjur (pr_cdnatjur IN CECRED.GNCDNTJ.CDNATJUR%TYPE) IS
     SELECT c.* 
     FROM CECRED.GNCDNTJ c
     WHERE c.cdnatjur = pr_cdnatjur;
   
   rg_natjur             cr_natjur%ROWTYPE;
+  
   
   vr_dscritic           VARCHAR2(2000);
   vr_exception          EXCEPTION;
