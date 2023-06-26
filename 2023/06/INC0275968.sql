@@ -12,8 +12,7 @@ DECLARE
  vr_exc_clob            EXCEPTION;
  vr_des_erroGeral       VARCHAR2(4000);
  vr_rollback_path       VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') ||'cpd/bacas/INC0275968';
- vr_exc_erro            EXCEPTION;
- vr_exc_clob            EXCEPTION;
+
  
  PROCEDURE pc_escreve_xml_rollback(pr_des_dados IN VARCHAR2,
                                    pr_fecha_xml IN BOOLEAN DEFAULT FALSE) IS
@@ -196,7 +195,7 @@ BEGIN
 
 EXCEPTION
   When vr_exc_clob then
-       dbms_output.putline(vr_des_erroGeral);
+       dbms_output.put_line(vr_des_erroGeral);
   When OThers then
   CECRED.GENE0002.pc_clob_para_arquivo(pr_clob     => vr_des_rollback_xml,
                                 pr_caminho  => vr_rollback_path,
