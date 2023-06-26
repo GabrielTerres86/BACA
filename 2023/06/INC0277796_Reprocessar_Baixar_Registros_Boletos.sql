@@ -3,10 +3,8 @@ DECLARE
   vr_dscritic VARCHAR2(4000);
   vr_des_erro VARCHAR2(100);
 
-  vr_idopelegnovo    crapcob.idopeleg%TYPE;
   vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
   vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
-  vr_index           INTEGER;
   vr_exc_erro EXCEPTION;
 
 BEGIN
@@ -40,18 +38,6 @@ BEGIN
     IF  vr_dscritic IS NOT NULL THEN       
       RAISE vr_exc_erro;
     END IF;    
-  
-    vr_index := vr_tab_remessa_dda.FIRST;
-    IF vr_index IS NOT NULL THEN
-      vr_idopelegnovo := seqcob_idopeleg.NEXTVAL;
-    
-      UPDATE crapcob cob
-         SET cob.idopeleg = vr_idopelegnovo
-            ,cob.idtitleg = vr_tab_remessa_dda(vr_index).idtitleg
-       WHERE ROWID = rw_npc_reproc.rowidcob;
-    ELSE
-      RAISE vr_exc_erro;
-    END IF;
   
   END LOOP;
 
