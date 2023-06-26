@@ -66,7 +66,8 @@ DECLARE
   
 BEGIN
  
- DELETE FROM gestaoderisco.tbrisco_juros_emprestimo;
+ TRUNCATE TABLE gestaoderisco.tbrisco_juros_emprestimo;
+ TRUNCATE TABLE gestaoderisco.htrisco_central_retorno;
  
  vr_tab_cr_principal_bulk.DELETE;
  OPEN cr_principal;
