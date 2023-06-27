@@ -8,7 +8,9 @@ Begin
    UPDATE cecred.tbconv_registro_remessa_pagfor 
      SET nmarquivo_inclusao_serpro       = null,
          dhinclusao_processamento_serpro = null,
-         idremessa_serpro                = null 
+         idremessa_serpro                = null,
+         cdstatus_processamento_serpro   = null,
+         dsprocessamento_serpro          = null
    WHERE IDSICREDI IN (7985471);
   commit;
 end;
