@@ -3,10 +3,10 @@ DECLARE
     SELECT cob.cdcooper
           ,dat.dtmvtolt
           ,cob.rowid rowid_cob
-      FROM crapcob cob
-     INNER JOIN crapdat dat
+      FROM CECRED.crapcob cob
+     INNER JOIN CECRED.crapdat dat
         ON cob.cdcooper = dat.cdcooper
-      LEFT JOIN crapdda dda
+      LEFT JOIN CECRED.crapdda dda
         ON cob.rowid = dda.cobrowid
        AND dda.dscritic IS NULL
      WHERE cob.cdcooper IN (1, 2, 7, 9, 11)
@@ -19,7 +19,7 @@ DECLARE
   TYPE typ_tab_crapcob IS TABLE OF cr_crapcob%ROWTYPE INDEX BY PLS_INTEGER;
   vr_tab_crapcob typ_tab_crapcob;
 
-  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_cdcritic CECRED.crapcri.cdcritic%TYPE;
   vr_dscritic VARCHAR2(4000);
 
   vr_exc_erro EXCEPTION;
@@ -36,7 +36,7 @@ BEGIN
 
   BEGIN
     FORALL idx IN INDICES OF vr_tab_crapcob SAVE EXCEPTIONS
-      INSERT INTO crapdda
+      INSERT INTO CECRED.crapdda
         (cdcooper
         ,dtsolici
         ,dtmvtolt
@@ -62,7 +62,7 @@ EXCEPTION
   WHEN vr_exc_erro THEN
     ROLLBACK;
     IF nvl(vr_cdcritic, 0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      vr_dscritic := CECRED.gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
     END IF;
     RAISE;
   WHEN OTHERS THEN
