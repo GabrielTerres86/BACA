@@ -68,232 +68,232 @@ BEGIN
   SET a.nmpartar = 'HISTORICOS_BOLETO_IQ_CRED_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
   WHERE a.cdpartar = 176;   
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_DEB_SFI/HOME/07C,01C,11C,16C,02C,14C'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_DEB_SFI/HOME/07C,01C,11C,16C,02C,14C')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_DEB_SFI/HOME/07C,01C,11C,16C,02C,14C')
       ,3
       ,'VLPARCELA,4238/VLIOF,4239/VLMORA,4237/VLMULTA,4236/VLTAXA_ADM,3715/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3694/');
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_DEB_SFI/PJ/07D,01D,02D,11D,14D' 
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_DEB_SFI/PJ/07D,01D,02D,11D,14D')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_DEB_SFI/PJ/07D,01D,02D,11D,14D')
       ,3
       ,'VLPARCELA,3693/VLIOF,3713/VLMORA,3670/VLMULTA,3669/VLTAXA_ADM,3716/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3811/');
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_CRED_SFI/PJ/07D,01D,02D,11D,14D'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_CRED_SFI/PJ/07D,01D,02D,11D,14D')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CRED_SFI/PJ/07D,01D,02D,11D,14D')
       ,3
       ,'VLPARCELA,3700/VLMORA,3699/VLMULTA,3698/VLTAXA_ADM_PF,3805/VLTAXA_ADM_PJ,3806/VLSEGURO_MPI,3808/VLSEGURO_DFI,3807/VLPARCELA_ESTORNO_FGTS,3746/VLSALDO_DEVEDOR_FGTS,3748/');
       
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_CRED_SFI/HOME/07C,01C,11C,16C,02C,14C'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_CRED_SFI/HOME/07C,01C,11C,16C,02C,14C')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CRED_SFI/HOME/07C,01C,11C,16C,02C,14C')
       ,3
       ,'VLPARCELA,4242/VLMORA,4241/VLMULTA,4240/VLTAXA_ADM_PF,3805/VLTAXA_ADM_PJ,3806/VLSEGURO_MPI,3808/VLSEGURO_DFI,3807/VLPARCELA_ESTORNO_FGTS,3746/VLSALDO_DEVEDOR_FGTS,3748/');
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_BOLETO_IQ_CRED_HOME/07C,01C,11C,16C,02C,14C'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_BOLETO_IQ_CRED_HOME/07C,01C,11C,16C,02C,14C')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_BOLETO_IQ_CRED_HOME/07C,01C,11C,16C,02C,14C')
       ,3
       ,'1,15476588,4250/2,820024,4250/3,0,4250/5,0,4250/6,0,4250/7,850004,4250/8,0,4250/9,0,4250/10,0,4250/11,498823,4250/12,0,4250/13,0,4250/14,0,4250/16,933392,4250/');
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_TEDIQ_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDIQ_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDIQ_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
       ,3
       ,'3929,3930,3931,3932');
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_TEDIQ_HOME/07C,01C,11C,16C,02C,14C'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDIQ_HOME/07C,01C,11C,16C,02C,14C')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDIQ_HOME/07C,01C,11C,16C,02C,14C')
       ,3
       ,'4245,4247,4248,4249');
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_TEDVD_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDVD_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDVD_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
       ,3
       ,'3925,3926,3927,3928');
 
-    UPDATE crappco a  
+    UPDATE cecred.crappco a  
     SET a.dsconteu = 'VLPARCELA,3693/VLIOF,3712/VLMORA,3670/VLMULTA,3669/VLTAXA_ADM,3715/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3694/'
     WHERE a.cdpartar = 122;
 
-    UPDATE crappco a  
+    UPDATE cecred.crappco a  
     SET a.dsconteu = 'VLPARCELA,3692/VLIOF,3711/VLMORA,3668/VLMULTA,3667/VLTAXA_ADM,3715/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3694/'
     WHERE a.cdpartar = 123;  
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_CABINE_TEDIQ_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDIQ_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDIQ_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
       ,3
       ,'3736');
       
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_CABINE_TEDVD_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDVD_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDVD_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
       ,3
       ,'3735');      
 
-  INSERT INTO crappat
+  INSERT INTO cecred.crappat
       (CDPARTAR
       ,NMPARTAR
       ,TPDEDADO
       ,CDPRODUT)
     VALUES
-      ((SELECT MAX(cdpartar) + 1 FROM crappat)
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
       ,'HISTORICOS_CABINE_TEDIQ_HOME\07C,01C,11C,16C,02C,14C'
       ,2
       ,0);
 
-    INSERT INTO crappco
+    INSERT INTO cecred.crappco
       (CDPARTAR
       ,CDCOOPER
       ,DSCONTEU)
     VALUES
-      ((SELECT a.cdpartar FROM CREDITO.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDIQ_HOME\07C,01C,11C,16C,02C,14C')
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDIQ_HOME\07C,01C,11C,16C,02C,14C')
       ,3
       ,'4246');
       
