@@ -33,6 +33,16 @@ BEGIN
   vr_tab_param(1).cdcooper := 3;
   vr_tab_param(1).dsconteu := '1044,1045,1046,1047,1077,1540,1619,2330,2334,2338,2363,2367,2371,2375,2701';
   
+  vr_tab_param(2).nmpartar := 'Historico Recuperacao Valores PRONAMPE';
+  vr_tab_param(2).tpdedado := 2;
+  vr_tab_param(2).cdprodut := 12;
+  vr_tab_param(2).cdbattar := 'CDHSTRECPVLPNMP';
+  vr_tab_param(2).nmidenti := 'Historico Recuperacao Valores PRONAMPE';
+  vr_tab_param(2).cdprogra := ' ';
+  vr_tab_param(2).tpcadast := 2;
+  vr_tab_param(2).cdcooper := 3;
+  vr_tab_param(2).dsconteu := '1044,1045,1046,1047,1077,1540,1619,2330,2334,2338,2363,2367,2371,2375,2701';
+  
   FOR idx IN vr_tab_param.first .. vr_tab_param.last LOOP
     FOR rw_crapbat IN cr_crapbat(pr_cdbattar => vr_tab_param(idx).cdbattar) LOOP
       DELETE 
