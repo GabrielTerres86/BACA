@@ -81,7 +81,7 @@ DECLARE
     
 BEGIN
  
-  vr_nmarqcsv := 'OUTRAS_'||TO_CHAR(SYSDATE,'DDMMYYYYHH24MISS');
+  vr_nmarqcsv := 'FALTANTES_'||TO_CHAR(SYSDATE,'DDMMYYYYHH24MISS');
    
   vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/VIRADACENTRAL';
  
