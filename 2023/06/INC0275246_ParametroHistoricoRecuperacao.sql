@@ -23,11 +23,11 @@ DECLARE
 BEGIN
   vr_tab_param.delete;
 
-  vr_tab_param(1).nmpartar := 'Historico Recuperação Valores PEAC';
+  vr_tab_param(1).nmpartar := 'Historico Recuperacao Valores PEAC';
   vr_tab_param(1).tpdedado := 2;
   vr_tab_param(1).cdprodut := 12;
   vr_tab_param(1).cdbattar := 'CDHSTRECPVLPEAC';
-  vr_tab_param(1).nmidenti := 'Historico Recuperação Valores PEAC';
+  vr_tab_param(1).nmidenti := 'Historico Recuperacao Valores PEAC';
   vr_tab_param(1).cdprogra := ' ';
   vr_tab_param(1).tpcadast := 2;
   vr_tab_param(1).cdcooper := 3;
