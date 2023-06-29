@@ -78,14 +78,14 @@ begin
   BEGIN
     vr_rootmicros := cecred.gene0001.fn_param_sistema('CRED', 3, 'ROOT_MICROS');
     vr_nmdireto   := vr_rootmicros || 'cpd/bacas';
-    pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0275135',
+    pc_valida_direto(pr_nmdireto => vr_nmdireto || '/INC0279507',
                      pr_dscritic => vr_dscritic);
   
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
   
-    vr_nmdireto := vr_nmdireto || '/INC0275135';
+    vr_nmdireto := vr_nmdireto || '/INC0279507';
   
     vr_dados_rollback := NULL;
     dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
@@ -101,7 +101,7 @@ begin
                             'BEGIN' || chr(13),
                             FALSE);
   
-    vr_nmarqbkp := 'ROLLBACK_INC0275135' || to_char(sysdate, 'hh24miss') ||
+    vr_nmarqbkp := 'ROLLBACK_INC0279507' || to_char(sysdate, 'hh24miss') ||
                    '.sql';
     for rw_cons in cr_conslautom loop
         cecred.cnso0001.pc_gera_crapndb(rw_cons.cdcooper,
