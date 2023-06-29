@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-63
 declare 
   vr_cdcritic varchar2(200);
   vr_dscritic varchar2(2000);
@@ -63,5 +61,3 @@ begin
       ROLLBACK;
       cecred.pc_internal_exception;
 END;
-0
-0
