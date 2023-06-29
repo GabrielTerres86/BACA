@@ -11,5 +11,6 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
-    sistema.excecaointerna(pr_cdcooper => 3, pr_compleme => SQLERRM);
+    sistema.excecaointerna(pr_cdcooper => 3, pr_compleme => 'INC0279170');
+    RAISE;
 END;
