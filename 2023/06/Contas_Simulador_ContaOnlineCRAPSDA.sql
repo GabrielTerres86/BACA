@@ -52,7 +52,7 @@ cursor cr_crapsda(pr_nrdconta crapass.nrdconta%type, pr_cdcooper crapass.cdcoope
       ,VLBLQAPLI
     from crapsda sda where nrdconta = 99999617)
   where rownum = 1;
-
+ 
 BEGIN
   FOR rw_crapass IN cr_crapass LOOP  
       FOR rw_crapsda IN cr_crapsda(rw_crapass.nrdconta, rw_crapass.cdcooper) LOOP
