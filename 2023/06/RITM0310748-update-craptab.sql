@@ -9,10 +9,10 @@ update cecred.craptab
                    '#F0015294|0 0101_digit_9.ailos.coop.br;' ||
                    '#F0016271|0 0101_digit_9.ailos.coop.br;' ||
                    '#F0016223|0 0101_digit_9.ailos.coop.br;'
-where nmsistem = 'CRED'
-   and tptabela = 'GENERI'
+where UPPER(nmsistem) = 'CRED'
+   and UPPER(tptabela) = 'GENERI'
    and cdempres = 0
-   and cdacesso = 'OPEDIGITEXC'
+   and UPPER(cdacesso) = 'OPEDIGITEXC'
    and tpregist = 0
    and cdcooper = 1;
 commit;
