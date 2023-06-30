@@ -28,7 +28,7 @@ BEGIN
          nrdnivel,
          nmrotpai,
          idambtel)
-        SELECT 'CONLIQ', 
+        SELECT 'PCRCMP', 
                5, 
                '@,C,B,G,X,D,Y', 
                'Conciliação', 
@@ -49,54 +49,24 @@ BEGIN
          WHERE cdcooper = pr_cdcooper; 
          
     INSERT INTO crapace (nmdatela,cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace) 
-    (SELECT 'CONLIQ',cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace 
+    (SELECT 'PCRCMP',cddopcao,cdoperad,nmrotina,cdcooper,nrmodulo,idevento,idambace 
        FROM crapace 
       WHERE nmdatela ='COBEMP' 
         AND cdcooper = pr_cdcooper);
         
-    INSERT INTO crapprg
-        (nmsistem,
-         cdprogra,
-         dsprogra##1,
-         dsprogra##2,
-         dsprogra##3,
-         dsprogra##4,
-         nrsolici,
-         nrordprg,
-         inctrprg,
-         cdrelato##1,
-         cdrelato##2,
-         cdrelato##3,
-         cdrelato##4,
-         cdrelato##5,
-         inlibprg,
-         cdcooper) 
-        SELECT 'CRED',
-               'CONLIQ',
-               'Conciliação',
-               '.',
-               '.',
-               '.',
-               1,
-               NULL,
-               1,
-               0,
-               0,
-               0,
-               0,
-               0,
-               1,
-               cdcooper
-          FROM crapcop          
-         WHERE cdcooper IN pr_cdcooper;
+    INSERT INTO crapprg(nmsistem,cdprogra,dsprogra##1,cdrelato##1,cdcooper,nrsolici,nrordprg)
+        VALUES ('CRED','PCRCMP','CONCILIAÇÂO ACMP',814,pr_cdcooper,1,2);
+
          
   END LOOP;
     
   INSERT INTO craprdr (nmprogra, dtsolici)
-       VALUES ('TELA_CONLIQ',SYSDATE);
+       VALUES ('TELA_PCRCMP',SYSDATE);
 
   INSERT INTO crapaca (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-       VALUES ('LISTA_CONCILIACAO', 'TELA_CONLIQ', 'pc_lista_conciliacao', 'pr_dtmovimento', (select nrseqrdr from craprdr where nmprogra = 'TELA_CONLIQ'));
+       VALUES ('LISTA_CONCILIACAO', 'TELA_PCRCMP', 'pc_lista_conciliacao', 'pr_dtmovimento', (select nrseqrdr from craprdr where nmprogra = 'TELA_PCRCMP' AND ROWNUM = 1));
 
   COMMIT;
 END;
+
+
