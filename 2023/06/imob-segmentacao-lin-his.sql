@@ -1,0 +1,307 @@
+BEGIN
+  UPDATE cecred.crappco a
+    SET a.DSCONTEU = '011,10000,100;01A,10000,100;01B,10005,100;01C,10005,100;01D,20000,100;01E,10007,100;01F,10006,100;001,10000,100;002,10000,100;012,10000,100;013,10000,100;FPF,10000,100;'
+    WHERE a.cdpartar = 118
+      AND A.CDCOOPER = 1;
+      
+    UPDATE cecred.crappco a
+    SET a.DSCONTEU = '016,10000,100;16B,10000,100;16C,10005,100;001,10000,100;002,10000,100;012,10000,100;013,10000,100;FPF,10000,100;'
+    WHERE a.cdpartar = 118
+      AND A.CDCOOPER = 16;      
+      
+  UPDATE cecred.crappco a
+    SET a.DSCONTEU = '02A,10000,100;02B,10000,100;02C,10005,100;02D,20000,100;02E,10007,100;02F,10006,100;012,10000,100;013,10000,100;FPF,10000,100;'
+    WHERE a.cdpartar = 118
+      AND A.CDCOOPER = 2;   
+
+  UPDATE cecred.crappco a
+    SET a.DSCONTEU = '07A,10000,100;07B,10000,100;07C,10005,100;07D,20000,100;07E,10007,100;07F,10006,100;012,10000,100;013,10000,100;FPF,10000,100;'
+    WHERE a.cdpartar = 118
+      AND A.CDCOOPER = 7; 
+
+  UPDATE cecred.crappco a
+    SET a.DSCONTEU = '11A,10000,100;11B,10000,100;11C,10005,100;11D,20000,100;11E,10007,100;11F,10006,100;012,10000,100;013,10000,100;FPF,10000,100;'
+    WHERE a.cdpartar = 118
+      AND A.CDCOOPER = 11;   
+    
+  INSERT 
+     INTO cecred.crappco(CDPARTAR, 
+                         CDCOOPER, 
+                         DSCONTEU)
+   VALUES(118, 
+           14, 
+           '14A,10000,100;14B,10000,100;14C,10005,100;14D,20000,100;14E,10007,100;14F,10006,100;012,10000,100;013,10000,100;FPF,10000,100;');
+         
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_DEB_SFI/002,01B,02B,07B,11B,14B,16B'
+  WHERE a.cdpartar = 122; 
+  
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_REEMB_SFI/002,01D,02D,11D,14D,01B,02B,07B,07D,11B,14B,16B,07C,01C,11C,16C,02C,14C'
+  WHERE a.cdpartar = 131; 
+
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_CANCELA_ADM_DEB_SFI/002,01D,02D,11D,14D,01B,02B,07B,07D,11B,14B,16B,07C,01C,11C,16C,02C,14C'
+  WHERE a.cdpartar = 166; 
+  
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_CRED_SFI/002,01B,02B,07B,11A,11B,14B,16B'
+  WHERE a.cdpartar = 175;   
+
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_DEB_SFH/001,011,11A,012,013,016,01A,02A,07A,14A,FPF'
+  WHERE a.cdpartar = 123;   
+
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_REEMB_SFH/001,011,11A,012,013,016,01A,02A,07A,14A,FPF'
+  WHERE a.cdpartar = 132;   
+
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_CANCELA_ADM_DEB_SFH/001,011,11A,012,013,016,01A,02A,07A,14A,FPF'
+  WHERE a.cdpartar = 165;   
+  
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_CRED_SFH/001,011,012,013,016,01A,02A,07A,14A,FPF'
+  WHERE a.cdpartar = 174;    
+  
+  UPDATE cecred.crappat a
+  SET a.nmpartar = 'HISTORICOS_BOLETO_IQ_CRED_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
+  WHERE a.cdpartar = 176;   
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_DEB_SFI/HOME/07C,01C,11C,16C,02C,14C'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_DEB_SFI/HOME/07C,01C,11C,16C,02C,14C')
+      ,3
+      ,'VLPARCELA,4238/VLIOF,4239/VLMORA,4237/VLMULTA,4236/VLTAXA_ADM,3715/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3694/');
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_DEB_SFI/PJ/07D,01D,02D,11D,14D' 
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_DEB_SFI/PJ/07D,01D,02D,11D,14D')
+      ,3
+      ,'VLPARCELA,3693/VLIOF,3713/VLMORA,3670/VLMULTA,3669/VLTAXA_ADM,3716/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3811/');
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_CRED_SFI/PJ/07D,01D,02D,11D,14D'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CRED_SFI/PJ/07D,01D,02D,11D,14D')
+      ,3
+      ,'VLPARCELA,3700/VLMORA,3699/VLMULTA,3698/VLTAXA_ADM_PF,3805/VLTAXA_ADM_PJ,3806/VLSEGURO_MPI,3808/VLSEGURO_DFI,3807/VLPARCELA_ESTORNO_FGTS,3746/VLSALDO_DEVEDOR_FGTS,3748/');
+      
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_CRED_SFI/HOME/07C,01C,11C,16C,02C,14C'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CRED_SFI/HOME/07C,01C,11C,16C,02C,14C')
+      ,3
+      ,'VLPARCELA,4242/VLMORA,4241/VLMULTA,4240/VLTAXA_ADM_PF,3805/VLTAXA_ADM_PJ,3806/VLSEGURO_MPI,3808/VLSEGURO_DFI,3807/VLPARCELA_ESTORNO_FGTS,3746/VLSALDO_DEVEDOR_FGTS,3748/');
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_BOLETO_IQ_CRED_HOME/07C,01C,11C,16C,02C,14C'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_BOLETO_IQ_CRED_HOME/07C,01C,11C,16C,02C,14C')
+      ,3
+      ,'1,15476588,4250/2,820024,4250/3,0,4250/5,0,4250/6,0,4250/7,850004,4250/8,0,4250/9,0,4250/10,0,4250/11,498823,4250/12,0,4250/13,0,4250/14,0,4250/16,933392,4250/');
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_TEDIQ_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDIQ_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ,3
+      ,'3929,3930,3931,3932');
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_TEDIQ_HOME/07C,01C,11C,16C,02C,14C'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDIQ_HOME/07C,01C,11C,16C,02C,14C')
+      ,3
+      ,'4245,4247,4248,4249');
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_TEDVD_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_TEDVD_SFI_SFH/002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ,3
+      ,'3925,3926,3927,3928');
+
+    UPDATE cecred.crappco a  
+    SET a.dsconteu = 'VLPARCELA,3693/VLIOF,3712/VLMORA,3670/VLMULTA,3669/VLTAXA_ADM,3715/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3694/'
+    WHERE a.cdpartar = 122;
+
+    UPDATE cecred.crappco a  
+    SET a.dsconteu = 'VLPARCELA,3692/VLIOF,3711/VLMORA,3668/VLMULTA,3667/VLTAXA_ADM,3715/VLSEGURO_MPI,3718/VLSEGURO_DFI,3717/VLNOMINAL,3694/'
+    WHERE a.cdpartar = 123;  
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_CABINE_TEDIQ_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDIQ_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ,3
+      ,'3736');
+      
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_CABINE_TEDVD_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDVD_SFI_SFH\002,01D,02D,11D,14D,02B,07B,07D,11A,11B,14B,16B,001,011,01B,012,013,016,01A,02A,07A,14A,FPF')
+      ,3
+      ,'3735');      
+
+  INSERT INTO cecred.crappat
+      (CDPARTAR
+      ,NMPARTAR
+      ,TPDEDADO
+      ,CDPRODUT)
+    VALUES
+      ((SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
+      ,'HISTORICOS_CABINE_TEDIQ_HOME\07C,01C,11C,16C,02C,14C'
+      ,2
+      ,0);
+
+    INSERT INTO cecred.crappco
+      (CDPARTAR
+      ,CDCOOPER
+      ,DSCONTEU)
+    VALUES
+      ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = 'HISTORICOS_CABINE_TEDIQ_HOME\07C,01C,11C,16C,02C,14C')
+      ,3
+      ,'4246');
+      
+  COMMIT;  
+EXCEPTION
+   WHEN OTHERS THEN
+      ROLLBACK;
+      RAISE_application_error(-20500, SQLERRM);
+  
+END;
+
