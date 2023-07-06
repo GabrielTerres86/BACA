@@ -6,7 +6,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'1'
-    ,'Score de Crédito PJ');
+    ,'Score de Credito PJ');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -15,7 +15,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'2'
-    ,'Score de Crédito PF Segmentando 12');
+    ,'Score de Credito PF Segmentando 12');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -33,7 +33,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'4'
-    ,'Score de Recuperação de Crédito');
+    ,'Score de Recuperacao de Credito');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -42,7 +42,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'5'
-    ,'Score de Propensão de Cheque Especial');
+    ,'Score de Propensao de Cheque Especial');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -51,7 +51,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'6'
-    ,'Score de Propensão de Depósito a Prazo');
+    ,'Score de Propensao de Deposito a Prazo');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -60,7 +60,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'7'
-    ,'Score de Propensão de Pré-Inativação');
+    ,'Score de Propensao de Pre-Inativacao');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -69,7 +69,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'8'
-    ,'Score de Propensão de Capital de Giro');
+    ,'Score de Propensao de Capital de Giro');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -78,7 +78,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'9'
-    ,'Vinculação');
+    ,'Vinculacao');
 
   INSERT INTO cecred.tbgen_dominio_campo
     (nmdominio
@@ -87,7 +87,7 @@ BEGIN
   VALUES
     ('CDMODELO_SCORE'
     ,'10'
-    ,'Score de Recuperação de Crédito 31 a 60');
+    ,'Score de Recuperacao de Credito 31 a 60');
     
   COMMIT;
 EXCEPTION
