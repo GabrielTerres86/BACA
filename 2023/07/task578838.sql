@@ -27,9 +27,15 @@ BEGIN
                            'f0034476'
                           WHEN 3 THEN
                            'f0034361'
+                          WHEN 4 THEN
+                           'f0033754'
+                          WHEN 5 THEN
+                           'f0033078'
+                          WHEN 6 THEN
+                           'f0034370'
                         END AS cdoperad
                    FROM DUAL
-                 CONNECT BY LEVEL IN (1, 2, 3)) ope
+                 CONNECT BY LEVEL IN (1, 2, 3, 4, 5, 6)) ope
          ON 1 = 1
       WHERE cop.flgativo = 1);
 
