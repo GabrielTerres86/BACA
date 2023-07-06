@@ -728,7 +728,7 @@ DECLARE
           
       END IF;
       
-      BEGIN
+    /*  BEGIN
         CADASTRO.atualizarDemissaoAssociado(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => pr_nrdconta
                                            ,pr_mtdemiss => pr_mtdemiss
@@ -738,8 +738,21 @@ DECLARE
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao atualizar a tabela crapass.' || SQLERRM;
           RAISE vr_exc_saida;
-      END;
-      
+      END; */
+	  
+	  begin
+	  UPDATE crapass SET cdmotdem = pr_mtdemiss
+                        ,cdsitdct = 4 -- Encerrada por Demissao na Empresa
+                        ,dtdemiss = rw_crapdat.dtmvtolt
+						,dtelimin = sysdate
+       WHERE cdcooper = pr_cdcooper
+         AND nrdconta = pr_nrdconta
+		 RETURNING cdsitdct INTO vr_cdsitdct;
+	  EXCEPTION
+	    when others THEN  
+		    vr_dscritic := 'Erro ao atualizar a tabela crapass.' || SQLERRM;
+                 RAISE vr_exc_saida;
+	  end;      
       pc_escreve_xml_rollback('UPDATE CECRED.crapass' ||
                               ' SET cdsitdct = '|| rw_crapass.cdsitdct ||
                               case
@@ -817,7 +830,7 @@ DECLARE
                      ,pr_cdoperad => pr_cdoperad
                      ,pr_dscritic => NULL
                      ,pr_dsorigem => 'AIMARO'
-                     ,pr_dstransa => 'Conta encerrada por script - RITM0295739'
+                     ,pr_dstransa => 'Conta encerrada por script - RITM0313952'
                      ,pr_dttransa => TRUNC(SYSDATE)
                      ,pr_flgtrans => 1
                      ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
@@ -858,7 +871,7 @@ DECLARE
       pc_escreve_xml_rollback('DELETE FROM CECRED.tbcc_conta_historico WHERE cdcooper = ' || pr_cdcooper || 
                               ' AND nrdconta = ' || pr_nrdconta ||
                               ' AND idcampo = 2 ' ||
-                              ' AND cdtipcta = 0' ||
+                              ' AND cdtipo_conta = 0' ||
                               ' AND cdsituacao = 0' ||
                               ' AND dsvalor_anterior = ' || rw_crapass.cdsitdct ||
                               ' AND dsvalor_novo = ' || vr_cdsitdct || 
