@@ -730,7 +730,7 @@ DECLARE
         
 	  begin
 	  UPDATE CECRED.crapass SET cdmotdem = pr_mtdemiss
-                        ,cdsitdct = 4 -- Encerrada por Demissao na Empresa
+                        ,cdsitdct = 4 
                         ,dtdemiss = rw_crapdat.dtmvtolt
 						,dtelimin = sysdate
        WHERE cdcooper = pr_cdcooper
