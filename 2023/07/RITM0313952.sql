@@ -729,7 +729,7 @@ DECLARE
       END IF;
         
 	  begin
-	  UPDATE crapass SET cdmotdem = pr_mtdemiss
+	  UPDATE CECRED.crapass SET cdmotdem = pr_mtdemiss
                         ,cdsitdct = 4 -- Encerrada por Demissao na Empresa
                         ,dtdemiss = rw_crapdat.dtmvtolt
 						,dtelimin = sysdate
