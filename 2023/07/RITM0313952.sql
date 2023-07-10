@@ -727,19 +727,7 @@ DECLARE
         pc_escreve_xml_rollback('DELETE cecred.TBCOTAS_DEVOLUCAO WHERE CDCOOPER = ' || pr_cdcooper || ' AND NRDCONTA = ' || pr_nrdconta || ' AND TPDEVOLUCAO = 4;' || chr(10) || chr(10));
           
       END IF;
-      
-    /*  BEGIN
-        CADASTRO.atualizarDemissaoAssociado(pr_cdcooper => pr_cdcooper
-                                           ,pr_nrdconta => pr_nrdconta
-                                           ,pr_mtdemiss => pr_mtdemiss
-                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                           ,pr_cdsitdct => vr_cdsitdct);
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar a tabela crapass.' || SQLERRM;
-          RAISE vr_exc_saida;
-      END; */
-	  
+        
 	  begin
 	  UPDATE crapass SET cdmotdem = pr_mtdemiss
                         ,cdsitdct = 4 -- Encerrada por Demissao na Empresa
