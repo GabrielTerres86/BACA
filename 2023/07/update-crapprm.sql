@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crapprm 
+  UPDATE cecred.crapprm 
      SET dsvlrprm = dsvlrprm || ','
    WHERE cdacesso = 'LMT_CREDITO_COTA_CAPITAL';   
 
