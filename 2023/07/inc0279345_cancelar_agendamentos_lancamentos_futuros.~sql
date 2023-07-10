@@ -109,10 +109,10 @@ BEGIN
   vr_hrtransa    := CECRED.GENE0002.fn_busca_time;
   
   vr_tab_conta_corrente(0).cdcooper := 1;
-  vr_tab_conta_corrente(0).nrdconta := 83580875;
+  vr_tab_conta_corrente(0).nrdconta := 11674318;
   
   vr_tab_conta_corrente(1).cdcooper := 1;
-  vr_tab_conta_corrente(1).nrdconta := 87313367;
+  vr_tab_conta_corrente(1).nrdconta := 12686573;
   
   OPEN CECRED.BTCH0001.cr_crapdat(pr_cdcooper => 1);
   FETCH CECRED.BTCH0001.cr_crapdat INTO rw_crapdat;
