@@ -156,7 +156,7 @@ BEGIN
 
    END LOOP;
    
-   update cecred.craplcm set cdhistor = 2061
+   update cecred.craplcm set cdhistor = 2062
     where nrdconta = 12686573
       and cdcooper = 1
       and cdhistor = 2079;
