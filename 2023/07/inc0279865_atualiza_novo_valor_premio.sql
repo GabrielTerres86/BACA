@@ -15,8 +15,7 @@ begin
 	update cecred.tbseg_prestamista b set b.VLPRODUT = 118.85   where b.NRPROPOSTA = '202307967730' and b.CDCOOPER = 14 and b.nrdconta = 14386828;
 	update cecred.tbseg_prestamista b set b.VLPRODUT = 230.38   where b.NRPROPOSTA = '202305271333' and b.CDCOOPER = 14 and b.nrdconta = 14386828;
 	update cecred.tbseg_prestamista b set b.VLPRODUT = 33.95    where b.NRPROPOSTA = '202305271335' and b.CDCOOPER = 14 and b.nrdconta = 14386828;
-	update cecred.tbseg_prestamista b set b.VLPRODUT = 765.65   where b.NRPROPOSTA = '202308018004' and b.CDCOOPER = 14 and b.nrdconta = 270040;
-	update cecred.tbseg_prestamista b set b.VLPRODUT = 194.94   where b.NRPROPOSTA = '202308117627' and b.CDCOOPER = 13 and b.nrdconta = 290530;
+	update cecred.tbseg_prestamista b set b.VLPRODUT = 765.65   where b.NRPROPOSTA = '202308018004' and b.CDCOOPER = 14 and b.nrdconta = 270040;	
 	update cecred.tbseg_prestamista b set b.VLPRODUT = 176.74   where b.NRPROPOSTA = '202307706103' and b.CDCOOPER = 13 and b.nrdconta = 16341856;
 	update cecred.tbseg_prestamista b set b.VLPRODUT = 23.57    where b.NRPROPOSTA = '202308679942' and b.CDCOOPER = 13 and b.nrdconta = 653101;
 	update cecred.crawseg s           set s.vlpremio = 20787.69 where s.nrdconta   = 60690          and s.CDCOOPER =  8 and s.NRCTRSEG = 22735  and s.NRPROPOSTA = '202212185083';
@@ -52,9 +51,7 @@ begin
 	update cecred.crawseg s           set s.vlpremio = 33.95    where s.nrdconta   = 14386828       and s.CDCOOPER = 14 and s.NRCTRSEG = 75418  and s.NRPROPOSTA = '202305271335';
 	update cecred.crapseg s           set s.vlpremio = 33.95    where s.nrdconta   = 14386828       and s.CDCOOPER = 14 and s.NRCTRSEG = 75418;
 	update cecred.crawseg s           set s.vlpremio = 765.65   where s.nrdconta   = 270040         and s.CDCOOPER = 14 and s.NRCTRSEG = 75617  and s.NRPROPOSTA = '202308018004';
-	update cecred.crapseg s           set s.vlpremio = 765.65   where s.nrdconta   = 270040         and s.CDCOOPER = 14 and s.NRCTRSEG = 75617;
-	update cecred.crawseg s           set s.vlpremio = 194.94   where s.nrdconta   = 290530         and s.CDCOOPER = 13 and s.NRCTRSEG = 480849 and s.NRPROPOSTA = '202308117627';
-	update cecred.crapseg s           set s.vlpremio = 194.94   where s.nrdconta   = 290530         and s.CDCOOPER = 13 and s.NRCTRSEG = 480849;
+	update cecred.crapseg s           set s.vlpremio = 765.65   where s.nrdconta   = 270040         and s.CDCOOPER = 14 and s.NRCTRSEG = 75617;	
 	update cecred.crawseg s           set s.vlpremio = 176.74   where s.nrdconta   = 16341856       and s.CDCOOPER = 13 and s.NRCTRSEG = 479573 and s.NRPROPOSTA = '202307706103';
 	update cecred.crapseg s           set s.vlpremio = 176.74   where s.nrdconta   = 16341856       and s.CDCOOPER = 13 and s.NRCTRSEG = 479573;
 	update cecred.crawseg s           set s.vlpremio = 23.57    where s.nrdconta   = 653101         and s.CDCOOPER = 13 and s.NRCTRSEG = 488040 and s.NRPROPOSTA = '202308679942';
