@@ -12,6 +12,7 @@ BEGIN
        AND ininscip = 1;
   
   END LOOP;
+  COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
