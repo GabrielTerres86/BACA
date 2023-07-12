@@ -1694,5 +1694,5 @@ begin
   UPDATE craptit b SET b.flgenvio = 0, b.dtdpagto = trunc(sysdate) where b.progress_recid = 198492270;
   UPDATE craptit b SET b.flgenvio = 0, b.dtdpagto = trunc(sysdate) where b.progress_recid = 198478775;
 
-
+  COMMIT;
 end;
