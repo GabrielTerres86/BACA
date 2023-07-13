@@ -476,4 +476,5 @@ EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
     sistema.excecaointerna(pr_cdcooper => 3, pr_compleme => 'PRB0048191');
+    RAISE;
 END;
