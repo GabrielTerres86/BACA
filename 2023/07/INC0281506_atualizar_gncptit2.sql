@@ -1,0 +1,60 @@
+begin
+  
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212494029;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212497480;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212437553;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212497430;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212471192;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212501950;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212498861;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212497367;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212495787;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212495836;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212493849;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496609;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496624;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212497964;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '13/07/2023' where b.progress_recid = 212625749;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436635;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496640;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212498602;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496653;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212495954;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496581;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496588;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496590;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436663;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496589;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212493617;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212493587;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212493583;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436651;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496483;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436655;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496488;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212503276;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436650;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496493;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496492;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496878;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212498158;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436630;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212496530;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436643;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436799;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212434884;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212442530;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212471536;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212442515;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436714;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212436712;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212437128;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212437837;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212442249;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212470544;
+  UPDATE cecred.gncptit b SET b.dtmvtolt = '12/07/2023' where b.progress_recid = 212438885;
+
+  
+  commit;
+
+end;
