@@ -214,7 +214,8 @@ DECLARE
     CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' COMMIT;');
     CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' END; ');
     CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'/ ');
-    CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq );
+    CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq);
+    CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq_erro);
   EXCEPTION
      WHEN vr_exc_saida THEN
           vr_dscritic := vr_dscritic || ' ' || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
