@@ -11,4 +11,5 @@ begin
      AND nmdominio = 'TPCATEG_RECIPROCIDADE';
 
   commit;
+
 end;
