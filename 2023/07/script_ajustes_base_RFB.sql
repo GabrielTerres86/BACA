@@ -105,6 +105,13 @@ Begin
 						  idremessa_serpro                = 51
 					WHERE idsicredi = 7993850;				
 
+    UPDATE cecred.tbconv_registro_remessa_pagfor 
+       SET nmarquivo_inclusao_serpro       = 'K3244.K05438BA.B0850066.D230719.H190037',
+           dhinclusao_processamento_serpro = to_date('19/07/2023 19:35:05','DD/MM/YYYY HH24:mi:ss'),
+           cdstatus_processamento_serpro   = 3,
+           idremessa_serpro                = 66
+     WHERE idsicredi = 8081118;
+
   commit;
 
 end;				
