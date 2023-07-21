@@ -161,7 +161,7 @@ BEGIN
   OPEN cr_crapcyb;
   LOOP
     FETCH cr_crapcyb BULK COLLECT
-      INTO vr_crapcyb LIMIT 30000;
+      INTO vr_crapcyb LIMIT 80000;
     EXIT WHEN vr_crapcyb.count = 0;
     
     obterProximaData(pr_cdcooper => vr_cdcooper,
