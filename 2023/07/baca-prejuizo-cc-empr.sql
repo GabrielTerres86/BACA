@@ -62,7 +62,7 @@ DECLARE
                      ,pr_dtmvtolt IN crapmfx.dtmvtolt%TYPE
                      ,pr_tpmoefix IN crapmfx.tpmoefix%TYPE) IS
       SELECT crapmfx.cdcooper, crapmfx.vlmoefix
-        FROM crapmfx
+        FROM cecred.crapmfx
        WHERE crapmfx.cdcooper = pr_cdcooper
              AND crapmfx.dtmvtolt = pr_dtmvtolt
              AND crapmfx.tpmoefix = pr_tpmoefix;
@@ -76,7 +76,7 @@ DECLARE
         FROM (SELECT lem.dtmvtolt
                     ,lem.vllanmto
                     ,(SELECT MAX(ll.dtmvtolt)
-                        FROM craplem ll
+                        FROM cecred.craplem ll
                        WHERE ll.cdcooper = lem.cdcooper
                              AND ll.nrdconta = lem.nrdconta
                              AND ll.nrctremp = lem.nrctremp
@@ -104,7 +104,7 @@ DECLARE
                                                 ,3279
                                                 ,99)
                              AND ll.dtmvtolt <= lem.dtmvtolt) dtpgtant
-                FROM crapepr epr, craplem lem
+                FROM cecred.crapepr epr, cecred.craplem lem
                WHERE epr.cdcooper = pr_cdcooper
                      AND epr.nrdconta = pr_nrdconta
                      AND epr.nrctremp = pr_nrctremp
@@ -122,7 +122,7 @@ DECLARE
               SELECT lem.dtmvtolt
                     ,lem.vllanmto
                     ,(SELECT MAX(ll.dtmvtolt)
-                        FROM tbepr_renegociacao_craplem ll
+                        FROM cecred.tbepr_renegociacao_craplem ll
                        WHERE ll.cdcooper = lem.cdcooper
                              AND ll.nrdconta = lem.nrdconta
                              AND ll.nrctremp = lem.nrctremp
@@ -151,8 +151,8 @@ DECLARE
                                                 ,3279
                                                 ,99)
                              AND ll.dtmvtolt <= lem.dtmvtolt) dtpgtant
-                FROM tbepr_renegociacao_crapepr epr
-                    ,tbepr_renegociacao_craplem lem
+                FROM cecred.tbepr_renegociacao_crapepr epr
+                    ,cecred.tbepr_renegociacao_craplem lem
                WHERE epr.cdcooper = pr_cdcooper
                      AND epr.nrdconta = pr_nrdconta
                      AND epr.nrctremp = pr_nrctremp
@@ -180,7 +180,7 @@ DECLARE
     CLOSE cr_crapmfx;
   
     BEGIN
-      UPDATE crapcot
+      UPDATE cecred.crapcot
          SET crapcot.qtjurmfx = crapcot.qtjurmfx -
                                 round((vr_vllanmto / rw_crapmfx.vlmoefix), 4)
        WHERE cdcooper = pr_cdcooper
@@ -189,7 +189,7 @@ DECLARE
     END;
   
     IF vr_qtjurmfx < 0 THEN
-      UPDATE crapcot
+      UPDATE cecred.crapcot
          SET crapcot.qtjurmfx = 0
        WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta;
@@ -199,34 +199,34 @@ DECLARE
 
 BEGIN
 
-  gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
-                          ,pr_nmarquiv => vr_arq_leitura
-                          ,pr_tipabert => 'R'
-                          ,pr_utlfileh => vr_ind_arquiv
-                          ,pr_des_erro => vr_dscritic);
+  cecred.gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto
+                                 ,pr_nmarquiv => vr_arq_leitura
+                                 ,pr_tipabert => 'R'
+                                 ,pr_utlfileh => vr_ind_arquiv
+                                 ,pr_des_erro => vr_dscritic);
   IF vr_dscritic IS NOT NULL THEN
     RAISE vr_exc_saida;
   END IF;
 
-  gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv
-                              ,pr_des_text => vr_linha);
+  cecred.gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv
+                                     ,pr_des_text => vr_linha);
   LOOP
     BEGIN
-      gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv
-                                  ,pr_des_text => vr_linha);
+      cecred.gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv
+                                         ,pr_des_text => vr_linha);
     EXCEPTION
       WHEN no_data_found THEN
         EXIT;
     END;
   
-    vr_campo := GENE0002.fn_quebra_string(pr_string  => vr_linha
-                                         ,pr_delimit => ';');
+    vr_campo := cecred.GENE0002.fn_quebra_string(pr_string  => vr_linha
+                                                ,pr_delimit => ';');
   
     vr_idpreju := vr_idpreju + 1;
   
     vr_tab_contrato(vr_idpreju).cdcooper := 1;
-    vr_tab_contrato(vr_idpreju).nrdconta := GENE0002.fn_char_para_number(vr_campo(1));
-    vr_tab_contrato(vr_idpreju).nrctremp := GENE0002.fn_char_para_number(vr_campo(2));
+    vr_tab_contrato(vr_idpreju).nrdconta := cecred.GENE0002.fn_char_para_number(vr_campo(1));
+    vr_tab_contrato(vr_idpreju).nrctremp := cecred.GENE0002.fn_char_para_number(vr_campo(2));
     vr_tab_contrato(vr_idpreju).tppreju := TRIM(upper(vr_campo(10)));
   
   END LOOP;
@@ -260,45 +260,45 @@ BEGIN
       
         IF rw_prejuizo.inprejuz = 1 THEN
         
-          gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
-                              ,pr_cdoperad => '1'
-                              ,pr_dscritic => 'Contrato em prejuizo!'
-                              ,pr_dsorigem => 'AIMARO'
-                              ,pr_dstransa => 'Falha Transf Prejuizo'
-                              ,pr_dttransa => trunc(SYSDATE)
-                              ,pr_flgtrans => 1
-                              ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                               ,'HH24MISS'))
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nrdconta => rw_prejuizo.nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
+          cecred.gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
+                                     ,pr_cdoperad => '1'
+                                     ,pr_dscritic => 'Contrato em prejuizo!'
+                                     ,pr_dsorigem => 'AIMARO'
+                                     ,pr_dstransa => 'Falha Transf Prejuizo'
+                                     ,pr_dttransa => trunc(SYSDATE)
+                                     ,pr_flgtrans => 1
+                                     ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                      ,'HH24MISS'))
+                                     ,pr_idseqttl => 1
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nrdconta => rw_prejuizo.nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);
         
-          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                   ,pr_nmdcampo => 'Contrato'
-                                   ,pr_dsdadant => ' '
-                                   ,pr_dsdadatu => rw_prejuizo.nrctremp);
+          cecred.gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Contrato'
+                                          ,pr_dsdadant => ' '
+                                          ,pr_dsdadatu => rw_prejuizo.nrctremp);
         
         ELSIF rw_prejuizo.inliquid = 1 THEN
         
-          gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
-                              ,pr_cdoperad => '1'
-                              ,pr_dscritic => 'Contrato liquidado!'
-                              ,pr_dsorigem => 'AIMARO'
-                              ,pr_dstransa => 'Falha Transf Prejuizo PP'
-                              ,pr_dttransa => trunc(SYSDATE)
-                              ,pr_flgtrans => 1
-                              ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                               ,'HH24MISS'))
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nrdconta => rw_prejuizo.nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
+          cecred.gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
+                                     ,pr_cdoperad => '1'
+                                     ,pr_dscritic => 'Contrato liquidado!'
+                                     ,pr_dsorigem => 'AIMARO'
+                                     ,pr_dstransa => 'Falha Transf Prejuizo PP'
+                                     ,pr_dttransa => trunc(SYSDATE)
+                                     ,pr_flgtrans => 1
+                                     ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                      ,'HH24MISS'))
+                                     ,pr_idseqttl => 1
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nrdconta => rw_prejuizo.nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);
         
-          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                   ,pr_nmdcampo => 'Contrato'
-                                   ,pr_dsdadant => ' '
-                                   ,pr_dsdadatu => rw_prejuizo.nrctremp);
+          cecred.gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Contrato'
+                                          ,pr_dsdadant => ' '
+                                          ,pr_dsdadatu => rw_prejuizo.nrctremp);
         
         END IF;
       
@@ -308,16 +308,16 @@ BEGIN
     
       IF rw_prejuizo.tpemprst = 1 THEN
       
-        PREJ0001.pc_transfere_epr_prejuizo_PP(pr_cdcooper => rw_prejuizo.cdcooper
-                                             ,pr_cdagenci => rw_prejuizo.cdagenci
-                                             ,pr_nrdcaixa => 0
-                                             ,pr_cdoperad => '1'
-                                             ,pr_nrdconta => rw_prejuizo.nrdconta
-                                             ,pr_idseqttl => 1
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_nrctremp => rw_prejuizo.nrctremp
-                                             ,pr_des_reto => vr_des_reto
-                                             ,pr_tab_erro => vr_tab_erro);
+        cecred.PREJ0001.pc_transfere_epr_prejuizo_PP(pr_cdcooper => rw_prejuizo.cdcooper
+                                                    ,pr_cdagenci => rw_prejuizo.cdagenci
+                                                    ,pr_nrdcaixa => 0
+                                                    ,pr_cdoperad => '1'
+                                                    ,pr_nrdconta => rw_prejuizo.nrdconta
+                                                    ,pr_idseqttl => 1
+                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                    ,pr_nrctremp => rw_prejuizo.nrctremp
+                                                    ,pr_des_reto => vr_des_reto
+                                                    ,pr_tab_erro => vr_tab_erro);
       
         IF vr_des_reto = 'OK' THEN
         
@@ -337,24 +337,24 @@ BEGIN
                            to_char(rw_prejuizo.nrdconta) || ' Contrato: ' ||
                            to_char(rw_prejuizo.nrctremp);
           END IF;
-          gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
-                              ,pr_cdoperad => '1'
-                              ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'AIMARO'
-                              ,pr_dstransa => 'Falha Transf Prejuizo'
-                              ,pr_dttransa => trunc(SYSDATE)
-                              ,pr_flgtrans => 1
-                              ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                               ,'HH24MISS'))
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nrdconta => rw_prejuizo.nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
+          cecred.gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
+                                     ,pr_cdoperad => '1'
+                                     ,pr_dscritic => vr_dscritic
+                                     ,pr_dsorigem => 'AIMARO'
+                                     ,pr_dstransa => 'Falha Transf Prejuizo'
+                                     ,pr_dttransa => trunc(SYSDATE)
+                                     ,pr_flgtrans => 1
+                                     ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                      ,'HH24MISS'))
+                                     ,pr_idseqttl => 1
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nrdconta => rw_prejuizo.nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);
         
-          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                   ,pr_nmdcampo => 'Contrato'
-                                   ,pr_dsdadant => ' '
-                                   ,pr_dsdadatu => rw_prejuizo.nrctremp);
+          cecred.gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Contrato'
+                                          ,pr_dsdadant => ' '
+                                          ,pr_dsdadatu => rw_prejuizo.nrctremp);
         
           vr_idpreju := vr_tab_contrato.NEXT(vr_idpreju);
         
@@ -364,15 +364,15 @@ BEGIN
       
       ELSIF rw_prejuizo.tpemprst = 0 THEN
       
-        PREJ0001.pc_transfere_epr_prejuizo_TR(pr_cdcooper => rw_prejuizo.cdcooper
-                                             ,pr_cdagenci => rw_prejuizo.cdagenci
-                                             ,pr_nrdcaixa => 0
-                                             ,pr_cdoperad => '1'
-                                             ,pr_nrdconta => rw_prejuizo.nrdconta
-                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                             ,pr_nrctremp => rw_prejuizo.nrctremp
-                                             ,pr_des_reto => vr_des_reto
-                                             ,pr_tab_erro => vr_tab_erro);
+        cecred.PREJ0001.pc_transfere_epr_prejuizo_TR(pr_cdcooper => rw_prejuizo.cdcooper
+                                                    ,pr_cdagenci => rw_prejuizo.cdagenci
+                                                    ,pr_nrdcaixa => 0
+                                                    ,pr_cdoperad => '1'
+                                                    ,pr_nrdconta => rw_prejuizo.nrdconta
+                                                    ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                    ,pr_nrctremp => rw_prejuizo.nrctremp
+                                                    ,pr_des_reto => vr_des_reto
+                                                    ,pr_tab_erro => vr_tab_erro);
       
         IF vr_des_reto = 'OK' THEN
         
@@ -392,24 +392,24 @@ BEGIN
                            to_char(rw_prejuizo.nrdconta) || ' Contrato: ' ||
                            to_char(rw_prejuizo.nrctremp);
           END IF;
-          gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
-                              ,pr_cdoperad => '1'
-                              ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'AIMARO'
-                              ,pr_dstransa => 'Falha Transf Prejuizo'
-                              ,pr_dttransa => trunc(SYSDATE)
-                              ,pr_flgtrans => 1
-                              ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                               ,'HH24MISS'))
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nrdconta => rw_prejuizo.nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
+          cecred.gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
+                                     ,pr_cdoperad => '1'
+                                     ,pr_dscritic => vr_dscritic
+                                     ,pr_dsorigem => 'AIMARO'
+                                     ,pr_dstransa => 'Falha Transf Prejuizo'
+                                     ,pr_dttransa => trunc(SYSDATE)
+                                     ,pr_flgtrans => 1
+                                     ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                      ,'HH24MISS'))
+                                     ,pr_idseqttl => 1
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nrdconta => rw_prejuizo.nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);
         
-          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                   ,pr_nmdcampo => 'Contrato'
-                                   ,pr_dsdadant => ' '
-                                   ,pr_dsdadatu => rw_prejuizo.nrctremp);
+          cecred.gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Contrato'
+                                          ,pr_dsdadant => ' '
+                                          ,pr_dsdadatu => rw_prejuizo.nrctremp);
         
           vr_idpreju := vr_tab_contrato.NEXT(vr_idpreju);
           CONTINUE;
@@ -417,16 +417,16 @@ BEGIN
         END IF;
       
       ELSIF rw_prejuizo.tpemprst = 2 THEN
-        PREJ0001.pc_transfere_epr_prejuizo_pos(pr_cdcooper => rw_prejuizo.cdcooper
-                                              ,pr_cdagenci => rw_prejuizo.cdagenci
-                                              ,pr_nrdcaixa => 0
-                                              ,pr_cdoperad => '1'
-                                              ,pr_nrdconta => rw_prejuizo.nrdconta
-                                              ,pr_idseqttl => 1
-                                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                              ,pr_nrctremp => rw_prejuizo.nrctremp
-                                              ,pr_des_reto => vr_des_reto
-                                              ,pr_tab_erro => vr_tab_erro);
+        cecred.PREJ0001.pc_transfere_epr_prejuizo_pos(pr_cdcooper => rw_prejuizo.cdcooper
+                                                     ,pr_cdagenci => rw_prejuizo.cdagenci
+                                                     ,pr_nrdcaixa => 0
+                                                     ,pr_cdoperad => '1'
+                                                     ,pr_nrdconta => rw_prejuizo.nrdconta
+                                                     ,pr_idseqttl => 1
+                                                     ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                     ,pr_nrctremp => rw_prejuizo.nrctremp
+                                                     ,pr_des_reto => vr_des_reto
+                                                     ,pr_tab_erro => vr_tab_erro);
       
         IF vr_des_reto = 'OK' THEN
         
@@ -445,24 +445,24 @@ BEGIN
                            to_char(rw_prejuizo.nrdconta) || ' Contrato: ' ||
                            to_char(rw_prejuizo.nrctremp);
           END IF;
-          gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
-                              ,pr_cdoperad => '1'
-                              ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => 'AIMARO'
-                              ,pr_dstransa => 'Falha Transf Prejuizo'
-                              ,pr_dttransa => trunc(SYSDATE)
-                              ,pr_flgtrans => 1
-                              ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                               ,'HH24MISS'))
-                              ,pr_idseqttl => 1
-                              ,pr_nmdatela => vr_nmdatela
-                              ,pr_nrdconta => rw_prejuizo.nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
+          cecred.gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
+                                     ,pr_cdoperad => '1'
+                                     ,pr_dscritic => vr_dscritic
+                                     ,pr_dsorigem => 'AIMARO'
+                                     ,pr_dstransa => 'Falha Transf Prejuizo'
+                                     ,pr_dttransa => trunc(SYSDATE)
+                                     ,pr_flgtrans => 1
+                                     ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                      ,'HH24MISS'))
+                                     ,pr_idseqttl => 1
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nrdconta => rw_prejuizo.nrdconta
+                                     ,pr_nrdrowid => vr_nrdrowid);
         
-          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                   ,pr_nmdcampo => 'Contrato'
-                                   ,pr_dsdadant => ' '
-                                   ,pr_dsdadatu => rw_prejuizo.nrctremp);
+          cecred.gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                          ,pr_nmdcampo => 'Contrato'
+                                          ,pr_dsdadant => ' '
+                                          ,pr_dsdadatu => rw_prejuizo.nrctremp);
         
           vr_idpreju := vr_tab_contrato.NEXT(vr_idpreju);
           CONTINUE;
@@ -470,24 +470,24 @@ BEGIN
         END IF;
       END IF;
     
-      gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
-                          ,pr_cdoperad => '1'
-                          ,pr_dscritic => 'Tranferencia realizada com sucesso!'
-                          ,pr_dsorigem => 'AIMARO'
-                          ,pr_dstransa => 'Transf Prejuizo'
-                          ,pr_dttransa => trunc(SYSDATE)
-                          ,pr_flgtrans => 1
-                          ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                           ,'HH24MISS'))
-                          ,pr_idseqttl => 1
-                          ,pr_nmdatela => vr_nmdatela
-                          ,pr_nrdconta => rw_prejuizo.nrdconta
-                          ,pr_nrdrowid => vr_nrdrowid);
+      cecred.gene0001.pc_gera_log(pr_cdcooper => rw_prejuizo.cdcooper
+                                 ,pr_cdoperad => '1'
+                                 ,pr_dscritic => 'Tranferencia realizada com sucesso!'
+                                 ,pr_dsorigem => 'AIMARO'
+                                 ,pr_dstransa => 'Transf Prejuizo'
+                                 ,pr_dttransa => trunc(SYSDATE)
+                                 ,pr_flgtrans => 1
+                                 ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                  ,'HH24MISS'))
+                                 ,pr_idseqttl => 1
+                                 ,pr_nmdatela => vr_nmdatela
+                                 ,pr_nrdconta => rw_prejuizo.nrdconta
+                                 ,pr_nrdrowid => vr_nrdrowid);
     
-      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                               ,pr_nmdcampo => 'Contrato'
-                               ,pr_dsdadant => ' '
-                               ,pr_dsdadatu => rw_prejuizo.nrctremp);
+      cecred.gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                      ,pr_nmdcampo => 'Contrato'
+                                      ,pr_dsdadant => ' '
+                                      ,pr_dsdadatu => rw_prejuizo.nrctremp);
     
     ELSIF vr_tab_contrato(vr_idpreju).tppreju = 'CONTA' THEN
     
@@ -499,66 +499,66 @@ BEGIN
     
       IF rw_crapass.inprejuz = 1 THEN
       
-        gene0001.pc_gera_log(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
-                            ,pr_cdoperad => '1'
-                            ,pr_dscritic => 'Conta em prejuizo!'
-                            ,pr_dsorigem => 'AIMARO'
-                            ,pr_dstransa => 'Falha Transf Prejuizo'
-                            ,pr_dttransa => trunc(SYSDATE)
-                            ,pr_flgtrans => 1
-                            ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                             ,'HH24MISS'))
-                            ,pr_idseqttl => 1
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+        cecred.gene0001.pc_gera_log(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
+                                   ,pr_cdoperad => '1'
+                                   ,pr_dscritic => 'Conta em prejuizo!'
+                                   ,pr_dsorigem => 'AIMARO'
+                                   ,pr_dstransa => 'Falha Transf Prejuizo'
+                                   ,pr_dttransa => trunc(SYSDATE)
+                                   ,pr_flgtrans => 1
+                                   ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                    ,'HH24MISS'))
+                                   ,pr_idseqttl => 1
+                                   ,pr_nmdatela => vr_nmdatela
+                                   ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
+                                   ,pr_nrdrowid => vr_nrdrowid);
       
         vr_idpreju := vr_tab_contrato.NEXT(vr_idpreju);
         CONTINUE;
       
       END IF;
     
-      PREJ0003.pc_grava_prejuizo_cc(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
-                                   ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
-                                   ,pr_tpope    => 'N'
-                                   ,pr_cdcritic => vr_cdcritic
-                                   ,pr_dscritic => vr_dscritic
-                                   ,pr_des_erro => vr_des_erro);
+      cecred.PREJ0003.pc_grava_prejuizo_cc(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
+                                          ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
+                                          ,pr_tpope    => 'N'
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic
+                                          ,pr_des_erro => vr_des_erro);
     
       IF vr_des_erro <> 'OK' THEN
       
-        gene0001.pc_gera_log(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
-                            ,pr_cdoperad => '1'
-                            ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => 'AIMARO'
-                            ,pr_dstransa => 'Falha Transf Prejuizo'
-                            ,pr_dttransa => trunc(SYSDATE)
-                            ,pr_flgtrans => 1
-                            ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                             ,'HH24MISS'))
-                            ,pr_idseqttl => 1
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
-                            ,pr_nrdrowid => vr_nrdrowid);
+        cecred.gene0001.pc_gera_log(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
+                                   ,pr_cdoperad => '1'
+                                   ,pr_dscritic => vr_dscritic
+                                   ,pr_dsorigem => 'AIMARO'
+                                   ,pr_dstransa => 'Falha Transf Prejuizo'
+                                   ,pr_dttransa => trunc(SYSDATE)
+                                   ,pr_flgtrans => 1
+                                   ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                    ,'HH24MISS'))
+                                   ,pr_idseqttl => 1
+                                   ,pr_nmdatela => vr_nmdatela
+                                   ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
+                                   ,pr_nrdrowid => vr_nrdrowid);
       
         vr_idpreju := vr_tab_contrato.NEXT(vr_idpreju);
         CONTINUE;
       
       END IF;
     
-      gene0001.pc_gera_log(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
-                          ,pr_cdoperad => '1'
-                          ,pr_dscritic => 'Tranferencia realizada com sucesso!'
-                          ,pr_dsorigem => 'AIMARO'
-                          ,pr_dstransa => 'Transf Prejuizo'
-                          ,pr_dttransa => trunc(SYSDATE)
-                          ,pr_flgtrans => 1
-                          ,pr_hrtransa => to_number(to_char(SYSDATE
-                                                           ,'HH24MISS'))
-                          ,pr_idseqttl => 1
-                          ,pr_nmdatela => vr_nmdatela
-                          ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
-                          ,pr_nrdrowid => vr_nrdrowid);
+      cecred.gene0001.pc_gera_log(pr_cdcooper => vr_tab_contrato(vr_idpreju).cdcooper
+                                 ,pr_cdoperad => '1'
+                                 ,pr_dscritic => 'Tranferencia realizada com sucesso!'
+                                 ,pr_dsorigem => 'AIMARO'
+                                 ,pr_dstransa => 'Transf Prejuizo'
+                                 ,pr_dttransa => trunc(SYSDATE)
+                                 ,pr_flgtrans => 1
+                                 ,pr_hrtransa => to_number(to_char(SYSDATE
+                                                                  ,'HH24MISS'))
+                                 ,pr_idseqttl => 1
+                                 ,pr_nmdatela => vr_nmdatela
+                                 ,pr_nrdconta => vr_tab_contrato(vr_idpreju).nrdconta
+                                 ,pr_nrdrowid => vr_nrdrowid);
     
     END IF;
   
