@@ -190,6 +190,19 @@ BEGIN
   
   END LOOP;
 
+  INSERT INTO crapprm
+    (NMSISTEM
+    ,CDCOOPER
+    ,CDACESSO
+    ,DSTEXPRM
+    ,DSVLRPRM)
+  VALUES
+    ('CRED'
+    ,0
+    ,'ROOT_ACMPS'
+    ,'Diretorio onde ficarao os arquivos de relatorios acmps'
+    ,'/progress/t0035420/micros/cecred/acmp');
+
   COMMIT;
 
 EXCEPTION
