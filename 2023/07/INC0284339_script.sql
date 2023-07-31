@@ -5,7 +5,7 @@ DECLARE
 BEGIN
 
   BEGIN
-    DELETE FROM tbgen_batch_relatorio_wrk
+    DELETE FROM cecred.tbgen_batch_relatorio_wrk
      WHERE cdcooper = 3
        AND cdprograma = 'CRPS670'
        AND dsrelatorio IN ('CRAPLOT_CET', 'CTRL_ARQ', 'DADOS_ARQ')
@@ -13,7 +13,7 @@ BEGIN
   END;
 
   BEGIN
-    UPDATE tbgen_batch_controle c
+    UPDATE cecred.tbgen_batch_controle c
        SET insituacao = 2
      WHERE c.cdcooper = 3
        AND c.cdprogra = 'CRPS670'
@@ -24,7 +24,7 @@ BEGIN
   END;
 
   BEGIN
-    UPDATE crapscb
+    UPDATE cecred.crapscb
        SET nrseqarq = 2274
           ,dtultint = SYSDATE
      WHERE crapscb.tparquiv = 2;
@@ -32,7 +32,7 @@ BEGIN
   
   COMMIT;
 
-  PC_BANCOOB_RECEBE_ARQUIVO_CEXT(pr_dscritic => vr_dscritic);
+  cecred.PC_BANCOOB_RECEBE_ARQUIVO_CEXT(pr_dscritic => vr_dscritic);
   
   IF vr_dscritic IS NOT NULL THEN
     DBMS_OUTPUT.PUT_LINE(vr_dscritic);
