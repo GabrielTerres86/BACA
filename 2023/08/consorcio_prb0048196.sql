@@ -22,7 +22,7 @@ DECLARE
       FROM CECRED.tbcns_repique t
      WHERE t.cdcooper = pr_cdcooper
        AND t.cdsitlct = 1
-       AND (pr_dtmvtolt - t.dtmvtopg) > 10;
+       AND GENE0005.fn_calc_qtd_dias_uteis(t.cdcooper, t.dtmvtopg, pr_dtmvtolt) > 10;
 
   PROCEDURE pc_valida_direto(pr_nmdireto IN  VARCHAR2,
                              pr_dscritic OUT CECRED.crapcri.dscritic%TYPE) IS
