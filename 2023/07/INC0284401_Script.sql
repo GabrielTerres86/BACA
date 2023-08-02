@@ -8,7 +8,6 @@ BEGIN
                FROM cecred.craptdb tdb
                    ,cecred.crapcob cob
               WHERE tdb.cdcooper = 13
-                AND tdb.dtvencto > '21/07/2023'
                 AND tdb.insittit = 4
                 AND cob.cdcooper = tdb.cdcooper
                 AND cob.nrdconta = tdb.nrdconta
