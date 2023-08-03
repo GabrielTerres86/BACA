@@ -326,6 +326,10 @@ BEGIN
           
           gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, ' DELETE CECRED.Crapenc WHERE ROWID = ''' || vr_rowidenc || '''; ');
           
+          gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'Informativo;' || ' INCLUSÃO de endereço para o cooperado ' || vr_chave || ' ;'
+                                                        || vr_nrcpfcgc 
+          );
+          
         ELSE
           
           vr_comments := 'ATUALIZAR ENDEREÇO PARA AQUELES QUE JÁ POSSUEM ENDEREÇO.';
@@ -349,6 +353,10 @@ BEGIN
                                                        || '   , cdufende = ''' || rg_crapttl.cdufende || ''' '
                                                        || '   , nrcepend = '   || NVL( TO_CHAR(rg_crapttl.nrcepend), 'NULL' )
                                                        || ' WHERE ROWID = '''  || rg_crapttl.rowid_enc || '''; ');
+          
+          gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'Informativo;' || ' Atualização de endereço para o cooperado ' || vr_chave || ' ;'
+                                                        || vr_nrcpfcgc 
+          );
           
         END IF;
         
@@ -403,7 +411,7 @@ BEGIN
       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid  => vr_nrdrowid
                                       ,pr_nmdcampo  => 'crapenc.cdseqinc'
                                       ,pr_dsdadant  => NVL( TRIM( TO_CHAR(rg_crapttl.cdseqinc) ), ' ' )
-                                      ,pr_dsdadatu  => NVL( TRIM( TO_CHAR(vr_cdseqinc) ), ' ' )
+                                      ,pr_dsdadatu  => NVL( TRIM( TO_CHAR( NVL(vr_cdseqinc, 1) ) ), ' ' )
                                       );
           
       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid  => vr_nrdrowid
