@@ -74,6 +74,23 @@ UPDATE cecred.tbseg_prestamista
    AND nrctremp = 210823
    AND nrctrseg = 407367;
    
+update cecred.tbseg_prestamista b set b.VLPRODUT = 60.32 where b.NRPROPOSTA = '202308752196' and b.CDCOOPER =  2 and b.nrdconta = 584290;
+update cecred.crawseg s           set s.vlpremio = 60.32 where s.nrdconta   = 584290         and s.CDCOOPER =  2 and s.NRCTRSEG = 324020  and s.NRPROPOSTA = '202308752196';
+update cecred.crapseg s           set s.vlpremio = 60.32 where s.nrdconta   = 584290         and s.CDCOOPER =  2 and s.NRCTRSEG = 324020;
+
+ 
+
+update cecred.tbseg_prestamista b set b.VLPRODUT = 987.37 where b.NRPROPOSTA = '202309897247' and b.CDCOOPER =  8 and b.nrdconta = 10278;
+update cecred.crawseg s           set s.vlpremio = 987.37 where s.nrdconta   = 10278          and s.CDCOOPER =  8 and s.NRCTRSEG = 23450  and s.NRPROPOSTA = '202309897247';
+update cecred.crapseg s           set s.vlpremio = 987.37 where s.nrdconta   = 10278          and s.CDCOOPER =  8 and s.NRCTRSEG = 23450;
+
+ 
+
+update cecred.tbseg_prestamista b set b.VLPRODUT = 467.84 where b.NRPROPOSTA = '202309027071' and b.CDCOOPER =  14 and b.nrdconta = 83810;
+update cecred.crawseg s           set s.vlpremio = 467.84 where s.nrdconta   = 83810          and s.CDCOOPER =  14 and s.NRCTRSEG = 23450  and s.NRPROPOSTA = '202309027071';
+update cecred.crapseg s           set s.vlpremio = 467.84 where s.nrdconta   = 83810          and s.CDCOOPER =  14 and s.NRCTRSEG = 23450;   
+   
 COMMIT;
+
 END;   
                     
