@@ -119,7 +119,9 @@ BEGIN
     VALUES (aux_cdpartar_add, rw_crapdat.cdcooper,  'N');
   END LOOP;
   
+  
   COMMIT;
+
 
 EXCEPTION  
   WHEN OTHERS THEN
