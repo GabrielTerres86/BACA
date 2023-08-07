@@ -63,6 +63,7 @@ BEGIN
   CLOSE cr_crapbat;
   
   IF rw_crapbat.cdcadast IS NOT NULL THEN
+  
     aux_cdpartar_del := rw_crapbat.cdcadast;
     
     BEGIN
