@@ -1,4 +1,5 @@
 DECLARE 
+
   vr_cdpartar CECRED.CRAPPAT.CDPARTAR%TYPE;
   
   CURSOR cr_crapcop IS

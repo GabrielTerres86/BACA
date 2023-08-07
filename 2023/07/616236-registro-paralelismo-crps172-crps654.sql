@@ -1,4 +1,5 @@
 BEGIN
+
   INSERT INTO CECRED.tbgen_batch_param
     (IDPARAMETRO
     ,QTPARALELO
