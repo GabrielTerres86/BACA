@@ -8,8 +8,8 @@ begin
    
   update CECRED.crappep
      set vlsdvpar = 2639.52, 
-       vlparepr = 2639.52, 
-     vlsdvsji = 2639.52
+         vlparepr = 2639.52, 
+         vlsdvsji = 2639.52
    where cdcooper = 9
      and nrdconta = 99545080
      and nrctremp = 87650
