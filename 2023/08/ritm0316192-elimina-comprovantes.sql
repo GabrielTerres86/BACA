@@ -10,6 +10,10 @@ BEGIN
   DELETE cecred.crappro WHERE progress_recid = 562189226;
   DELETE cecred.crappro WHERE progress_recid = 562192353;
   DELETE cecred.crappro WHERE progress_recid = 562194505;
+  DELETE cecred.crappro WHERE progress_recid = 575406453;
+  DELETE cecred.crappro WHERE progress_recid = 575475532;
+  DELETE cecred.crappro WHERE progress_recid = 575533537;
+  DELETE cecred.crappro WHERE progress_recid = 575559039;
 
   COMMIT;
 END;
