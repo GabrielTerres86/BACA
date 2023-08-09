@@ -150,7 +150,7 @@ UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sys
 
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200891482;
 
-/*** gncptit ***/
+
 UPDATE cecred.gncptit b SET b.dtmvtolt = trunc(sysdate) where b.progress_recid = 215336707;
 UPDATE cecred.gncptit b SET b.dtmvtolt = trunc(sysdate) where b.progress_recid = 215336708;
 UPDATE cecred.gncptit b SET b.dtmvtolt = trunc(sysdate) where b.progress_recid = 215336709;
