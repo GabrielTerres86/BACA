@@ -1,20 +1,16 @@
 begin
-  
-/** Credicomin - 10 **/
-/** craptit **/
+
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200768212;
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200768233;
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200768234;
 
-/** gncptit **/
+
 UPDATE cecred.gncptit b SET b.dtmvtolt = trunc(sysdate) where b.progress_recid = 215336831;
 UPDATE cecred.gncptit b SET b.dtmvtolt = trunc(sysdate) where b.progress_recid = 215336836;
 UPDATE cecred.gncptit b SET b.dtmvtolt = trunc(sysdate) where b.progress_recid = 215336837;
 
 
-/************************/
-/*** Transpocred - 09***/
-/*** craptit ***/
+
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200768264;
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200768266;
 UPDATE cecred.craptit b SET b.dtmvtolt =  trunc(sysdate), b.dtdpagto = trunc(sysdate), b.flgenvio = 0, b.cdbcoenv = 0 where b.progress_recid = 200768267;
