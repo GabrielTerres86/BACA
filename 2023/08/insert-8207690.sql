@@ -6,7 +6,7 @@ BEGIN
          AND nrctremp = 2416667;
 
   UPDATE cecred.crappep
-     SET inliquid = 1, vlsdvpar = 0
+     SET inliquid = 1, vlsdvpar = 0, vlsdvatu = 0, vlpagpar = 60.95
    WHERE cdcooper = 1
          AND nrdconta = 8207690
          AND nrctremp = 2416667
