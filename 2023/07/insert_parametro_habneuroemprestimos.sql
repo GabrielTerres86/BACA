@@ -63,6 +63,7 @@ BEGIN
   CLOSE cr_crapbat;
   
   IF rw_crapbat.cdcadast IS NOT NULL THEN
+  
     aux_cdpartar_del := rw_crapbat.cdcadast;
     
     BEGIN
@@ -119,7 +120,9 @@ BEGIN
     VALUES (aux_cdpartar_add, rw_crapdat.cdcooper,  'N');
   END LOOP;
   
+  
   COMMIT;
+
 
 EXCEPTION  
   WHEN OTHERS THEN
