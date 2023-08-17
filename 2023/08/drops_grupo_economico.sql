@@ -35,6 +35,8 @@ BEGIN
   
   UPDATE craptel SET FLGTELBL = 0 WHERE nmdatela = 'FORMGE';
   
+  UPDATE crapprm SET dsvlrprm = 1 WHERE cdacesso = 'EXECUTAR_CARGA_CENTRAL';
+  
   FOR rw_crapcop IN cr_crapcop LOOP
     
     vr_nrsolici := 0;
