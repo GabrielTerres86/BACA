@@ -208,6 +208,51 @@ BEGIN
   END IF;
   CLOSE cr_crapass;
   
+  vr_cdcooper := 9;
+  vr_nrdconta := NULL;
+  vr_nrctremp := 90315;
+  vr_innivris := 'B';
+  vr_progress := 1353354;
+  
+  OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                 ,pr_progress => vr_progress);
+  FETCH cr_crapass INTO rw_crapass;
+  IF cr_crapass%FOUND THEN
+    vr_nrdconta := rw_crapass.nrdconta;
+    UPDATE cecred.tbrisco_operacoes a 
+       SET a.inrisco_rating = risc0004.fn_traduz_nivel_risco(vr_innivris)
+          ,a.inrisco_inclusao = risc0004.fn_traduz_nivel_risco(vr_innivris)
+     WHERE a.cdcooper = vr_cdcooper
+       AND a.nrdconta = rw_crapass.nrdconta
+       AND a.nrctremp = vr_nrctremp
+       AND a.tpctrato = 90;
+             
+    UPDATE cecred.crawepr e
+       SET e.dsnivori = vr_innivris
+     WHERE e.cdcooper = vr_cdcooper
+       AND e.nrdconta = rw_crapass.nrdconta 
+       AND e.nrctremp = vr_nrctremp;
+  
+    gene0002.pc_escreve_xml(vr_dados_rollback
+                           ,vr_texto_rollback
+                           ,'UPDATE cecred.tbrisco_operacoes o ' || chr(13) || 
+                            '   SET o.inrisco_rating = '|| risc0004.fn_traduz_nivel_risco('E') || chr(13) ||
+                            '      ,o.inrisco_inclusao = '|| risc0004.fn_traduz_nivel_risco('E') || chr(13) ||
+                            ' WHERE o.cdcooper = ' || vr_cdcooper  || chr(13) ||
+                            '   AND o.nrdconta = ' || vr_nrdconta  || chr(13) ||
+                            '   AND o.nrctremp = ' || vr_nrctremp  || chr(13) ||
+                            '   AND o.tpctrato = 90;' ||chr(13)||chr(13), FALSE);    
+    
+    gene0002.pc_escreve_xml(vr_dados_rollback
+                           ,vr_texto_rollback
+                           ,'UPDATE cecred.crawepr e ' || chr(13) || 
+                            '   SET e.dsnivori = ''E'''|| chr(13) ||
+                            ' WHERE e.cdcooper = ' || vr_cdcooper  || chr(13) ||
+                            '   AND e.nrdconta = ' || vr_nrdconta  || chr(13) ||
+                            '   AND e.nrctremp = ' || vr_nrctremp  || ';' ||chr(13)||chr(13), FALSE);   
+  END IF;
+  CLOSE cr_crapass;
+  
   cecred.gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'COMMIT;'||chr(13), FALSE);
   cecred.gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, chr(13), TRUE); 
                
