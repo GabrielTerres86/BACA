@@ -19,23 +19,23 @@ BEGIN
                      ,dsinfadc
                      ,vlresblq
                      ,hrblqini)
-               VALUES(16                       -- cdcooper
-                     ,901377               -- nrdconta
-                     ,83382470900               -- nrcpfcgc
-                     ,4 -- cdmodali
-                     ,3 --BLOQUEIO DE CAPITAL
-                     ,0                       -- flblcrft
-                     ,trunc(SYSDATE)      -- dtblqini                     
-                     ,317.81 -- vlbloque
-                     ,1                       -- cdopdblq /* Operador Bloqueio    */
-                     ,NULL                              -- cdopddes /* Operador Desbloqueio */
-                     ,'Vara da Fazenda Pub. Acid. do Trab e Reg. Pub Rio do Sul'                       -- dsjuizem
-                     ,'Bloqueio de capital ate R$ 317,81'                       -- dsresord
-                     ,'24/08/2023'                       -- dtenvres
-                     ,'310046643761' -- nroficio
-                     ,'5013470-07.2020.8.24.0054'                       -- nrproces
-                     ,''                       -- dsinfadc
-                     ,0                       -- vlresblq
+               VALUES(16                      
+                     ,901377               
+                     ,83382470900          
+                     ,4 
+                     ,3 
+                     ,0  
+                     ,trunc(SYSDATE)     
+                     ,317.81 
+                     ,1      
+                     ,NULL   
+                     ,'Vara da Fazenda Pub. Acid. do Trab e Reg. Pub Rio do Sul'                       
+                     ,'Bloqueio de capital ate R$ 317,81'                       
+                     ,'24/08/2023'                       
+                     ,'310046643761' 
+                     ,'5013470-07.2020.8.24.0054'                      
+                     ,''                       
+                     ,0                       
                      ,(To_Number(To_Char(systimestamp,'SSSSS'))));
                              
   COMMIT;
