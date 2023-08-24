@@ -1,6 +1,5 @@
 BEGIN
 
-  -- Inserir o registro do bloqueio
   INSERT INTO cecred.crapblj(cdcooper
                      ,nrdconta
                      ,nrcpfcgc
