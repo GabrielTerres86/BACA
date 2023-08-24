@@ -109,7 +109,7 @@ DECLARE
 
           BEGIN
              UPDATE CECRED.tbseg_prestamista
-                SET nrapolice = rw_principal.nrapolice
+                SET nrapolice = rw_crapcop.nrapolic
               WHERE idseqtra = rw_principal.idseqtra;
           EXCEPTION
             WHEN NO_DATA_FOUND THEN
