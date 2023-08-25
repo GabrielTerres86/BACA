@@ -729,7 +729,7 @@ DECLARE
       END IF;
         
 	  begin
-	  UPDATE crapass SET cdmotdem = pr_mtdemiss
+	  UPDATE crapass SET cdmotdem = 17
                         ,cdsitdct = 4 
                         ,dtdemiss = rw_crapdat.dtmvtolt
 						,dtelimin = rw_crapdat.dtmvtolt
