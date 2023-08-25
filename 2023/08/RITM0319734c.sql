@@ -984,7 +984,7 @@ begin
                     ,vr_vldcotasGeral
                     ,1
                     ,vr_dtmvtolt
-                    ,11
+                    ,18
                     ,vr_dtmvtolt
                     ,1
                     ,0
