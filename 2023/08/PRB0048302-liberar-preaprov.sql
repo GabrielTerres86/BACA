@@ -1,8 +1,8 @@
 declare
   vr_rootmicros      VARCHAR2(5000) := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
-  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/RITM0000000';
-  vr_nmarqimp        VARCHAR2(100)  := 'RITM0000000.csv';
-  vr_nmarqimpr       VARCHAR2(100)  := 'ROLLBACK_RITM0000000.csv';
+  vr_nmdireto        VARCHAR2(4000) := vr_rootmicros||'/cpd/bacas/PRB0048302';
+  vr_nmarqimp        VARCHAR2(100)  := 'PRB0048302.csv';
+  vr_nmarqimpr       VARCHAR2(100)  := 'ROLLBACK_PRB0048302.csv';
   vr_ind_arquiv      utl_file.file_type;
   vr_ind_arquivr     utl_file.file_type;  
   vr_linha           varchar2(5000);
@@ -14,6 +14,7 @@ declare
   vr_cdcritic        crapcri.cdcritic%TYPE;
   vr_dscritic        VARCHAR2(32767);
   vr_exc_saida       EXCEPTION;
+  vr_nrdrowid        ROWID;
   
      
   CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE
@@ -62,7 +63,8 @@ BEGIN
       vr_cdcooper := GENE0002.fn_char_para_number(vr_campo(1));
       vr_nrdconta := GENE0002.fn_char_para_number(vr_campo(2));
       
-      OPEN cr_crapass;
+      OPEN cr_crapass(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => vr_nrdconta);
         FETCH cr_crapass
         INTO rw_crapass;     
       IF cr_crapass%NOTFOUND THEN
@@ -106,7 +108,7 @@ BEGIN
                           ,pr_cdoperad => 1
                           ,pr_dscritic => ''
                           ,pr_dsorigem => gene0001.vr_vet_des_origens(5)
-                          ,pr_dstransa => 'Desbloqueio manual de Pre Aprovado - RITM0000000'
+                          ,pr_dstransa => 'Desbloqueio manual de Pre Aprovado - PRB0048302'
                           ,pr_dttransa => TRUNC(SYSDATE)
                           ,pr_flgtrans => 1
                           ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
