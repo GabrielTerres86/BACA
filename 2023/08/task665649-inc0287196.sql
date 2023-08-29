@@ -19,7 +19,7 @@ DECLARE
 
   CURSOR cr_crapcot_base IS
     SELECT lct.cdcooper,lct.nrdconta,SUM(decode(his.indebcre, 'D', -1, 1) * lct.vllanmto) vllanmto
-      FROM craplct lct, craphis his
+      FROM cecred.craplct lct, cecred.craphis his
      WHERE lct.cdcooper = his.cdcooper
        AND lct.cdhistor = his.cdhistor
        AND lct.cdcooper = 11
