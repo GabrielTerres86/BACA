@@ -18,14 +18,6 @@ BEGIN
   
   FOR rw_crapcop IN cr_crapcop LOOP
   
-    CECRED.RISC0001_NOVA_CENTRAL.pc_risco_k(pr_cdcooper => rw_crapcop.cdcooper
-                                           ,pr_dtrefere => vr_dtrefere_ris
-                                           ,pr_retfile  => vr_retfile
-                                           ,pr_dscritic => vr_dscritic);
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-
     CECRED.RISC0001_NOVA_CENTRAL.pc_risco_t(pr_cdcooper => rw_crapcop.cdcooper
                                            ,pr_dtrefere => vr_dtrefere_ris
                                            ,pr_dscritic => vr_dscritic);
