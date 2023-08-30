@@ -5,13 +5,13 @@ BEGIN
     ,NRORDEM
     ,DHINICIO_CICLO
     ,DHFIM_CICLO
-    ,DHINICIO_VIGENGIA
+    ,DHINICIO_VIGENCIA
     ,DHFIM_VIGENCIA)
   VALUES
     ('CICLO 01'
     ,1
-    ,to_date('01-01-1900 14:00:01', 'dd-mm-yyyy hh24:mi:ss')
-    ,to_date('01-01-1900 01:00:00', 'dd-mm-yyyy hh24:mi:ss')
+    ,to_date('01-01-1900 13:30:00', 'dd-mm-yyyy hh24:mi:ss')
+    ,to_date('01-01-1900 23:59:59', 'dd-mm-yyyy hh24:mi:ss')
     ,to_date('01-07-2023', 'dd-mm-yyyy')
     ,NULL);
 
@@ -20,13 +20,13 @@ BEGIN
     ,NRORDEM
     ,DHINICIO_CICLO
     ,DHFIM_CICLO
-    ,DHINICIO_VIGENGIA
+    ,DHINICIO_VIGENCIA
     ,DHFIM_VIGENCIA)
   VALUES
     ('CICLO 02'
     ,2
-    ,to_date('01-01-1900 01:00:01', 'dd-mm-yyyy hh24:mi:ss')
-    ,to_date('01-01-1900 14:00:00', 'dd-mm-yyyy hh24:mi:ss')
+    ,to_date('01-01-1900 00:00:00', 'dd-mm-yyyy hh24:mi:ss')
+    ,to_date('01-01-1900 13:29:59', 'dd-mm-yyyy hh24:mi:ss')
     ,to_date('01-07-2023', 'dd-mm-yyyy')
     ,NULL);
     
