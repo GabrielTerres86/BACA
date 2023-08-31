@@ -81,7 +81,7 @@ DECLARE
   vr_nrseqdig            NUMBER;
   vr_lgrowid             ROWID;
   vr_vldcotas            NUMBER;
-  vr_dstransa            VARCHAR2(100) := 'Alterada situacao de conta por script. RITM0313970.';
+  vr_dstransa            VARCHAR2(100) := 'Reversão encerramento de conta em massa RITM0328602';
   vr_dscritic            VARCHAR2(2000);
   vr_tab_retorno         CECRED.LANC0001.typ_reg_retorno;
   vr_incrineg            INTEGER;
