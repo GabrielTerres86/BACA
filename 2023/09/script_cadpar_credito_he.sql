@@ -1,12 +1,12 @@
 BEGIN
- INSERT INTO tbgen_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
+ INSERT INTO cecred.tbgen_dominio_campo (NMDOMINIO, CDDOMINIO, DSCODIGO)
  VALUES ('TIPOMODALIDADEIMOB', '12', 'Emprestimo Garantia Imovel');
 
  INSERT INTO cecred.crappat(CDPARTAR
                             ,NMPARTAR
                             ,TPDEDADO
                             ,CDPRODUT)
-  VALUES((SELECT MAX(cdpartar) + 1 FROM crappat)
+  VALUES((SELECT MAX(cdpartar) + 1 FROM CREDITO.crappat)
          ,'HISTORICOS_CONTRATO_CRED/HOME/07C,01C,11C,16C,02C,14C'
          ,2
          ,0);
