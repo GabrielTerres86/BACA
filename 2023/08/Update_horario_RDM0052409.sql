@@ -50,6 +50,6 @@ BEGIN
   DBMS_SCHEDULER.set_attribute(name      => 'cecred.JBDEB_UNICO_HORA04_COOP16',
                                attribute => 'repeat_interval',
                                value     => 'Freq=daily;ByDay=MON, TUE, WED, THU, FRI;ByHour=19;ByMinute=30;BySecond=0');
-
+commit;
 END;
 /
