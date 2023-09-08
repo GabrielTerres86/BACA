@@ -15,7 +15,7 @@ DECLARE
 
 BEGIN
 
-  INSERT INTO craprdr
+  INSERT INTO CECRED.craprdr
     (NMPROGRA
     ,DTSOLICI)
   VALUES
@@ -59,7 +59,7 @@ BEGIN
     ,3
     ,NULL);
 
-  INSERT INTO crapaca
+  INSERT INTO CECRED.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -72,7 +72,7 @@ BEGIN
     ,'pr_dtmovimento, pr_nrispbif_recebedora, pr_nrispbif_favorecida, pr_tipo_documento, pr_codigo_barras, pr_id_baixa, pr_id_titulo, pr_tipo_lancamento, pr_tipo_ciclo, pr_valor_de, pr_valor_ate'
     ,(SELECT r.nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_PCRCMP'));
 
-  INSERT INTO crapaca
+  INSERT INTO CECRED.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -85,7 +85,7 @@ BEGIN
     ,'pr_dtmovimento'
     ,(SELECT r.nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_PCRCMP'));
 
-  INSERT INTO crapaca
+  INSERT INTO CECRED.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -98,7 +98,7 @@ BEGIN
     ,NULL
     ,(SELECT r.nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_PCRCMP'));
 
-  INSERT INTO crapaca
+  INSERT INTO CECRED.crapaca
     (NMDEACAO
     ,NMPACKAG
     ,NMPROCED
@@ -111,6 +111,18 @@ BEGIN
     ,'pr_dtmovimento, pr_nrispbif_recebedora, pr_nrispbif_favorecida, pr_tipo_documento, pr_codigo_barras, pr_id_baixa, pr_id_titulo, pr_tipo_lancamento, pr_tipo_ciclo, pr_valor_de, pr_valor_ate, pr_nrregist,pr_nriniseq'
     ,(SELECT r.nrseqrdr FROM craprdr r WHERE r.nmprogra = 'TELA_PCRCMP'));
 
+  INSERT INTO CECRED.crapaca
+    (nmdeacao
+    ,nmpackag
+    ,nmproced
+    ,lstparam
+    ,nrseqrdr)
+  VALUES
+    ('PCRCMP_MONITORAR_ARQUIVO'
+    ,'TELA_PCRCMP'
+    ,'pc_listar_monitor_acmp615_640'
+    ,'pr_dtmovimento'
+    ,(SELECT NRSEQRDR FROM CECRED.craprdr WHERE NMPROGRA = 'TELA_PCRCMP'));
   INSERT INTO craptel
     (NMDATELA
     ,NRMODULO
@@ -132,13 +144,13 @@ BEGIN
   VALUES
     ('PCRCMP'
     ,5
-    ,'C,M'
+    ,'C,M,A'
     ,'CONCILIACAO ACMP'
     ,'CONCILIACAO ACMP'
     ,0
     ,1
     ,' '
-    ,'CONCILIACAO,MOVIMENTO ANALITICO'
+    ,'CONCILIACAO,MOVIMENTO ANALITICO,MONITOR ARQUIVO'
     ,2
     ,3
     ,1
@@ -151,7 +163,7 @@ BEGIN
   FOR i IN operador.FIRST .. operador.LAST LOOP
     vr_operador := operador(i);
   
-    INSERT INTO crapace
+    INSERT INTO CECRED.crapace
       (nmdatela
       ,cddopcao
       ,cdoperad
@@ -188,9 +200,27 @@ BEGIN
       ,0
       ,2);
   
+    INSERT INTO CECRED.crapace
+      (nmdatela
+      ,cddopcao
+      ,cdoperad
+      ,nmrotina
+      ,cdcooper
+      ,nrmodulo
+      ,idevento
+      ,idambace)
+    VALUES
+      ('PCRCMP'
+      ,'A'
+      ,vr_operador
+      ,' '
+      ,3
+      ,1
+      ,0
+      ,2);
   END LOOP;
 
-  INSERT INTO crapprm
+  INSERT INTO CECRED.crapprm
     (NMSISTEM
     ,CDCOOPER
     ,CDACESSO
