@@ -1,19 +1,17 @@
 BEGIN
 
-    UPDATE tbtransf_arquivo_ted_linhas tatl
+    UPDATE cecred.tbtransf_arquivo_ted_linhas tatl
        SET tatl.dsret_cnab = 'NP'
-     WHERE TRUNC(tatl.dtgeracao) = '08/09/2023'
-       AND tatl.cdsegmento = 'A'
+     WHERE tatl.cdsegmento = 'A'
        AND tatl.nrseq_arq_ted = 37116
        AND tatl.nrseq_arq_ted_linha IN (369884, 369885);
-    
-    UPDATE tbtransf_arquivo_ted tat
+
+    UPDATE cecred.tbtransf_arquivo_ted tat
        SET tat.idsituacao = 3
      WHERE tat.cdcooper = 8
        AND tat.nrdconta = 99971488
        AND tat.nrseq_arquivo = 4
-       AND tat.nrseq_arq_ted = 37116
-       AND TRUNC(tat.dtgeracao) = '08/09/2023';
+       AND tat.nrseq_arq_ted = 37116;
 
   COMMIT;
 EXCEPTION
