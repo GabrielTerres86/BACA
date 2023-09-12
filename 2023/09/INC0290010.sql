@@ -11,7 +11,7 @@ Declare
 
   vc_dstransaSensbCRAPSLD             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSLD) por script - INC0290010';
   vc_dstransaSensbCRAPSDA             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSDA) por script - INC0290010';
-  vc_dtinicioCRAPSDA                  CONSTANT DATE           := to_date('04/08/2023','dd/mm/yyyy');
+  vc_dtinicioCRAPSDA                  CONSTANT DATE           := to_date('03/08/2023','dd/mm/yyyy');
 
   vr_erro_geralog EXCEPTION;
   v_code NUMBER;
@@ -36,33 +36,6 @@ Declare
        AND a.cdcooper = contas.cdcooper
        AND a.dtmvtolt BETWEEN vc_dtinicioCRAPSDA AND TRUNC(SYSDATE)
      ORDER BY a.nrdconta, a.dtmvtolt asc;
-
-    
-   CURSOR cr_contas is
-    SELECT contas.cdcooper, contas.nrdconta
-        from (select 1 as cdcooper, 10192930  as nrdconta from dual ) contas;
-
-    Cursor cr_lcm (p_nrdconta number)is
-       select lcm.cdcooper, 
-              lcm.dtmvtolt, 
-              lcm.cdagenci,
-              lcm.cdbccxlt, 
-              lcm.nrdolote, 
-        lcm.nrdconta,
-             (select nvl(max(nrseqdig)+1,1) 
-                from cecred.craplcm b 
-               where b.cdcooper = lcm.cdcooper
-                 and b.dtmvtolt = to_Date('04/08/2023','dd/mm/yyyy')
-                 and b.cdagenci = lcm.cdagenci
-                 and b.cdbccxlt = lcm.cdbccxlt
-                 and b.nrdolote = lcm.nrdolote) NRSEQDIG
-         from cecred.craplcm lcm
-        where lcm.cdcooper = 1 
-          and lcm.nrdconta = p_nrdconta
-          and lcm.dtmvtolt = to_Date('03/08/2023','dd/mm/yyyy')
-          and lcm.cdhistor = 108;
-    rg_lcm cr_lcm%rowtype;
-
 
   PROCEDURE pr_atualiza_sld(pr_cdcooper IN NUMBER,
                             pr_nrdconta IN NUMBER,
@@ -152,28 +125,6 @@ BEGIN
   gr_dttransa := trunc(sysdate);
   gr_hrtransa := GENE0002.fn_busca_time;
   
-  for rg_contas in cr_contas LOOP
-       
-     open cr_lcm(rg_contas.nrdconta);
-     fetch cr_lcm into rg_lcm;
-     if rg_lcm.nrdconta   = 10192930 THEN
-        insert into cecred.craplcm (DTMVTOLT, CDAGENCI, CDBCCXLT, NRDOLOTE, NRDCONTA, NRDOCMTO, CDHISTOR, NRSEQDIG, VLLANMTO, NRDCTABB, CDPESQBB, VLDOIPMF, NRAUTDOC, NRSEQUNI, CDBANCHQ, CDCMPCHQ, CDAGECHQ, NRCTACHQ, NRLOTCHQ, SQLOTCHQ, DTREFERE, HRTRANSA, CDOPERAD, DSIDENTI, CDCOOPER, NRDCTITG, DSCEDENT, CDCOPTFN, CDAGETFN, NRTERFIN, NRPAREPR, PROGRESS_RECID, NRSEQAVA, NRAPLICA, CDORIGEM, IDLAUTOM, DTTRANS)
-        values (to_date('04-08-2023', 'dd-mm-yyyy'), rg_lcm.cdagenci, rg_lcm.cdbccxlt, rg_lcm.nrdolote, 89807006, 4331, 108, rg_lcm.nrseqdig, 185.69, 10192930, ' 6.710.232', 0.00, 0, 0, 0, 0, 0, 0, 0, 0, null, 16156, '1', '0', 1, '10192930', ' ', 0, 0, 0, 4, null, 0, 0, 0, 0, '04/08/23 04:29:16,000000');
-     end if;
-     
-     
-     close cr_lcm;
-   
-   
-   
-   
-   end loop;
-  
-  delete from cecred.craplcm lcm
-   where lcm.nrdconta = 10192930
-     and lcm.cdcooper = 1
-     and lcm.dtmvtolt = to_Date('03/08/2023','dd/mm/yyyy')
-     and lcm.cdhistor = 108;   
 
   FOR rg_crapsld IN cr_crapsld LOOP
     gr_nrdconta := rg_crapsld.nrdconta;
