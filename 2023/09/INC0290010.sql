@@ -11,7 +11,7 @@ Declare
 
   vc_dstransaSensbCRAPSLD             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSLD) por script - INC0290010';
   vc_dstransaSensbCRAPSDA             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSDA) por script - INC0290010';
-  vc_dtinicioCRAPSDA                  CONSTANT DATE           := to_date('03/08/2023','dd/mm/yyyy');
+  vc_dtinicioCRAPSDA                  CONSTANT DATE           := to_date('04/08/2023','dd/mm/yyyy');
 
   vr_erro_geralog EXCEPTION;
   v_code NUMBER;
