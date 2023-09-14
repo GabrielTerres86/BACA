@@ -18,10 +18,10 @@ DECLARE
                , t.nrdconta
 			   , t.cdcatego
                , (SELECT COUNT(1)
-                    FROM crapttl x
+                    FROM cecred.crapttl x
                    WHERE x.cdcooper = t.cdcooper
                      AND x.nrdconta = t.nrdconta) qtdtitulares
-            FROM crapass t
+            FROM cecred.crapass t
            WHERE t.inpessoa = 1
              AND t.cdcatego = 1 
              AND NVL(t.dtdemiss,TRUNC(SYSDATE)) > to_date('01/11/2021','DD/MM/YYYY')) a
@@ -36,10 +36,10 @@ DECLARE
                , t.nrdconta
 			   , t.cdcatego
                , (SELECT COUNT(1)
-                    FROM crapttl x
+                    FROM cecred.crapttl x
                    WHERE x.cdcooper = t.cdcooper
                      AND x.nrdconta = t.nrdconta) qtdtitulares
-            FROM crapass t
+            FROM cecred.crapass t
            WHERE t.inpessoa = 1
              AND t.cdcatego > 1 
              AND NVL(t.dtdemiss,TRUNC(SYSDATE)) > to_date('01/11/2021','DD/MM/YYYY')) a
