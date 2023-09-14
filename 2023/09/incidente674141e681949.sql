@@ -5,7 +5,7 @@ BEGIN
   UPDATE cecred.tbepr_consignado_pagamento cp
      SET cp.instatus = 2
         ,cp.dtupdreg = SYSDATE
-   WHERE (cp.idsequencia, cp.cdcooper, cp.nrdconta, cp.nrctremp, cp.nrparepr) in
+   WHERE (cp.idsequencia, cp.cdcooper, cp.nrdconta, cp.nrctremp, cp.nrparepr) IN
          ((3147688, 01, 08637733, 4101609, 024),
           (3147683, 16, 00316091, 0520270, 012),
           (3413742, 13, 00144762, 0236458, 017),
