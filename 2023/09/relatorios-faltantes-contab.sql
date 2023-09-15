@@ -1286,7 +1286,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
          AND vri.cdmodali = pr_cdmodali
          AND vri.nrctremp = pr_nrctremp
          AND vri.nrseqctr = pr_nrseqctr
-         AND vri.cdvencto > 190;
+         AND vri.cdvencto > 205;
     rw_crabvri cr_crabvri%ROWTYPE;
 
     CURSOR cr_crapepr(pr_cdcooper IN cecred.crapepr.cdcooper%TYPE
@@ -1622,7 +1622,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                     and v.cdmodali = c.cdmodali
                                     and v.nrctremp = c.nrctremp
                                     and v.nrseqctr = c.nrseqctr
-                                    and v.cdvencto > 190)
+                                    and v.cdvencto > 205)
                  and a.cdcooper = c.cdcooper
                  and a.nrdconta = c.nrdconta
                  and e.cdcooper = c.cdcooper
@@ -1659,7 +1659,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                 and v.cdmodali = c.cdmodali
                                 and v.nrctremp = c.nrctremp
                                 and v.nrseqctr = c.nrseqctr
-                                and v.cdvencto > 190)
+                                and v.cdvencto > 205)
                  and a.cdcooper = c.cdcooper
                  and a.nrdconta = c.nrdconta
                  and e.cdcooper = c.cdcooper
@@ -2528,7 +2528,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
           vr_vldivida := 0;
         END IF;
 
-        IF  rw_crapvri.cdvencto BETWEEN 110 AND 190 THEN 
+        IF  rw_crapvri.cdvencto BETWEEN 110 AND 205 THEN 
 
           OPEN cr_crabvri(pr_cdcooper,
                           rw_crapvri.nrdconta,
@@ -2545,7 +2545,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
 
         IF rw_crapris.innivris IN (1,2) THEN
           vr_contador := rw_crapris.innivris;
-        ELSIF rw_crapvri.cdvencto BETWEEN 110 AND 190 AND vr_flsoavto AND 
+        ELSIF rw_crapvri.cdvencto BETWEEN 110 AND 205 AND vr_flsoavto AND 
               nvl(rw_crapris.nracordo,0) = 0 THEN
 
           IF rw_crapris.innivris = 3 THEN
