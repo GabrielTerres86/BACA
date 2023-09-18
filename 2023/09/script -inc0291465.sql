@@ -29,8 +29,8 @@ DECLARE
     SELECT *
       FROM CECRED.craprac
      WHERE cdprodut = 1109
-       AND dtatlsld >= '11/09/2023'
-       AND dtaniver = '09/10/2023';
+       AND dtatlsld >= to_date('11/09/2023','dd/mm/yyyy')
+       AND dtaniver = to_date('09/10/2023','dd/mm/yyyy');
   rw_craprac cr_craprac%ROWTYPE;
 
   CURSOR cr_craplac(pr_cdcooper NUMBER
@@ -45,7 +45,7 @@ DECLARE
        AND lac.nrdconta = pr_nrdconta
        AND lac.nraplica = pr_nraplica
        AND lac.cdhistor in (3527,3532,3528)
-       AND lac.dtmvtolt < '09/09/2023';
+       AND lac.dtmvtolt < to_date('09/09/2023','dd/mm/yyyy');
   rw_craplac cr_craplac%ROWTYPE;
   
   CURSOR cr_craplac_rentab(pr_cdcooper NUMBER
@@ -57,15 +57,15 @@ DECLARE
        AND lac.nrdconta = pr_nrdconta
        AND lac.nraplica = pr_nraplica
        AND lac.cdhistor = 3532
-       AND lac.dtmvtolt = '11/09/2023';
+       AND lac.dtmvtolt = to_date('11/09/2023','dd/mm/yyyy');
   rw_craplac_rentab cr_craplac_rentab%ROWTYPE;
 
 BEGIN  
   BEGIN 
     UPDATE cecred.craptxi txi
        SET txi.vlrdtaxa = 0.68050000
-     WHERE txi.dtiniper = '09/08/2023'
-       AND txi.dtfimper = '09/08/2023'
+     WHERE txi.dtiniper = to_date('09/08/2023','dd/mm/yyyy')
+       AND txi.dtfimper = to_date('09/08/2023','dd/mm/yyyy')
        AND txi.cddindex = 6;
     COMMIT;
     EXCEPTION
