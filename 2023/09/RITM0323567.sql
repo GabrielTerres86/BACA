@@ -24,7 +24,7 @@ DECLARE
             FROM cecred.crapass t
            WHERE t.inpessoa = 1
              AND t.cdcatego = 1 
-             AND NVL(t.dtdemiss,TRUNC(SYSDATE)) > to_date('01/11/2021','DD/MM/YYYY')) a
+             AND NVL(t.dtdemiss,TRUNC(SYSDATE)) > to_date('01/11/2020','DD/MM/YYYY')) a
    WHERE a.qtdtitulares > 1;
  indv c_indv%rowtype;
  
@@ -42,7 +42,7 @@ DECLARE
             FROM cecred.crapass t
            WHERE t.inpessoa = 1
              AND t.cdcatego > 1 
-             AND NVL(t.dtdemiss,TRUNC(SYSDATE)) > to_date('01/11/2021','DD/MM/YYYY')) a
+             AND NVL(t.dtdemiss,TRUNC(SYSDATE)) > to_date('01/11/2020','DD/MM/YYYY')) a
    WHERE a.qtdtitulares = 1;
  conj c_conj%rowtype;
  
