@@ -76,7 +76,7 @@ DECLARE
                              AND t.nrdconta = e.nrdconta
                              AND t.idseqttl = e.idseqttl
     WHERE t.cdcooper = pr_cooperativa
-      -- AND t.nrdconta = pr_conta
+      AND t.nrdconta = pr_conta
       AND t.nrcpfcgc = pr_cpf
       AND t.idseqttl = pr_idseq
       AND e.nrcepend = pr_cep;
