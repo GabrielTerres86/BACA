@@ -8,8 +8,7 @@ BEGIN
            ,a.idcontrato
            ,(SELECT MAX(d.nrremessa)
                FROM credito.tbcred_pronampe_retremessa d
-              WHERE d.tpregistro = 97
-                AND d.cdmovimentacaofi = 5
+              WHERE d.tpregistro = 95
                 AND d.idcontrato = a.idcontrato) nrremessa
        FROM credito.tbcred_pronampe_contrato  a
            ,cecred.crapdat                    b
