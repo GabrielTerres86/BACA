@@ -95,6 +95,7 @@ DECLARE
         END;
 
         IF vcount = 1000 THEN
+		  vcount := 0;
           COMMIT;
         ELSE
           vcount := vcount + 1;
