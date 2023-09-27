@@ -11,7 +11,7 @@ DECLARE
     SELECT cdcooper
       FROM cecred.crapcop a
      WHERE a.flgativo = 1
-       AND a.cdcooper IN (1,2,3,5,6,7,8,9,10,11,12,13,14,16)
+       AND a.cdcooper IN (5)
      ORDER BY a.cdcooper DESC;
   rw_crapcop cr_crapcop%ROWTYPE;
   
