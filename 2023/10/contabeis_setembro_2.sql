@@ -1,4 +1,3 @@
--- Created on 26/09/2023 by T0032717 
 DECLARE
   vr_dscritic         VARCHAR2(4000);
   vr_exc_erro         EXCEPTION;
