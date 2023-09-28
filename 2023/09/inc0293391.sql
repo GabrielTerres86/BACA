@@ -28,7 +28,7 @@ BEGIN
        SET nrseqarq = 2333
           ,dtultint = SYSDATE
      WHERE crapscb.tparquiv = 2;
-  END;
+  END; 
   
   COMMIT;
 
