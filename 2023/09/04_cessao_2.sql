@@ -383,9 +383,9 @@ DECLARE
                                             pr_cdprogra  => 'CRPS715',
                                             pr_dtmvtolt  => rw_crapdat.dtmvtolt,
                                             pr_dsxml     => vr_desclob,
-                                            pr_dsarqsaid => vr_nmdireto||'/novacentral/erro/'||vr_nmarqdat,
+                                            pr_dsarqsaid => vr_nmdireto||'/'||vr_nmarqdat,
                                             pr_cdrelato  => 0,
-                                            pr_dspathcop => vr_dircopia,
+                                            pr_dspathcop => vr_dircopia||'/novacentral/erro/',
                                             pr_fldoscop  => 'S',
                                             pr_flg_gerar => 'S',
                                             pr_des_erro  => vr_dscritic);
