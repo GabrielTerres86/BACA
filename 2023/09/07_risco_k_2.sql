@@ -562,7 +562,6 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
          AND ris.cdcooper  = pr_cdcooper
          AND ris.dtrefere  = par_dtrefere
          AND ris.cdmodali  = 101
-         AND ris.qtdiaatr >= 60
          AND ris.innivris <  10 
          AND sld.cdcooper = ass.cdcooper
          AND sld.nrdconta = ass.nrdconta
@@ -592,7 +591,6 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
          AND ris.cdcooper  = pr_cdcooper
          AND ris.dtrefere  = par_dtrefere
          AND ris.cdmodali  = 101
-         AND ris.qtdiaatr >= 60
          AND ris.innivris <  10 
          AND sld.cdcooper = ass.cdcooper
          AND sld.nrdconta = ass.nrdconta

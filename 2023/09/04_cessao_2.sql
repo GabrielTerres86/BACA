@@ -80,18 +80,17 @@ DECLARE
          AND cop.flgativo = 1;
     rw_crapcop cr_crapcop%ROWTYPE;
 
-    CURSOR cr_crapris (pr_cdcooper cecred.crapass.cdcooper%TYPE,
-                       pr_dtultdma cecred.crapdat.dtultdma%TYPE) IS
+    CURSOR cr_crapris (pr_cdcooper crapass.cdcooper%TYPE,
+                       pr_dtultdma crapdat.dtultdma%TYPE) IS
        SELECT ass.inpessoa,
               ass.cdagenci,
-              (SUM(vri.vldivida) + ROUND(AVG(NVL(j.vljura60,0)),2)) vltotdiv,
+              (SUM(vri.vldivida)) vltotdiv,
               row_number() OVER (PARTITION BY ass.inpessoa ORDER BY ass.inpessoa ) seqdreg,
               COUNT(1) OVER (PARTITION BY ass.inpessoa ORDER BY ass.inpessoa ) qtddreg
          FROM gestaoderisco.tbrisco_crapvri vri,
               gestaoderisco.tbrisco_crapris ris,
-              cecred.tbcrd_cessao_credito ces,
-              cecred.crapass ass,
-              gestaoderisco.tbrisco_juros_emprestimo j
+              tbcrd_cessao_credito ces,
+              crapass ass
         WHERE ces.cdcooper = ass.cdcooper
           AND ces.nrdconta = ass.nrdconta
           AND vri.cdcooper = ris.cdcooper
@@ -99,23 +98,41 @@ DECLARE
           AND vri.dtrefere = ris.dtrefere
           AND vri.cdmodali = ris.cdmodali
           AND vri.nrctremp = ris.nrctremp
-          AND vri.nrseqctr = ris.nrseqctr
+          AND vri.nrseqctr = ris.nrseqctr 
           AND ces.cdcooper = ris.cdcooper
           AND ces.nrdconta = ris.nrdconta
           AND ces.nrctremp = ris.nrctremp
-          AND ris.cdcooper = j.cdcooper(+)
-          AND ris.nrdconta = j.nrdconta(+)
-          AND ris.nrctremp = j.nrctremp(+)
-          AND ris.dtrefere = j.dtrefere(+)
           AND vri.cdvencto BETWEEN 110 AND 290
           AND ces.cdcooper = pr_cdcooper
           AND ris.cdorigem = 3
           AND ris.dtrefere = pr_dtultdma
-          
-          GROUP BY ROLLUP  (ass.inpessoa, ass.cdagenci)
-          
+          GROUP BY ROLLUP  (ass.inpessoa, ass.cdagenci) 
           ORDER BY ass.inpessoa, nvl(ass.cdagenci,0) ASC;
-
+    
+    CURSOR cr_juros60(pr_cdcooper crapass.cdcooper%TYPE
+                     ,pr_dtultdma crapdat.dtultdma%TYPE
+                     ,pr_inpessoa crapass.inpessoa%TYPE
+                     ,pr_cdagenci crapass.cdagenci%TYPE) IS
+      SELECT (SUM(NVL(j.vljura60,0))) vljura60
+        FROM gestaoderisco.tbrisco_crapris ris,
+             tbcrd_cessao_credito ces,
+             crapass ass,
+             gestaoderisco.tbrisco_juros_emprestimo j
+       WHERE ces.cdcooper = ass.cdcooper
+         AND ces.nrdconta = ass.nrdconta
+         AND ces.cdcooper = ris.cdcooper
+         AND ces.nrdconta = ris.nrdconta
+         AND ces.nrctremp = ris.nrctremp
+         AND ris.cdcooper = j.cdcooper(+)
+         AND ris.nrdconta = j.nrdconta(+)
+         AND ris.nrctremp = j.nrctremp(+)
+         AND ris.dtrefere = j.dtrefere(+)
+         AND ces.cdcooper = pr_cdcooper
+         AND ris.cdorigem = 3
+         AND ris.dtrefere = pr_dtultdma
+         AND (ass.inpessoa = pr_inpessoa OR nvl(pr_inpessoa, 0) = 0)
+         AND (ass.cdagenci = pr_cdagenci OR nvl(pr_cdagenci, 0) = 0);
+    rw_juros60 cr_juros60%ROWTYPE;
 
     CURSOR cr_cessao (pr_cdcooper cecred.crapass.cdcooper%TYPE,
                       pr_dtultdma cecred.crapdat.dtultdma%TYPE) IS
@@ -147,7 +164,7 @@ DECLARE
     vr_dircopia     VARCHAR2(500);
 
     vr_vltotali     cecred.crapris.vldivida%TYPE;
-
+    vr_vljura60     cecred.crapris.vldivida%TYPE;
     
     vr_dtultdma_util_yymmdd  varchar2(6);
     vr_dtultdma_util_ddmmyy  varchar2(6);
@@ -222,6 +239,15 @@ DECLARE
                                       pr_dtultdma => pr_dtrefere) LOOP
 
           
+          vr_vljura60 := 0;
+          OPEN cr_juros60(pr_cdcooper => rw_crapcop.cdcooper
+                         ,pr_dtultdma => pr_dtrefere
+                         ,pr_inpessoa => rw_crapris.inpessoa
+                         ,pr_cdagenci => rw_crapris.cdagenci);
+          FETCH cr_juros60 INTO rw_juros60;
+          vr_vljura60 := nvl(rw_juros60.vljura60,0);
+          CLOSE cr_juros60;
+          
           IF rw_crapris.cdagenci IS NULL AND
              rw_crapris.inpessoa IS NULL THEN
             continue;
@@ -248,7 +274,7 @@ DECLARE
             vr_dsdlinha := '99'||TRIM(vr_dtultdma_util_yymmdd)        ||','||
                            TRIM(vr_dtultdma_util_ddmmyy)              ||','||
                            vr_lshistor                                ||','||
-                           to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
+                           to_char((rw_crapris.vltotdiv + vr_vljura60),'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
                            '5210'                                     ||','||
                            vr_dshistor||
                            chr(10);
@@ -260,7 +286,7 @@ DECLARE
             vr_dsdlinha := '99'||TRIM(vr_dtultdma_util_yymmdd)        ||','||
                            TRIM(vr_dtultdia_util_ddmmyy)              ||','||
                            vr_lshistor_rev                            ||','||
-                           to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
+                           to_char((rw_crapris.vltotdiv + vr_vljura60),'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''') ||','||
                            '5210'                                     ||','||
                            vr_dshistor_rev                            ||
                            chr(10);
@@ -270,7 +296,7 @@ DECLARE
             vr_dsdlinha := NULL;
 
             
-            vr_vltotali := rw_crapris.vltotdiv;
+            vr_vltotali := (rw_crapris.vltotdiv + vr_vljura60);
           ELSE
             
             IF rw_crapris.seqdreg = 2 THEN
@@ -286,7 +312,7 @@ DECLARE
 
             
             vr_dsdlinha := to_char(rw_crapris.cdagenci,'fm000')||','||
-                           to_char(rw_crapris.vltotdiv,'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
+                           to_char((rw_crapris.vltotdiv + vr_vljura60),'FM9999999999990D00','NLS_NUMERIC_CHARACTERS=''.,''')||
                            chr(10);
 
             
