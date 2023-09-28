@@ -1,16 +1,16 @@
 declare
 
-  vr_nrdocmto    craplci.nrdocmto%TYPE;
-  vr_cdcritic    crapcri.cdcritic%TYPE := 0;
-  vr_dscritic    crapcri.dscritic%TYPE := NULL;
-  vr_tab_retorno LANC0001.typ_reg_retorno;
+  vr_nrdocmto    CECRED.craplci.nrdocmto%TYPE;
+  vr_cdcritic    CECRED.crapcri.cdcritic%TYPE := 0;
+  vr_dscritic    CECRED.crapcri.dscritic%TYPE := NULL;
+  vr_tab_retorno CECRED.LANC0001.typ_reg_retorno;
   vr_incrineg    INTEGER;
-  vr_dtmvtolt    crapdat.dtmvtolt%type;
+  vr_dtmvtolt    CECRED.crapdat.dtmvtolt%type;
 Begin
   
-  delete from tbcc_lancamentos_pendentes t where t.idseq_lancamento in (307747589,313179302);
+  delete from CECRED.tbcc_lancamentos_pendentes t where t.idseq_lancamento in (307747589,313179302);
 
-  select t.dtmvtolt into vr_dtmvtolt from crapdat t where t.cdcooper = 16;
+  select t.dtmvtolt into vr_dtmvtolt from CECRED.crapdat t where t.cdcooper = 16;
   
   
   vr_nrdocmto := fn_sequence(pr_nmtabela => 'CRAPLCI_LCI',
@@ -18,7 +18,7 @@ Begin
                              pr_dsdchave => '1010107;16',
                              pr_flgdecre => 'N');
 
-  LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => 16,
+  CECRED.LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => 16,
                                      pr_dtmvtolt => vr_dtmvtolt,
                                      pr_cdagenci => 4,
                                      pr_cdbccxlt => 0,
