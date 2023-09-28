@@ -230,8 +230,8 @@ BEGIN
     ('CRED'
     ,0
     ,'ROOT_ACMPS'
-    ,'Diretorio onde ficarao os arquivos de relatorios acmps'
-    ,'/progress/t0035420/micros/cecred/acmp');
+    ,'Diretorio onde ficarao os arquivos csv de relatorios acmps'
+    ,'/micros/cecred/acmp');
 
   COMMIT;
 
