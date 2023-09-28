@@ -23,11 +23,11 @@ DECLARE
 BEGIN
   vr_tab_param.delete;
 
-  vr_tab_param(1).nmpartar := 'Dia util recuperacao valores PEAC';
+  vr_tab_param(1).nmpartar := 'Dia Util Recuperacao Valores PEAC';
   vr_tab_param(1).tpdedado := 2;
   vr_tab_param(1).cdprodut := 12;
   vr_tab_param(1).cdbattar := 'DUTIL_RECPPEAC';
-  vr_tab_param(1).nmidenti := 'Dia util recuperacao valores PEAC';
+  vr_tab_param(1).nmidenti := 'Dia Util Recuperacao Valores PEAC';
   vr_tab_param(1).cdprogra := ' ';
   vr_tab_param(1).tpcadast := 2;
   vr_tab_param(1).cdcooper := 3;
