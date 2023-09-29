@@ -22,7 +22,7 @@ BEGIN
     ,1
     ,'D'
     ,'0111110'
-    ,to_date('22/10/2023 07:30:00', 'dd/mm/yyyy hh24:mi:ss')
+    ,to_date('23/10/2023 07:30:00', 'dd/mm/yyyy hh24:mi:ss')
     ,0
     ,'N'
     ,'N'
