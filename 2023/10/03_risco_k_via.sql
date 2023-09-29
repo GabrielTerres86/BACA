@@ -1169,7 +1169,6 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
             ,crapass a  
             ,crapepr e
             ,gestaoderisco.tbrisco_crapvri v
-            ,GESTAODERISCO.tbrisco_juros_emprestimo j
        WHERE r.cdcooper = a.cdcooper
          AND r.nrdconta = a.nrdconta
          AND r.cdcooper = pr_cdcooper
