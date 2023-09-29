@@ -547,7 +547,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
       SELECT ris.nrdconta
            , DECODE(ass.inpessoa,3,2,ass.inpessoa) inpessoa 
            , ass.cdagenci
-           , ris.qtdiaatr qtdiaatr
+           , j.qtdiaatr qtdiaatr
            , ris.vldivida
            , ris.dtinictr
            , sld.vljuresp 
@@ -562,6 +562,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
          AND ris.cdcooper  = pr_cdcooper
          AND ris.dtrefere  = par_dtrefere
          AND ris.cdmodali  = 101
+         AND j.qtdiaatr >= 60
          AND ris.innivris <  10 
          AND sld.cdcooper = ass.cdcooper
          AND sld.nrdconta = ass.nrdconta
@@ -573,7 +574,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
       SELECT ris.nrdconta
            , DECODE(ass.inpessoa,3,2,ass.inpessoa) inpessoa 
            , ass.cdagenci
-           , ris.qtdiaatr qtdiaatr
+           , j.qtdiaatr qtdiaatr
            , ris.vldivida
            , ris.dtinictr
            , sld.vljuresp 
@@ -591,6 +592,7 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
          AND ris.cdcooper  = pr_cdcooper
          AND ris.dtrefere  = par_dtrefere
          AND ris.cdmodali  = 101
+         AND j.qtdiaatr >= 60
          AND ris.innivris <  10 
          AND sld.cdcooper = ass.cdcooper
          AND sld.nrdconta = ass.nrdconta
@@ -1156,18 +1158,17 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                ,nrdconta
                ,nrctremp;
     
-    CURSOR cr_crapris_249(pr_cdcooper in cecred.crapris.cdcooper%TYPE
-                         ,pr_dtultdia in cecred.crapris.dtrefere%TYPE
-                         ,pr_cdorigem in cecred.crapris.cdorigem%TYPE
-                         ,pr_cdmodali in cecred.crapris.cdmodali%TYPE
-                         ,pr_tpemprst IN cecred.crapepr.tpemprst%TYPE) IS
+    -- Informações da central de risco
+    CURSOR cr_crapris_249(pr_cdcooper in crapris.cdcooper%TYPE
+                         ,pr_dtultdia in crapris.dtrefere%TYPE
+                         ,pr_cdorigem in crapris.cdorigem%TYPE
+                         ,pr_cdmodali in crapris.cdmodali%TYPE
+                         ,pr_tpemprst IN crapepr.tpemprst%TYPE) IS
       SELECT a.cdagenci
-            ,r.nrdconta
-            ,r.nrctremp
-            ,(SUM(v.vldivida) + ROUND(AVG(nvl(j.vljura60, 0)),2)) saldo_devedor
+            ,(SUM(v.vldivida)) saldo_devedor
         FROM gestaoderisco.tbrisco_crapris r
-            ,cecred.crapass a  
-            ,cecred.crapepr e
+            ,crapass a  
+            ,crapepr e
             ,gestaoderisco.tbrisco_crapvri v
             ,GESTAODERISCO.tbrisco_juros_emprestimo j
        WHERE r.cdcooper = a.cdcooper
@@ -1185,25 +1186,63 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
          AND v.nrctremp = r.nrctremp
          AND v.dtrefere = r.dtrefere
          AND v.cdmodali = r.cdmodali
-         AND r.cdcooper = j.cdcooper(+) 
-         AND r.nrdconta = j.nrdconta(+) 
-         AND r.nrctremp = j.nrctremp(+) 
-         AND r.dtrefere = j.dtrefere(+) 
          AND v.cdvencto BETWEEN 110 AND 290 
+         --> Deve ignorar emprestimos de cessao de credito                 
          AND NOT EXISTS (SELECT 1
-                           FROM cecred.crapebn b
+                           FROM crapebn b
                           WHERE b.cdcooper = r.cdcooper
                             AND b.nrdconta = r.nrdconta
                             AND b.nrctremp = r.nrctremp)
          AND NOT EXISTS (SELECT 1
-                           FROM cecred.tbcrd_cessao_credito ces
+                           FROM tbcrd_cessao_credito ces
                           WHERE ces.cdcooper = r.cdcooper
                             AND ces.nrdconta = r.nrdconta
                             AND ces.nrctremp = r.nrctremp)
-         GROUP BY (a.cdagenci,r.nrdconta,r.nrctremp) 
+         --> Gerar linha com o somatorios
+         GROUP BY (a.cdagenci) 
+         --> Ordenar para linha de somatorio ser apresentada primeiro
          ORDER BY nvl(a.cdagenci,0) ASC;
     TYPE typ_cr_crapris_249 IS TABLE OF cr_crapris_249%ROWTYPE index by PLS_INTEGER;
     rw_crapris_249 typ_cr_crapris_249; 
+    
+    CURSOR cr_crapris_249_jura60(pr_cdcooper in crapris.cdcooper%TYPE
+                                ,pr_dtultdia in crapris.dtrefere%TYPE
+                                ,pr_cdorigem in crapris.cdorigem%TYPE
+                                ,pr_cdmodali in crapris.cdmodali%TYPE
+                                ,pr_tpemprst IN crapepr.tpemprst%TYPE
+                                ,pr_cdagenci IN crapass.cdagenci%TYPE) IS
+      SELECT (SUM(NVL(j.vljura60,0))) vljura60
+        FROM gestaoderisco.tbrisco_crapris r
+            ,crapass a  
+            ,crapepr e
+            ,GESTAODERISCO.tbrisco_juros_emprestimo j
+       WHERE r.cdcooper = a.cdcooper
+         AND r.nrdconta = a.nrdconta
+         AND e.cdcooper = r.cdcooper
+         AND e.nrdconta = r.nrdconta
+         AND e.nrctremp = r.nrctremp
+         AND r.cdcooper = pr_cdcooper
+         AND r.dtrefere = pr_dtultdia
+         AND r.cdorigem = pr_cdorigem
+         AND r.cdmodali = pr_cdmodali
+         AND e.tpemprst = pr_tpemprst
+         AND a.cdagenci = pr_cdagenci
+         AND r.cdcooper = j.cdcooper(+) 
+         AND r.nrdconta = j.nrdconta(+) 
+         AND r.nrctremp = j.nrctremp(+) 
+         AND r.dtrefere = j.dtrefere(+) 
+         --> Deve ignorar emprestimos de cessao de credito                 
+         AND NOT EXISTS (SELECT 1
+                           FROM crapebn b
+                          WHERE b.cdcooper = r.cdcooper
+                            AND b.nrdconta = r.nrdconta
+                            AND b.nrctremp = r.nrctremp)
+         AND NOT EXISTS (SELECT 1
+                           FROM tbcrd_cessao_credito ces
+                          WHERE ces.cdcooper = r.cdcooper
+                            AND ces.nrdconta = r.nrdconta
+                            AND ces.nrctremp = r.nrctremp);
+    vr_vljura60_249       GESTAODERISCO.tbrisco_juros_emprestimo.vljura60%TYPE;
     
     CURSOR cr_crapris_lnu(pr_cdcooper IN cecred.crapris.cdcooper%TYPE
                          ,pr_dtrefere IN cecred.crapris.dtrefere%TYPE
@@ -11112,10 +11151,19 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                         ,pr_cdorigem => 3
                                         ,pr_cdmodali => 299
                                         ,pr_tpemprst => 0) LOOP
+      vr_vljura60_249 := 0;
+      OPEN cr_crapris_249_jura60(pr_cdcooper => pr_cdcooper
+                                ,pr_dtultdia => vr_dtrefere
+                                ,pr_cdorigem => 3
+                                ,pr_cdmodali => 299
+                                ,pr_tpemprst => 0
+                                ,pr_cdagenci => rw_crapris_249.cdagenci);
+      FETCH cr_crapris_249_jura60 INTO vr_vljura60_249;
+      CLOSE cr_crapris_249_jura60;
       vr_tab_cratorc(rw_crapris_249.cdagenci).vr_cdagenci := rw_crapris_249.cdagenci;
-      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0);
-      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0);
-    END LOOP;                
+      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+    END LOOP;             
     
     
     vr_flgrvorc := false; 
@@ -11143,10 +11191,19 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                         ,pr_cdorigem => 3
                                         ,pr_cdmodali => 499
                                         ,pr_tpemprst => 0) LOOP
+      vr_vljura60_249 := 0;
+      OPEN cr_crapris_249_jura60(pr_cdcooper => pr_cdcooper
+                                ,pr_dtultdia => vr_dtrefere
+                                ,pr_cdorigem => 3
+                                ,pr_cdmodali => 499
+                                ,pr_tpemprst => 0
+                                ,pr_cdagenci => rw_crapris_249.cdagenci);
+      FETCH cr_crapris_249_jura60 INTO vr_vljura60_249;
+      CLOSE cr_crapris_249_jura60;
       vr_tab_cratorc(rw_crapris_249.cdagenci).vr_cdagenci := rw_crapris_249.cdagenci;
-      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0);
-      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0);
-    END LOOP;   
+      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+    END LOOP;    
                                
     
     vr_flgrvorc := false; 
@@ -11209,10 +11266,19 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                         ,pr_cdorigem => 3
                                         ,pr_cdmodali => 299
                                         ,pr_tpemprst => 1) LOOP
+      vr_vljura60_249 := 0;
+      OPEN cr_crapris_249_jura60(pr_cdcooper => pr_cdcooper
+                                ,pr_dtultdia => vr_dtrefere
+                                ,pr_cdorigem => 3
+                                ,pr_cdmodali => 299
+                                ,pr_tpemprst => 1
+                                ,pr_cdagenci => rw_crapris_249.cdagenci);
+      FETCH cr_crapris_249_jura60 INTO vr_vljura60_249;
+      CLOSE cr_crapris_249_jura60;
       vr_tab_cratorc(rw_crapris_249.cdagenci).vr_cdagenci := rw_crapris_249.cdagenci;
-      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0);
-      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0);
-    END LOOP;   
+      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+    END LOOP;     
     
     vr_flgrvorc := false; 
     vr_flgctpas := false; 
@@ -11239,10 +11305,19 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                         ,pr_cdorigem => 3
                                         ,pr_cdmodali => 499
                                         ,pr_tpemprst => 1) LOOP
+      vr_vljura60_249 := 0;
+      OPEN cr_crapris_249_jura60(pr_cdcooper => pr_cdcooper
+                                ,pr_dtultdia => vr_dtrefere
+                                ,pr_cdorigem => 3
+                                ,pr_cdmodali => 499
+                                ,pr_tpemprst => 1
+                                ,pr_cdagenci => rw_crapris_249.cdagenci);
+      FETCH cr_crapris_249_jura60 INTO vr_vljura60_249;
+      CLOSE cr_crapris_249_jura60;
       vr_tab_cratorc(rw_crapris_249.cdagenci).vr_cdagenci := rw_crapris_249.cdagenci;
-      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0);
-      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0);
-    END LOOP;   
+      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+    END LOOP;    
         
     
     vr_flgrvorc := false; 
@@ -11270,10 +11345,19 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                         ,pr_cdorigem => 3
                                         ,pr_cdmodali => 299
                                         ,pr_tpemprst => 2) LOOP
+      vr_vljura60_249 := 0;
+      OPEN cr_crapris_249_jura60(pr_cdcooper => pr_cdcooper
+                                ,pr_dtultdia => vr_dtrefere
+                                ,pr_cdorigem => 3
+                                ,pr_cdmodali => 299
+                                ,pr_tpemprst => 2
+                                ,pr_cdagenci => rw_crapris_249.cdagenci);
+      FETCH cr_crapris_249_jura60 INTO vr_vljura60_249;
+      CLOSE cr_crapris_249_jura60;
       vr_tab_cratorc(rw_crapris_249.cdagenci).vr_cdagenci := rw_crapris_249.cdagenci;
-      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0);
-      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0);
-    END LOOP;   
+      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+    END LOOP;  
     
     
     vr_flgrvorc := false; 
@@ -11301,10 +11385,19 @@ PROCEDURE pc_calcula_juros_60_tdb(par_cdcooper IN cecred.crapris.cdcooper%TYPE
                                         ,pr_cdorigem => 3
                                         ,pr_cdmodali => 499
                                         ,pr_tpemprst => 2) LOOP
+      vr_vljura60_249 := 0;
+      OPEN cr_crapris_249_jura60(pr_cdcooper => pr_cdcooper
+                                ,pr_dtultdia => vr_dtrefere
+                                ,pr_cdorigem => 3
+                                ,pr_cdmodali => 499
+                                ,pr_tpemprst => 2
+                                ,pr_cdagenci => rw_crapris_249.cdagenci);
+      FETCH cr_crapris_249_jura60 INTO vr_vljura60_249;
+      CLOSE cr_crapris_249_jura60;
       vr_tab_cratorc(rw_crapris_249.cdagenci).vr_cdagenci := rw_crapris_249.cdagenci;
-      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0);
-      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0);
-    END LOOP;   
+      vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto := nvl(vr_tab_cratorc(rw_crapris_249.cdagenci).vr_vllanmto, 0) + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+      vr_vltotorc := vr_vltotorc + nvl(rw_crapris_249.saldo_devedor, 0) + nvl(vr_vljura60_249, 0);
+    END LOOP;  
     
     vr_flgrvorc := false; 
     vr_flgctpas := false; 
