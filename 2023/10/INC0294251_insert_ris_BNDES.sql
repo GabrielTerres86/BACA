@@ -4,7 +4,7 @@ DECLARE
   vr_dtrefere_ant cecred.crapdat.dtmvtolt%TYPE := to_date('28/09/2023', 'DD/MM/RRRR');
   
   pr_cdcooper NUMBER := 14;
-  vr_nrdconta NUMBER := 99969513;--30422;
+  vr_nrdconta NUMBER := 30422;
   vr_nrctremp NUMBER := 25750;
   vr_vlarrasto NUMBER := 130;
 
@@ -14,7 +14,6 @@ DECLARE
   vr_des_erro   VARCHAR2(4000);
   vr_cdprograma VARCHAR2(25) := 'atualiza_crapris_BNDES';
   
-  -- VARIAVEIS INDIVIDUALIZADAS PARA O RISCO
   vr_inrisco_inclusao tbrisco_central_ocr.inrisco_inclusao%TYPE;
   vr_inrisco_rating   tbrisco_central_ocr.inrisco_rating%TYPE;
   vr_inrisco_atraso   tbrisco_central_ocr.inrisco_atraso%TYPE;
@@ -43,7 +42,6 @@ DECLARE
        INDEX BY PLS_INTEGER;
   vr_tab_ddavence typ_tab_ddparcel;
   
-  -- Busca dos dados do ultimo risco Doctos 3020/3030
   CURSOR cr_crapris_arrasto_last(pr_cdcooper crapris.cdcooper%TYPE
                                 ,pr_nrdconta NUMBER
                                 ,pr_nrctremp NUMBER
@@ -66,10 +64,10 @@ DECLARE
        AND r.nrdconta = pr_nrdconta
        AND r.nrctremp = pr_nrctremp
        AND r.cdmodali = pr_cdmodali
-       AND r.inddocto = 1 -- 3020 e 3030
-     ORDER BY r.dtrefere DESC --> Retornar o ultimo gravado
-            , r.innivris DESC --> Retornar o ultimo gravado
-            , r.dtdrisco DESC;--> Retornar o ultimo gravado
+       AND r.inddocto = 1 
+     ORDER BY r.dtrefere DESC 
+            , r.innivris DESC 
+            , r.dtdrisco DESC;
             
   rw_crapris_arrasto_last cr_crapris_arrasto_last%ROWTYPE;
   
@@ -151,8 +149,7 @@ DECLARE
        AND ebn.nrdconta = pr_nrdconta
        AND ebn.nrctremp = pr_nrctremp
        AND ebn.cdcooper = ass.cdcooper
-       AND ebn.nrdconta = ass.nrdconta
-       -- Somente (N)ormal, (A)trasado e (P)rejuizo
+       AND ebn.nrdconta = ass.nrdconta       
        AND ebn.insitctr IN('N','A','P');
   rw_contratos_bndes cr_contratos_bndes%ROWTYPE;
   
@@ -254,7 +251,7 @@ DECLARE
                               ) IS
 
     vr_dttrfprj DATE := NULL;
-    -- Definicao de tipo de registro e tabela para manter os riscos para posteriormente gravar
+    
     TYPE typ_tab_crapris IS TABLE OF crapris%ROWTYPE INDEX BY PLS_INTEGER;
     vr_tab_crapris typ_tab_crapris;
 
@@ -371,17 +368,15 @@ DECLARE
                   vlprxpar,
                   qtparcel,
                   dtvencop,
-                  vlmrapar60, -- PRJ298.3
-                  vljuremu60, -- PRJ298.3
-                  vljurcor60, -- PRJ298.3
-                  -- Início -- PRJ577 -- Item 24073
+                  vlmrapar60, 
+                  vljuremu60, 
+                  vljurcor60, 
                   vljurantpp,
                   vljurparpp,
                   vljurmorpp,
                   vljurmulpp,
                   vljuriofpp,
                   vljurcorpp,
-                  -- Fim -- PRJ577 -- Item 24073
                   inespecie,
                   qtdiaatr_ori,
                   nracordo,
@@ -429,17 +424,17 @@ DECLARE
                   vr_tab_crapris(idx).vlprxpar,
                   vr_tab_crapris(idx).qtparcel,
                   vr_tab_crapris(idx).dtvencop,
-                  vr_tab_crapris(idx).vlmrapar60, -- PRJ298.3
-                  vr_tab_crapris(idx).vljuremu60, -- PRJ298.3
-                  vr_tab_crapris(idx).vljurcor60, -- PRJ298.3
-                  -- Início -- PRJ577 -- Item 24073
+                  vr_tab_crapris(idx).vlmrapar60, 
+                  vr_tab_crapris(idx).vljuremu60, 
+                  vr_tab_crapris(idx).vljurcor60, 
+
                   vr_tab_crapris(idx).vljurantpp,
                   vr_tab_crapris(idx).vljurparpp,
                   vr_tab_crapris(idx).vljurmorpp,
                   vr_tab_crapris(idx).vljurmulpp,
                   vr_tab_crapris(idx).vljuriofpp,
                   vr_tab_crapris(idx).vljurcorpp,
-                  -- Fim -- PRJ577 -- Item 24073
+
                   vr_tab_crapris(idx).inespecie,
                   vr_tab_crapris(idx).qtdiaatr_ori,
                   vr_tab_crapris(idx).nracordo,
@@ -452,7 +447,7 @@ DECLARE
     
   EXCEPTION
     WHEN OTHERS THEN
-      pr_des_erro := 'pc_grava_crapris --> Erro ao incluir na crapris.'|| sqlerrm;
+      pr_des_erro := 'pc_grava_crapris -> Erro ao incluir na crapris.'|| sqlerrm;
   END pc_grava_crapris;
 
   
@@ -500,13 +495,9 @@ BEGIN
       vr_inrisco_final    := NULL;
       vr_inrisco_rating   := 2;
 
-      -- Para os atrasados ou em prejuízo
       IF rw_contratos_bndes.insitctr IN ('A','P') THEN
-        -- Contar os dias do atraso
         vr_qtdiaatr := to_char(vr_dtrefere - rw_contratos_bndes.dtppvenc);
-        -- Definir nivel do risco conforme faixas de vencimento
         IF rw_contratos_bndes.vlprac48 <> 0 OR rw_contratos_bndes.vlprej48 <> 0 OR rw_contratos_bndes.vlprej12 <> 0  THEN
-          -- Prejuizo
           vr_inrisco_atraso := 10;
         ELSIF rw_contratos_bndes.vlvac540 <> 0 OR rw_contratos_bndes.vlven540 <> 0
            OR rw_contratos_bndes.vlven360 <> 0 OR rw_contratos_bndes.vlven300 <> 0 OR rw_contratos_bndes.vlven240 <> 0 THEN
@@ -529,47 +520,28 @@ BEGIN
           vr_inrisco_atraso := 1;
         END IF;
       ELSE
-        -- Qualquer outra situação não há atraso
         vr_qtdiaatr := 0;
-        vr_inrisco_atraso := 2; -- 'A'
+        vr_inrisco_atraso := 2;
       END IF;
 
       vr_qtdias_atr   := vr_qtdiaatr;
       vr_qtdiaatr_ori := vr_qtdiaatr;
 
-      ----------------------- RISCO INCLUSAO---------------------
-      -- Obs.: Risco INC ainda não implementado para BNDES
-      -- Está em Melhoria futura P450
-      vr_inrisco_inclusao := 2;
-      ----------------------- RISCO INCLUSAO---------------------
-
-      ----------------------- RISCO RATING ---------------------
-      -- P450 SPT16 - Rating por Operação
       
-      -- P450 SPT16 - Rating por Operação
-      ----------------------- RISCO RATING ---------------------
-
-      ----------------------- RISCO FINAL ---------------------
+      vr_inrisco_inclusao := 2;
+      
       vr_inrisco_final := greatest(NVL(vr_inrisco_inclusao,2)
                                   ,NVL(vr_inrisco_atraso  ,2)
                                   ,NVL(vr_inrisco_rating  ,2));
-      ----------------------- RISCO FINAL ---------------------
-
-      ------ NOVA REGRA RISCO AA -----
-      -- Sempre que Risco INC e RAT forem AA e
-      -- diasAtraso for 0, Risco Final deve ser AA
-      -- Independente dos demais riscos,
-      -- conforme estoria P450 - 26307 - Regra Risco AA - Rating
-      IF  vr_inrisco_rating   = 1 -- Risco AA
-      AND vr_inrisco_inclusao = 1 -- Risco AA
-      AND vr_inrisco_final    = 2 -- Se o Risco Final fechou em A
+      
+      IF  vr_inrisco_rating   = 1
+      AND vr_inrisco_inclusao = 1
+      AND vr_inrisco_final    = 2
       AND vr_qtdias_atr       = 0 THEN
-        -- Sem Atraso
-        vr_inrisco_final := 1; -- RISCO AA
-      END IF;
-      --------------------------------
 
-      -- Divida menor que o valor do parametro do arrasto (Materialidade)
+        vr_inrisco_final := 1;
+      END IF;
+      
       vr_flarrasto := 1;
       vr_dtdrisco  := NULL;
       IF vr_vlarrasto > rw_contratos_bndes.vlsdeved THEN
