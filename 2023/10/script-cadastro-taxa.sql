@@ -29,13 +29,6 @@ BEGIN
                        WHERE cop.flgativo = 1
                          AND cop.cdcooper <> 3) ;                         
                          
-  DELETE craptrd 
-   WHERE tptaxrda = 7
-     AND dtiniper = TRUNC(SYSDATE)
-     AND cdcooper in (SELECT cop.cdcooper 
-                        FROM crapcop cop
-                       WHERE cop.flgativo = 1
-                         AND cop.cdcooper <> 3) ;  
                          
   DELETE crapftx 
    WHERE tptaxrdc = 7
