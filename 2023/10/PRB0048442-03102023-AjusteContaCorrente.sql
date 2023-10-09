@@ -8,7 +8,11 @@ declare
   vr_dtmvtolt    CECRED.crapdat.dtmvtolt%type;
 Begin
   
-  delete from CECRED.tbcc_lancamentos_pendentes t where t.nrdconta = 15974189 and t.cdcooper = 16 and t.dtmvtolt = '03/10/2023';
+  delete from CECRED.tbcc_lancamentos_pendentes t
+   where t.nrdconta = 15974189
+     and t.cdcooper = 16
+     and t.dtmvtolt = '03/10/2023'
+     and t.nrdcmto = 2003;
 
   select t.dtmvtolt into vr_dtmvtolt from CECRED.crapdat t where t.cdcooper = 16;
   
