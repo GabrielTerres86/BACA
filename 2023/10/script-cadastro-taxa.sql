@@ -35,7 +35,14 @@ BEGIN
      AND cdcooper in (SELECT cop.cdcooper 
                         FROM crapcop cop
                        WHERE cop.flgativo = 1
-                         AND cop.cdcooper <> 3) ;                         
+                         AND cop.cdcooper <> 3) ;  
+                         
+  DELETE crapftx 
+   WHERE tptaxrdc = 7
+     AND cdcooper in (SELECT cop.cdcooper 
+                        FROM crapcop cop
+                       WHERE cop.flgativo = 1
+                         AND cop.cdcooper <> 3) ;                                                
 
   insert into crapttx (CDCOOPER, TPTAXRDC, CDPERAPL, QTDIAINI, QTDIAFIM, QTDIACAR)
                values (1, 7, 1, 30, 30, 0);
