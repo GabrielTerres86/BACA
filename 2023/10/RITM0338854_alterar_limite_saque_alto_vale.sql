@@ -1,0 +1,14 @@
+BEGIN
+  UPDATE cecred.craptab tab
+     SET tab.DSTEXTAB = '1000,00'
+   WHERE tab.CDCOOPER = 16
+     AND UPPER(tab.NMSISTEM) = 'CRED'
+     AND UPPER(tab.TPTABELA) = 'GENERI'
+     AND tab.CDEMPRES = 0
+     AND UPPER(tab.CDACESSO) = 'SAQMAXCASH';
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_application_error(-20500, SQLERRM);
+    ROLLBACK;
+END;
