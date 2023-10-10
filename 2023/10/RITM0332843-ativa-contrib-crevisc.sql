@@ -5,7 +5,7 @@ BEGIN
      AND p.cdcooper = 12;
      
   INSERT INTO cecred.crapprm (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
-  VALUES ('CRED', 12, 'DIA_ATIVA_CONTRB_SEGPRE', 'Dia da ativação das linhas de credito contributario', '23/10/2023');
+  VALUES ('CRED', 12, 'DIA_ATIVA_CONTRB_SEGPRE', 'Dia da ativação das linhas de credito contributario', '13/11/2023');
 
   UPDATE cecred.craplcr l    
 	 SET l.tpcuspr = 0
