@@ -1,5 +1,5 @@
 begin
-INSERT INTO crapprm(
+INSERT INTO cecred.crapprm(
   nmsistem,
   cdcooper,
   cdacesso,
