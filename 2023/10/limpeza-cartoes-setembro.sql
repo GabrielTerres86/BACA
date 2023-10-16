@@ -2,7 +2,8 @@ DECLARE
   CURSOR cr_coop IS
     SELECT cdcooper
       FROM crapcop
-     WHERE flgativo = 1;
+     WHERE flgativo = 1
+     order by cdcooper desc;
   rw_coop cr_coop%ROWTYPE;
 BEGIN
   
