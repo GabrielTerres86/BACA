@@ -1,7 +1,7 @@
 DECLARE
 
-  vr_dtrefere         DATE := to_date('01/09/2023', 'DD/MM/RRRR');
-  vr_dtrefere_ris     DATE := to_date('31/08/2023', 'DD/MM/RRRR');
+  vr_dtrefere         DATE := to_date('02/10/2023', 'DD/MM/RRRR');
+  vr_dtrefere_ris     DATE := to_date('30/09/2023', 'DD/MM/RRRR');
   
   CURSOR cr_crapcop IS
     SELECT cdcooper
