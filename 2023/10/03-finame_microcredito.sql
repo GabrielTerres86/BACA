@@ -3,14 +3,6 @@ DECLARE
   vr_dtrefere         DATE := to_date('02/10/2023', 'DD/MM/RRRR');
   vr_dtrefere_ris     DATE := to_date('30/09/2023', 'DD/MM/RRRR');
   
-  CURSOR cr_crapcop IS
-    SELECT cdcooper
-      FROM cecred.crapcop a
-     WHERE a.flgativo = 1
-       AND a.cdcooper IN (1,2,3,5,6,7,8,9,10,11,12,13,14,16)
-     ORDER BY a.cdcooper DESC;
-  rw_crapcop cr_crapcop%ROWTYPE;
-  
   vc_cdacesso CONSTANT VARCHAR2(24) := 'DIR_ARQ_CONTAB_X';
   vc_cdtodascooperativas INTEGER := 0;
 
@@ -59,20 +51,8 @@ DECLARE
   rw_crapdat datascooperativa;
   
     PROCEDURE gerarRelatorioAjusteFiname(pr_cdcooper  IN cecred.crapcop.cdcooper%TYPE
-                                      ,pr_dtrefere  IN cecred.crapdat.dtmvtolt%TYPE -- data da central que será gerado o arquivo
+                                      ,pr_dtrefere  IN cecred.crapdat.dtmvtolt%TYPE 
                                       ,pr_dscritic OUT cecred.crapcri.dscritic%TYPE) IS
-  /* ............................................................................
-
-     Autor      : Darlei Zillmer
-     Data       : 14/08/2023
-     Dominio    : Gestão de Risco
-     Subdominio : Central de risco
-     Objetivo   : Gerar relatorio de ajuste de finame, retirado da crps280_i
-     Alteracoes :
-
-    ............................................................................ */
-
-    ---> Variaveis <---
     vr_cdprograma VARCHAR2(100) := 'gerarRelatorioAjusteFiname';
     vr_dscomple   VARCHAR2(2000);
 
@@ -90,37 +70,28 @@ DECLARE
     vr_tot_libctnfiname NUMBER := 0;
     vr_tot_prvperdafiname NUMBER := 0;
 
-    vr_percentu         NUMBER(5,2); --> Percentual auxiliar
-    vr_vlpercen         NUMBER;      --> Valor auxiliar para calcular o atraso
-    vr_vlpreatr         NUMBER;      --> Valor perstação em atraso
-    vr_dsnivris         VARCHAR2(2); --> Nivel do risco atual
-    vr_contador         INTEGER;     -- Contador para a tabela de riscos
+    vr_percentu         NUMBER(5,2); 
+    vr_vlpercen         NUMBER;      
+    vr_vlpreatr         NUMBER;      
+    vr_dsnivris         VARCHAR2(2); 
+    vr_contador         INTEGER;     
 
     vr_destino          NUMBER;
     vr_origem           NUMBER;
 
-    -- Definição de registro para totalização por nível de risco de FINAME
-    TYPE typ_reg_finame_nivris IS RECORD(vlslddev NUMBER);  -- Valor acumulado saldo devedor
+    TYPE typ_reg_finame_nivris IS RECORD(vlslddev NUMBER); 
 
-    -- Definicao do tipo de tabela totalização por nível de risco de FINAME
     TYPE typ_tab_finame_nivris IS TABLE OF typ_reg_finame_nivris INDEX BY cecred.crawepr.dsnivris%type;
 
-    -- Vetor para armazenar a totalização por nível de risco de FINAME
     vr_tab_finame_nivris typ_tab_finame_nivris;
 
-    -- Definição do tipo de registro para englobar descrições e percentuais dos riscos A, B, C, etc...
-    -- Obs: Na versao antiga do programa, cada campo era um vetor, na nova, todos os campos
-    --      ficam presentes num unico registro da tabela vr_tab_risco
     TYPE typ_reg_risco IS
-       RECORD(dsdrisco VARCHAR2(2)   -- "x(02)"
-             ,percentu NUMBER(5,2)); -- "zz9.99"
+       RECORD(dsdrisco VARCHAR2(2)   
+             ,percentu NUMBER(5,2)); 
 
-    -- Definicao do tipo de tabela de riscos
     TYPE typ_tab_risco IS TABLE OF typ_reg_risco INDEX BY PLS_INTEGER;
-    -- Vetor para armazenar os dados de riscos
     vr_tab_risco typ_tab_risco;
 
-    ---> Cursores <---
     rw_crapdat datascooperativa := datascooperativa(pr_cdcooper);
 
     CURSOR cr_finame(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
@@ -151,12 +122,11 @@ DECLARE
          AND r.cdcooper = pr_cdcooper
          AND r.dtrefere = pr_dtrefere
          AND r.cdmodali = 201
-         AND l.tpctrlim = 1  --> Cheque especial
-         AND l.insitlim = 2  --> Ativo
+         AND l.tpctrlim = 1  
+         AND l.insitlim = 2  
          AND l.cddlinha = 2;
     rw_finame cr_finame%ROWTYPE;
 
-    -- Cursor genérico de parametrização --
     CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE
                      ,pr_nmsistem IN craptab.nmsistem%TYPE
                      ,pr_tptabela IN craptab.tptabela%TYPE
@@ -175,27 +145,25 @@ DECLARE
        ORDER BY tab.progress_recid;
     rw_craptab cr_craptab%ROWTYPE;
 
-    -- Retorna linha cabeçalho arquivo Radar ou Matera
     FUNCTION fn_set_cabecalho(pr_inilinha IN VARCHAR2
                              ,pr_dtarqmv  IN DATE
                              ,pr_dtarqui  IN DATE
-                             ,pr_origem   IN NUMBER      --> Conta Origem
-                             ,pr_destino  IN NUMBER      --> Conta Destino
-                             ,pr_vltotal  IN NUMBER      --> Soma total de todas as agencias
-                             ,pr_dsconta  IN VARCHAR2)   --> Descricao da conta
+                             ,pr_origem   IN NUMBER    
+                             ,pr_destino  IN NUMBER    
+                             ,pr_vltotal  IN NUMBER    
+                             ,pr_dsconta  IN VARCHAR2) 
      RETURN VARCHAR2 IS
     BEGIN
-      RETURN pr_inilinha --> Identificacao inicial da linha
-              ||TO_CHAR(pr_dtarqmv,'YYMMDD')||',' --> Data AAMMDD do Arquivo
-              ||TO_CHAR(pr_dtarqui,'DDMMYY')||',' --> Data DDMMAA
-              ||pr_origem||','                    --> Conta Origem
-              ||pr_destino||','                   --> Conta Destino
+      RETURN pr_inilinha 
+              ||TO_CHAR(pr_dtarqmv,'YYMMDD')||',' 
+              ||TO_CHAR(pr_dtarqui,'DDMMYY')||',' 
+              ||pr_origem||','                    
+              ||pr_destino||','                   
               ||TRIM(TO_CHAR(pr_vltotal,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','
               ||'5210'||','
               ||pr_dsconta;
     END fn_set_cabecalho;
 
-    -- Retorna linha gerencial arquivo Radar ou Matera
     FUNCTION fn_set_gerencial(pr_cdagenci in number
                              ,pr_vlagenci in number)
     RETURN VARCHAR2 IS
@@ -204,55 +172,48 @@ DECLARE
     END fn_set_gerencial;
   BEGIN
 
-    -- Nome do arquivo a ser gerado
     vr_nmarqfin := to_char(pr_dtrefere, 'yymmdd')||'_'||lpad(pr_cdcooper,2,0)||'_AJUSTE_FINAME_NOVA_CENTRAL.txt';
 
-    vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+    vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                              ,pr_cdcooper => pr_cdcooper
                                              ,pr_nmsubdir => 'contab');
-    -- Busca do diretório onde o Radar ou Matera pegará o arquivo
     vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                  ,pr_cdcooper => 0
                                                  ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
-    -- Tenta abrir o arquivo de log em modo gravacao
-    cecred.gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     --> Diretório do arquivo
-                            ,pr_nmarquiv => vr_nmarqfin          --> Nome do arquivo
-                            ,pr_tipabert => 'W'                  --> Modo de abertura (R,W,A)
-                            ,pr_utlfileh => vr_input_file        --> Handle do arquivo aberto
-                            ,pr_des_erro => vr_dscritic);        --> Erro
+
+    cecred.gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     
+                            ,pr_nmarquiv => vr_nmarqfin         
+                            ,pr_tipabert => 'W'                 
+                            ,pr_utlfileh => vr_input_file       
+                            ,pr_des_erro => vr_dscritic);       
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
-    -- Leitura das descricoes de risco A,B,C etc e percentuais
     FOR rw_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
                                 ,pr_nmsistem => 'CRED'
                                 ,pr_tptabela => 'GENERI'
                                 ,pr_cdempres => 00
                                 ,pr_cdacesso => 'PROVISAOCL'
                                 ,pr_tpregist => 0) LOOP
-      -- Para cada registro, buscar o contador atual na posição 12
       vr_contador := SUBSTR(rw_craptab.dstextab,12,2);
-      -- Adicionar na tabela as informações de descrição e percentuais
       vr_tab_risco(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
       vr_tab_risco(vr_contador).percentu := SUBSTR(rw_craptab.dstextab,1,6);
     END LOOP;
 
-    -- Alimentar variavel para nao ser preciso criar registro na PROVISAOCL
     vr_tab_risco(10).dsdrisco := 'HH';
     vr_tab_risco(10).percentu := 0;
 
     FOR rw_finame IN cr_finame(pr_cdcooper => pr_cdcooper
                               ,pr_dtrefere => pr_dtrefere
                               ,pr_dtmvtolt => pr_dtrefere) LOOP
-      -- Guardar percentual
+
       vr_percentu := vr_tab_risco(rw_finame.innivris).percentu;
-      -- Calcular o percentual para o atraso com base nos percentuais da tabela
+
       vr_vlpercen := vr_percentu / 100;
 
-      -- Calcular o valor de prestação em atraso
       vr_vlpreatr := ROUND( (rw_finame.vltotdiv - rw_finame.vljura60
-                                                - nvl(rw_finame.vljurantpp, 0) -- PRJ577 -- O cálculo da provisão deve considerar o Valor do Juros+60 Anterior
+                                                - nvl(rw_finame.vljurantpp, 0) 
                             ) * vr_vlpercen ,2);
 
       GESTAODERISCO.calcularProvisaoRiscoAtual(pr_cdcooper => pr_cdcooper,
@@ -269,7 +230,7 @@ DECLARE
       vr_tot_prvperdafiname := vr_tot_prvperdafiname + vr_vlpreatr;
 
       vr_dsnivris := vr_tab_risco(rw_finame.innivris).dsdrisco;
-      --Agupar valores microcrédito das filiadas por nível de risco
+
       IF vr_tab_finame_nivris.exists(vr_dsnivris) THEN
         vr_tab_finame_nivris(vr_dsnivris).vlslddev := vr_tab_finame_nivris(vr_dsnivris).vlslddev + rw_finame.vltotdiv;
       ELSE
@@ -278,7 +239,6 @@ DECLARE
 
     END LOOP;
 
-    -- Valor liberação contrato finame
     IF vr_tot_libctnfiname > 0 THEN
       vr_setlinha := fn_set_cabecalho('20'
                                      ,pr_dtrefere
@@ -288,19 +248,18 @@ DECLARE
                                      ,vr_tot_libctnfiname
                                      ,'"AJUSTE CONTABIL REF. LIBERACAO DE RECURSO BNDES - FINAME"');
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',vr_tot_libctnfiname);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
     END IF;
 
-    -- Valor provisão de perda contrato finame
     IF vr_tot_prvperdafiname > 0 THEN
-      -- Linhas de provisão
+
       vr_setlinha := fn_set_cabecalho('20'
                                      ,pr_dtrefere
                                      ,pr_dtrefere
@@ -309,15 +268,14 @@ DECLARE
                                      ,vr_tot_prvperdafiname
                                      ,'"AJUSTE CONTABIL – PROVISAO BNDES FINAME"');
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',vr_tot_prvperdafiname);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
-      --Linhas de reversão
       vr_setlinha := fn_set_cabecalho('20'
                                      ,vr_dtmvtopr
                                      ,vr_dtmvtopr
@@ -326,50 +284,48 @@ DECLARE
                                      ,vr_tot_prvperdafiname
                                      ,'"REVERSAO AJUSTE CONTABIL – PROVISAO BNDES FINAME"');
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',vr_tot_prvperdafiname);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
     END IF;
 
-    --
     vr_chave_nivris := vr_tab_finame_nivris.first;
     LOOP
       EXIT WHEN vr_chave_nivris IS NULL;
-      --Gera no arquivo linhas referente a valor de liberação de contrato
+
       IF vr_tab_finame_nivris(vr_chave_nivris).vlslddev > 0 THEN
 
         IF vr_chave_nivris IN ('A','AA') THEN
-          vr_destino := 3321;  --provisão
-          vr_origem  := 3321;  --reversão
+          vr_destino := 3321;  
+          vr_origem  := 3321;  
         ELSIF vr_chave_nivris = 'B' THEN
-          vr_destino := 3332; --provisão
-          vr_origem  := 3332; --reversão
+          vr_destino := 3332; 
+          vr_origem  := 3332; 
         ELSIF vr_chave_nivris = 'C' THEN
-          vr_destino := 3342; --provisão
-          vr_origem  := 3342; --reversão
+          vr_destino := 3342; 
+          vr_origem  := 3342; 
         ELSIF vr_chave_nivris = 'D' THEN
-          vr_destino := 3352; --provisão
-          vr_origem  := 3352; --reversão
+          vr_destino := 3352; 
+          vr_origem  := 3352; 
         ELSIF vr_chave_nivris = 'E' THEN
-          vr_destino := 3362; --provisão
-          vr_origem  := 3362; --reversão
+          vr_destino := 3362; 
+          vr_origem  := 3362; 
         ELSIF vr_chave_nivris = 'F' THEN
-          vr_destino := 3372; --provisão
-          vr_origem  := 3372; --reversão
+          vr_destino := 3372; 
+          vr_origem  := 3372; 
         ELSIF vr_chave_nivris = 'G' THEN
-          vr_destino := 3382; --provisão
-          vr_origem  := 3382; --reversão
+          vr_destino := 3382; 
+          vr_origem  := 3382; 
         ELSIF vr_chave_nivris IN ('H','HH') THEN
-          vr_destino := 3392; --provisão
-          vr_origem  := 3392; --reversão
+          vr_destino := 3392; 
+          vr_origem  := 3392; 
         END IF;
 
-        -- Gerar linhas de PROVISÃO
         vr_setlinha := fn_set_cabecalho('20'
                                        ,pr_dtrefere
                                        ,pr_dtrefere
@@ -378,10 +334,10 @@ DECLARE
                                        ,vr_tab_finame_nivris(vr_chave_nivris).vlslddev
                                        ,'"CLASSIFICACAO DE RISCO DE REPASSES BNDES FINAME DEVIDO AJUSTES DO DOCUMENTO 4010 ENVIANDO AO BACEN"');
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
-        -- Gerar linhas de REVERSÃO
+        
         vr_setlinha := fn_set_cabecalho('20'
                                        ,pr_dtrefere
                                        ,vr_dtmvtopr
@@ -390,30 +346,30 @@ DECLARE
                                        ,vr_tab_finame_nivris(vr_chave_nivris).vlslddev
                                        ,'"REVERSAO DE AJUSTE DE CLASSIFICACAO DE RISCO DE REPASSES BNDES FINAME DEVIDO AJUSTES DO DOCUMENTO 4010 ENVIANDO AO BACEN"');
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
       END IF;
 
       vr_chave_nivris := vr_tab_finame_nivris.next(vr_chave_nivris);
     END LOOP;
 
-    -- Fechar Arquivo
+    
     BEGIN
-      cecred.gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); --> Handle do arquivo aberto;
+      cecred.gene0001.pc_fecha_arquivo(pr_utlfileh => vr_input_file); 
     EXCEPTION
       WHEN OTHERS THEN
         cecred.pc_internal_exception;
-        -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
+        
           vr_dscritic := 'Problema ao fechar o arquivo <'||vr_nom_diretorio||'/'||vr_nmarqfin||'>: ' || SQLERRM;
         RAISE vr_exc_erro;
     END;
 
-    -- Copia o arquivo gerado para o diretório final convertendo para DOS
+    
     cecred.gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqfin||' > '||vr_nom_dir_copia||'/'||vr_nmarqfin||' 2>/dev/null'
                                ,pr_typ_saida   => vr_typ_said
                                ,pr_des_saida   => vr_dscritic);
-    -- Testar erro
+    
     IF vr_typ_said = 'ERR' THEN
       vr_dscritic := 'Erro ao copiar o arquivo '||vr_nmarqfin||': '||vr_dscritic;
       RAISE vr_exc_erro;
@@ -424,12 +380,12 @@ DECLARE
   EXCEPTION
     WHEN vr_exc_erro THEN
 
-      -- Se foi retornado apenas codigo
+      
       IF nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
-        -- Buscar a descricao
+        
         vr_dscritic := obterCritica(vr_cdcritic);
       END IF;
-      -- Devolvemos codigo e critica encontradas
+      
       pr_dscritic := vr_dscritic ||': '||vr_dscomple;
 
       sistema.excecaoInterna(pr_cdcooper => pr_cdcooper
@@ -443,7 +399,7 @@ DECLARE
                             ,pr_compleme => vr_dscomple || pr_dscritic);
 
       sistema.Gravarlogprograma(pr_cdcooper      => pr_cdcooper
-                               ,pr_ind_tipo_log  => 3 --Erro
+                               ,pr_ind_tipo_log  => 3 
                                ,pr_des_log       => pr_dscritic
                                ,pr_cdprograma    => vr_cdprograma
                                ,pr_tpexecucao    => 1);
@@ -451,20 +407,9 @@ DECLARE
   END gerarRelatorioAjusteFiname;
 
   PROCEDURE gerarRelatorioAjusteMicrocredito(pr_cdcooper  IN cecred.crapcop.cdcooper%TYPE
-                                            ,pr_dtrefere  IN cecred.crapdat.dtmvtolt%TYPE -- data da central que será gerado o arquivo
+                                            ,pr_dtrefere  IN cecred.crapdat.dtmvtolt%TYPE 
                                             ,pr_dscritic OUT cecred.crapcri.dscritic%TYPE) IS
-  /* ............................................................................
 
-     Autor      : Darlei Zillmer
-     Data       : 10/08/2023
-     Dominio    : Gestão de Risco
-     Subdominio : Central de risco
-     Objetivo   : Gerar relatorio de ajuste de microcredito, retirado da crps280_i
-     Alteracoes :
-
-    ............................................................................ */
-
-    ---> Variaveis <---
     vr_cdprograma VARCHAR2(100) := 'gerarRelatorioAjusteMicrocredito';
     vr_dscomple   VARCHAR2(2000);
 
@@ -477,66 +422,63 @@ DECLARE
     vr_nom_dir_copia    VARCHAR2(200);
     vr_chave_finalidade VARCHAR2(50);
     vr_chave_nivris     VARCHAR2(10);
-    vr_input_file       UTL_FILE.file_type;             --> Handle Utl File
-    vr_setlinha         VARCHAR2(400);                  --> Linhas do arquivo
+    vr_input_file       UTL_FILE.file_type;             
+    vr_setlinha         VARCHAR2(400);                  
     vr_typ_said         VARCHAR2(4);
-    vr_contador         INTEGER;     -- Contador para a tabela de riscos
-    --
+    vr_contador         INTEGER;     
+    
     vr_destino          NUMBER;
     vr_origem           NUMBER;
     vr_descricao        VARCHAR2(400);
-    --
-    vr_percentu         NUMBER(5,2); --> Percentual auxiliar
-    vr_vlpercen         NUMBER;      --> Valor auxiliar para calcular o atraso
-    vr_vlpreatr         NUMBER;      --> Valor perstação em atraso
-    vr_dsnivris         VARCHAR2(2); --> Nivel do risco atual
-    v_pese_vldivida     NUMBER := 0;   -- Valor acumulado saldo devedor
-    v_pese_vlaprrec     NUMBER := 0;   -- Valor acumulado apropriação de receitas
-    v_pese_vlprvper     NUMBER := 0;   -- Valor acumulado provisão de perdas
+    
+    vr_percentu         NUMBER(5,2); 
+    vr_vlpercen         NUMBER;      
+    vr_vlpreatr         NUMBER;      
+    vr_dsnivris         VARCHAR2(2); 
+    v_pese_vldivida     NUMBER := 0; 
+    v_pese_vlaprrec     NUMBER := 0; 
+    v_pese_vlprvper     NUMBER := 0; 
 
-    TYPE typ_reg_pese_nivris IS RECORD(vlslddev NUMBER);  -- Valor acumulado saldo devedor
+    TYPE typ_reg_pese_nivris IS RECORD(vlslddev NUMBER);  
 
-    -- Definicao do tipo de tabela totalização por nível de risco de microcrédito
+    
     TYPE typ_tab_pese_nivris IS TABLE OF typ_reg_pese_nivris INDEX BY cecred.crawepr.dsnivris%type;
-    -- Vetor para armazenar a totalização por nível de risco de microcrédito
+    
     vr_tab_pese_nivris typ_tab_pese_nivris;
 
-    -- Definição de registro para totalização por finalidade de microcrédito
+    
     TYPE typ_reg_miccred_fin IS
-      RECORD(vllibctr    NUMBER   -- Valor acumulado liberação de contratos
-            ,vlaprrec    NUMBER   -- Valor acumulado apropriação de receitas
-            ,vlprvper    NUMBER   -- Valor acumulado provisão de perdas
-            ,vldebpar91  NUMBER   -- Valor acumulado débito de parcelas historico 91
-            ,vldebpar95  NUMBER   -- Valor acumulado débito de parcelas historico 95
-            ,vldebpar441 NUMBER); -- Valor acumulado débito de parcelas historico 441
+      RECORD(vllibctr    NUMBER  
+            ,vlaprrec    NUMBER  
+            ,vlprvper    NUMBER  
+            ,vldebpar91  NUMBER  
+            ,vldebpar95  NUMBER  
+            ,vldebpar441 NUMBER);
 
-    -- Definicao do tipo de tabela totalização por finalidade de microcrédito
+    
     TYPE typ_tab_miccred_fin IS TABLE OF typ_reg_miccred_fin INDEX BY VARCHAR2(5);
-    -- Vetor para armazenar a totalização por finalidade de microcrédito
+    
     vr_tab_miccred_fin typ_tab_miccred_fin;
 
-    -- Definição de registro para totalização por nível de risco de microcrédito
+    
     TYPE typ_reg_miccred_nivris IS
-      RECORD(vlslddev NUMBER);  -- Valor acumulado saldo devedor
+      RECORD(vlslddev NUMBER);  
 
-    -- Definicao do tipo de tabela totalização por nível de risco de microcrédito
+    
     TYPE typ_tab_miccred_nivris IS TABLE OF typ_reg_miccred_nivris INDEX BY cecred.crawepr.dsnivris%type;
-    -- Vetor para armazenar a totalização por nível de risco de microcrédito
+    
     vr_tab_miccred_nivris typ_tab_miccred_nivris;
 
-    -- Definição do tipo de registro para englobar descrições e percentuais dos riscos A, B, C, etc...
-    -- Obs: Na versao antiga do programa, cada campo era um vetor, na nova, todos os campos
-    --      ficam presentes num unico registro da tabela vr_tab_risco
     TYPE typ_reg_risco IS
-       RECORD(dsdrisco VARCHAR2(2)   -- "x(02)"
-             ,percentu NUMBER(5,2)); -- "zz9.99"
+       RECORD(dsdrisco VARCHAR2(2)   
+             ,percentu NUMBER(5,2)); 
 
-    -- Definicao do tipo de tabela de riscos
+    
     TYPE typ_tab_risco IS TABLE OF typ_reg_risco INDEX BY PLS_INTEGER;
-    -- Vetor para armazenar os dados de riscos
+    
     vr_tab_risco typ_tab_risco;
 
-    ---> Cursores <---
+    
     rw_crapdat datascooperativa := datascooperativa(pr_cdcooper);
 
     CURSOR cr_ajuste(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
@@ -584,7 +526,7 @@ DECLARE
            AND e.inprejuz = 0;
     rw_ajuste cr_ajuste%ROWTYPE;
 
-    -- Cursor genérico de parametrização --
+    
     CURSOR cr_craptab(pr_cdcooper IN cecred.craptab.cdcooper%TYPE
                      ,pr_nmsistem IN cecred.craptab.nmsistem%TYPE
                      ,pr_tptabela IN cecred.craptab.tptabela%TYPE
@@ -614,7 +556,7 @@ DECLARE
          AND lem.nrdconta = pr_nrdconta
          AND lem.nrctremp = pr_nrctremp
          AND lem.dtmvtolt BETWEEN TRUNC(pr_dtrefere,'MM') AND pr_dtrefere
-         AND lem.cdhistor in (91,95,441) --> Pagamentos / juros
+         AND lem.cdhistor in (91,95,441) 
        GROUP BY lem.cdhistor;
 
     CURSOR cr_pese(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE
@@ -635,7 +577,7 @@ DECLARE
                  AND v.cdmodali = r.cdmodali
                  AND v.nrctremp = r.nrctremp
                  AND v.nrseqctr = r.nrseqctr
-                 AND v.cdvencto BETWEEN 110 AND 290) vltotdiv -- ja sem o jura60
+                 AND v.cdvencto BETWEEN 110 AND 290) vltotdiv 
         FROM gestaoderisco.tbrisco_crapris r
             ,cecred.crapepr e
             ,cecred.craplcr l
@@ -658,28 +600,27 @@ DECLARE
          AND e.inprejuz = 0;
     rw_pese cr_pese%ROWTYPE;
 
-    ---> Subprogramas <---
-    -- Retorna linha cabeçalho arquivo Radar ou Matera
+    
     FUNCTION fn_set_cabecalho(pr_inilinha IN VARCHAR2
                              ,pr_dtarqmv  IN DATE
                              ,pr_dtarqui  IN DATE
-                             ,pr_origem   IN NUMBER      --> Conta Origem
-                             ,pr_destino  IN NUMBER      --> Conta Destino
-                             ,pr_vltotal  IN NUMBER      --> Soma total de todas as agencias
-                             ,pr_dsconta  IN VARCHAR2)   --> Descricao da conta
+                             ,pr_origem   IN NUMBER     
+                             ,pr_destino  IN NUMBER     
+                             ,pr_vltotal  IN NUMBER     
+                             ,pr_dsconta  IN VARCHAR2)  
      RETURN VARCHAR2 IS
     BEGIN
-      RETURN pr_inilinha --> Identificacao inicial da linha
-              ||TO_CHAR(pr_dtarqmv,'YYMMDD')||',' --> Data AAMMDD do Arquivo
-              ||TO_CHAR(pr_dtarqui,'DDMMYY')||',' --> Data DDMMAA
-              ||pr_origem||','                    --> Conta Origem
-              ||pr_destino||','                   --> Conta Destino
+      RETURN pr_inilinha 
+              ||TO_CHAR(pr_dtarqmv,'YYMMDD')||',' 
+              ||TO_CHAR(pr_dtarqui,'DDMMYY')||',' 
+              ||pr_origem||','                    
+              ||pr_destino||','                   
               ||TRIM(TO_CHAR(pr_vltotal,'FM999999999999990D00', 'NLS_NUMERIC_CHARACTERS=.,'))||','
               ||'5210'||','
               ||pr_dsconta;
     END fn_set_cabecalho;
 
-    -- Retorna linha gerencial arquivo Radar ou Matera
+    
     FUNCTION fn_set_gerencial(pr_cdagenci in number
                              ,pr_vlagenci in number)
     RETURN VARCHAR2 IS
@@ -690,46 +631,46 @@ DECLARE
     vr_tab_miccred_nivris.delete;
     vr_tab_miccred_fin.delete;
 
-    -- Nome do arquivo a ser gerado
+    
     vr_nmarqmic := to_char(pr_dtrefere, 'yymmdd')||'_'||lpad(pr_cdcooper,2,0)||'_AJUSTE_MICROCREDITO_NOVA_CENTRAL.txt';
-    vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+    vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C' 
                                              ,pr_cdcooper => pr_cdcooper
                                              ,pr_nmsubdir => 'contab');
-    -- Busca do diretório onde o Radar ou Matera pegará o arquivo
+    
     vr_nom_dir_copia := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                  ,pr_cdcooper => 0
                                                  ,pr_cdacesso => 'DIR_ARQ_CONTAB_X');
-    -- Tenta abrir o arquivo de log em modo gravacao
-    cecred.gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio     --> Diretório do arquivo
-                            ,pr_nmarquiv => vr_nmarqmic          --> Nome do arquivo
-                            ,pr_tipabert => 'W'                  --> Modo de abertura (R,W,A)
-                            ,pr_utlfileh => vr_input_file        --> Handle do arquivo aberto
-                            ,pr_des_erro => vr_dscritic);        --> Erro
+    
+    cecred.gene0001.pc_abre_arquivo(pr_nmdireto => vr_nom_diretorio    
+                            ,pr_nmarquiv => vr_nmarqmic         
+                            ,pr_tipabert => 'W'                 
+                            ,pr_utlfileh => vr_input_file       
+                            ,pr_des_erro => vr_dscritic);       
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
 
-    -- Leitura das descricoes de risco A,B,C etc e percentuais
+    
     FOR rw_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
                                 ,pr_nmsistem => 'CRED'
                                 ,pr_tptabela => 'GENERI'
                                 ,pr_cdempres => 00
                                 ,pr_cdacesso => 'PROVISAOCL'
                                 ,pr_tpregist => 0) LOOP
-      -- Para cada registro, buscar o contador atual na posição 12
+      
       vr_contador := SUBSTR(rw_craptab.dstextab,12,2);
-      -- Adicionar na tabela as informações de descrição e percentuais
+      
       vr_tab_risco(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
       vr_tab_risco(vr_contador).percentu := SUBSTR(rw_craptab.dstextab,1,6);
     END LOOP;
 
-    -- Alimentar variavel para nao ser preciso criar registro na PROVISAOCL
+    
     vr_tab_risco(10).dsdrisco := 'HH';
     vr_tab_risco(10).percentu := 0;
 
     FOR rw_ajuste IN cr_ajuste(pr_cdcooper => pr_cdcooper
                               ,pr_dtrefere => pr_dtrefere) LOOP
-      -- Garantir que a finalidade exista na PL Table
+      
       IF NOT vr_tab_miccred_fin.exists(rw_ajuste.cdfinemp) THEN
         vr_tab_miccred_fin(rw_ajuste.cdfinemp).vllibctr    := 0;
         vr_tab_miccred_fin(rw_ajuste.cdfinemp).vlaprrec    := 0;
@@ -738,25 +679,25 @@ DECLARE
         vr_tab_miccred_fin(rw_ajuste.cdfinemp).vldebpar95  := 0;
         vr_tab_miccred_fin(rw_ajuste.cdfinemp).vldebpar441 := 0;
       END IF;
-      --Apenas contratos liberados no mês
+      
       IF rw_ajuste.dtinictr BETWEEN TRUNC(pr_dtrefere,'mm') AND pr_dtrefere THEN
         vr_tab_miccred_fin(rw_ajuste.cdfinemp).vllibctr := vr_tab_miccred_fin(rw_ajuste.cdfinemp).vllibctr + rw_ajuste.vlemprst;
       END IF;
 
-      -- Guardar percentual
+      
       vr_percentu := vr_tab_risco(rw_ajuste.innivris).percentu;
-      -- Calcular o percentual para o atraso com base nos percentuais da tabela
+      
       vr_vlpercen := vr_percentu / 100;
 
-      -- Calcular o valor de prestação em atraso
+      
       vr_vlpreatr := ROUND( (rw_ajuste.vltotdiv - rw_ajuste.vljura60
-                                                - nvl(rw_ajuste.vljurantpp, 0) -- PRJ577 -- O cálculo da provisão deve considerar o Valor do Juros+60 Anterior
+                                                - nvl(rw_ajuste.vljurantpp, 0) 
                             ) * vr_vlpercen ,2);
 
       vr_tab_miccred_fin(rw_ajuste.cdfinemp).vlaprrec := vr_tab_miccred_fin(rw_ajuste.cdfinemp).vlaprrec + rw_ajuste.vljurmes;
       vr_tab_miccred_fin(rw_ajuste.cdfinemp).vlprvper := vr_tab_miccred_fin(rw_ajuste.cdfinemp).vlprvper + vr_vlpreatr;
 
-      -- Busca valor de parcelas pagas
+      
       FOR rw_craplem in cr_craplem(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => rw_ajuste.nrdconta
                                   ,pr_nrctremp => rw_ajuste.nrctremp
@@ -771,7 +712,7 @@ DECLARE
       END LOOP;
 
       vr_dsnivris := vr_tab_risco(rw_ajuste.innivris).dsdrisco;
-      --Agupar valores microcrédito das filiadas por nível de risco
+      
       IF rw_ajuste.cdfinemp IN (1,4) THEN
         IF vr_tab_miccred_nivris.exists(vr_dsnivris) THEN
           vr_tab_miccred_nivris(vr_dsnivris).vlslddev := vr_tab_miccred_nivris(vr_dsnivris).vlslddev + rw_ajuste.vldivida;
@@ -783,14 +724,14 @@ DECLARE
 
     FOR rw_pese IN cr_pese(pr_cdcooper => pr_cdcooper
                           ,pr_dtrefere => pr_dtrefere) LOOP
-      -- Guardar percentual
+      
       vr_percentu := vr_tab_risco(rw_pese.innivris).percentu;
-      -- Calcular o percentual para o atraso com base nos percentuais da tabela
+      
       vr_vlpercen := vr_percentu / 100;
 
-      -- Calcular o valor de prestação em atraso
+      
       vr_vlpreatr := ROUND( (rw_pese.vltotdiv - rw_pese.vljura60
-                                                - nvl(rw_pese.vljurantpp, 0) -- PRJ577 -- O cálculo da provisão deve considerar o Valor do Juros+60 Anterior
+                                                - nvl(rw_pese.vljurantpp, 0) 
                             ) * vr_vlpercen ,2);
 
       GESTAODERISCO.calcularProvisaoRiscoAtual(pr_cdcooper => pr_cdcooper,
@@ -805,7 +746,7 @@ DECLARE
       v_pese_vlprvper := v_pese_vlprvper + vr_vlpreatr;
 
       vr_dsnivris := vr_tab_risco(rw_pese.innivris).dsdrisco;
-      --Agupar valores microcrédito das filiadas por nível de risco
+      
       IF vr_tab_pese_nivris.exists(vr_dsnivris) THEN
         vr_tab_pese_nivris(vr_dsnivris).vlslddev := vr_tab_pese_nivris(vr_dsnivris).vlslddev + rw_pese.vldivida;
       ELSE
@@ -818,7 +759,7 @@ DECLARE
     LOOP
       EXIT WHEN vr_chave_finalidade IS NULL;
 
-      --Gera no arquivo linhas referente a valor de liberação de contrato
+      
       IF vr_tab_miccred_fin(vr_chave_finalidade).vllibctr > 0 THEN
 
         IF vr_chave_finalidade = 1 THEN
@@ -843,8 +784,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vllibctr
                                        ,vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
@@ -852,11 +793,11 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vllibctr);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
       END IF;
 
-      --Gera no arquivo linhas referente a valor de apropriação de contrato
+      
       IF vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec > 0 THEN
         IF vr_chave_finalidade = 1 THEN
           vr_origem := 1437;
@@ -884,8 +825,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec
                                        ,vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
@@ -893,10 +834,10 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
-        --Escreve novamente as linhas para outra conta de débito e crédito
+        
         vr_setlinha := fn_set_cabecalho('20'
                                        ,pr_dtrefere
                                        ,pr_dtrefere
@@ -905,8 +846,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec
                                        ,vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
@@ -914,36 +855,36 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlaprrec);
         END IF;
 
-        --Escreve duas vezes a linha gerencial
+        
         FOR i IN 1..2 LOOP
-          cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                        ,pr_des_text => vr_setlinha); --> Texto para escrita
+          cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                        ,pr_des_text => vr_setlinha); 
         END LOOP;
       END IF;
 
-      --Gera no arquivo linhas referente a valor de provisão de contrato
+      
       IF vr_tab_miccred_fin(vr_chave_finalidade).vlprvper > 0 THEN
         IF vr_chave_finalidade = 1 THEN
-          --para provisão
+          
           vr_destino := 1438;
-          --para reversao
+          
           vr_origem := 1438;
           vr_descricao := '"AJUSTE CONTABIL - PROVISAO CEF"';
         ELSIF vr_chave_finalidade = 2 THEN
-          --para provisão
+          
           vr_destino := 1702;
-          --para reversao
+          
           vr_origem  := 1702;
           vr_descricao := '"AJUSTE CONTABIL - PROVISAO CCB IMOBILIZADO REFAP"';
         ELSIF vr_chave_finalidade = 4 THEN
-          --para provisão
+          
           vr_destino := 1441;
-          --para reversao
+          
           vr_origem  := 1441;
           vr_descricao := '"AJUSTE CONTABIL - PROVISAO BNDES"';
         END IF;
 
-        --Cria linhas de provisão
+
         vr_setlinha := fn_set_cabecalho('20'
                                        ,pr_dtrefere
                                        ,pr_dtrefere
@@ -952,8 +893,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vlprvper
                                        ,vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
@@ -961,10 +902,10 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
-        --Cria linhas de reversão
+        
         vr_setlinha := fn_set_cabecalho('20'
                                         ,vr_dtmvtopr
                                         ,vr_dtmvtopr
@@ -973,8 +914,8 @@ DECLARE
                                         ,vr_tab_miccred_fin(vr_chave_finalidade).vlprvper
                                         ,replace(vr_descricao,'PROVISAO','REVERSAO'));
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
@@ -982,12 +923,12 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vlprvper);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
       END IF;
 
-      -- Gera no arquivo linhas referente a valor de pagamento de parcelas de contrato
+      
       IF vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91 > 0 THEN
 
         IF vr_chave_finalidade = 1 THEN
@@ -1012,8 +953,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91
                                        ,vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91);
@@ -1021,11 +962,11 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar91);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
       END IF;
 
-      -- Gera no arquivo linhas referente a valor de pagamento de parcelas de contrato
+      
       IF vr_tab_miccred_fin(vr_chave_finalidade).vldebpar95 > 0 THEN
 
         IF vr_chave_finalidade = 1 THEN
@@ -1050,8 +991,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vldebpar95
                                        ,vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar95);
@@ -1059,11 +1000,11 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar95);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
       END IF;
 
-      -- Gera no arquivo linhas referente a valor de pagamento de parcelas de contrato
+      
       IF vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441 > 0 THEN
 
         IF vr_chave_finalidade = 1 THEN
@@ -1092,8 +1033,8 @@ DECLARE
                                        ,vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441
                                        ,'"EMPRESTIMOS EFETUADOS PARA ASSOCIADOS - (0441) JUROS SOBRE EMPRESTIMOS ' || vr_descricao);
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
         IF vr_chave_finalidade IN (1,4) THEN
           vr_setlinha := fn_set_gerencial('001',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441);
@@ -1101,8 +1042,8 @@ DECLARE
           vr_setlinha := fn_set_gerencial('999',vr_tab_miccred_fin(vr_chave_finalidade).vldebpar441);
         END IF;
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
       END IF;
 
       vr_chave_finalidade := vr_tab_miccred_fin.next(vr_chave_finalidade);
@@ -1112,35 +1053,35 @@ DECLARE
     vr_chave_nivris := vr_tab_miccred_nivris.first;
     LOOP
       EXIT WHEN vr_chave_nivris IS NULL;
-      --Gera no arquivo linhas referente a valor de liberação de contrato
+      
       IF vr_tab_miccred_nivris(vr_chave_nivris).vlslddev > 0 THEN
         IF vr_chave_nivris IN ('A','AA') THEN
-          vr_destino := 3321;  --provisão
-          vr_origem  := 3321;  --reversão
+          vr_destino := 3321;  
+          vr_origem  := 3321;  
         ELSIF vr_chave_nivris = 'B' THEN
-          vr_destino := 3332; --provisão
-          vr_origem  := 3332; --reversão
+          vr_destino := 3332; 
+          vr_origem  := 3332; 
         ELSIF vr_chave_nivris = 'C' THEN
-          vr_destino := 3342; --provisão
-          vr_origem  := 3342; --reversão
+          vr_destino := 3342; 
+          vr_origem  := 3342; 
         ELSIF vr_chave_nivris = 'D' THEN
-          vr_destino := 3352; --provisão
-          vr_origem  := 3352; --reversão
+          vr_destino := 3352; 
+          vr_origem  := 3352; 
         ELSIF vr_chave_nivris = 'E' THEN
-          vr_destino := 3362; --provisão
-          vr_origem  := 3362; --reversão
+          vr_destino := 3362; 
+          vr_origem  := 3362; 
         ELSIF vr_chave_nivris = 'F' THEN
-          vr_destino := 3372; --provisão
-          vr_origem  := 3372; --reversão
+          vr_destino := 3372; 
+          vr_origem  := 3372; 
         ELSIF vr_chave_nivris = 'G' THEN
-          vr_destino := 3382; --provisão
-          vr_origem  := 3382; --reversão
+          vr_destino := 3382; 
+          vr_origem  := 3382; 
         ELSIF vr_chave_nivris IN ('H','HH') THEN
-          vr_destino := 3392; --provisão
-          vr_origem  := 3392; --reversão
+          vr_destino := 3392; 
+          vr_origem  := 3392; 
         END IF;
 
-        --Gerar linhas de PROVISÃO
+        
         vr_setlinha := fn_set_cabecalho('20'
                                        ,pr_dtrefere
                                        ,pr_dtrefere
@@ -1149,10 +1090,10 @@ DECLARE
                                        ,vr_tab_miccred_nivris(vr_chave_nivris).vlslddev
                                        ,'"CLASSIFICACAO DE RISCO DE REPASSES CEF E BNDES DEVIDO AJUSTES DO DOCUMENTO 4010 ENVIANDO AO BACEN"');
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
-        --Gerar linhas de REVERSÃO
+        
         vr_setlinha := fn_set_cabecalho('20'
                                        ,vr_dtmvtopr
                                        ,vr_dtmvtopr
@@ -1161,15 +1102,14 @@ DECLARE
                                        ,vr_tab_miccred_nivris(vr_chave_nivris).vlslddev
                                        ,'"REVERSAO DE AJUSTE DE CLASSIFICACAO DE RISCO DE REPASSES CEF E BNDES DEVIDO AJUSTES DO DOCUMENTO 4010 ENVIANDO AO BACEN"');
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
       END IF;
 
       vr_chave_nivris := vr_tab_miccred_nivris.next(vr_chave_nivris);
     END LOOP;
 
-    /* PROGRAMA PESE BNDES */
     IF v_pese_vldivida > 0 THEN
       vr_origem    := 1444;
       vr_destino   := 1667;
@@ -1183,15 +1123,15 @@ DECLARE
                                      ,v_pese_vldivida
                                      ,vr_descricao);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',v_pese_vldivida);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
-      --Cria linha de reversao
+      
       vr_descricao := '"REVERSAO RECLASSIFICACAO CONTABIL REF. REPASSE BNDES PESE"';
 
       vr_setlinha := fn_set_cabecalho('20'
@@ -1202,22 +1142,22 @@ DECLARE
                                      ,v_pese_vldivida
                                      ,vr_descricao);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',v_pese_vldivida);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
     END IF;
 
-    --Gera no arquivo linhas referente a valor de provisão de contrato
+    
     IF v_pese_vlprvper > 0 THEN
       vr_origem    := 1733;
       vr_destino   := 1446;
       vr_descricao := '"RECLASSIFICACAO CONTABIL REF. REPASSE BNDES PESE"';
 
-      --Cria linhas de provisão
+      
       vr_setlinha := fn_set_cabecalho('20'
                                      ,pr_dtrefere
                                      ,pr_dtrefere
@@ -1226,15 +1166,15 @@ DECLARE
                                      ,v_pese_vlprvper
                                      ,vr_descricao);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',v_pese_vlprvper);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
-      --Cria linhas de reversão
+      
       vr_setlinha := fn_set_cabecalho('20'
                                      ,vr_dtmvtopr
                                      ,vr_dtmvtopr
@@ -1243,16 +1183,16 @@ DECLARE
                                      ,v_pese_vlprvper
                                      ,replace(vr_descricao,'RECLASSIFICACAO','REVERSAO RECLASSIFICACAO'));
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',v_pese_vlprvper);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
     END IF;
 
-    --Gera no arquivo linhas referente a valor de apropriação de contrato
+    
     IF v_pese_vlaprrec > 0 THEN
       vr_origem    := 7135;
       vr_destino   := 7289;
@@ -1266,54 +1206,54 @@ DECLARE
                                      ,v_pese_vlaprrec
                                      ,vr_descricao);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
       vr_setlinha := fn_set_gerencial('999',v_pese_vlaprrec);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
 
-      --Criar segundo linha pois ambas as contas possuem rateio por gerencial
+      
       vr_setlinha := fn_set_gerencial('999',v_pese_vlaprrec);
 
-      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                    ,pr_des_text => vr_setlinha); --> Texto para escrita
+      cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                    ,pr_des_text => vr_setlinha); 
     END IF;
 
     vr_chave_nivris := vr_tab_pese_nivris.first;
     LOOP
       EXIT WHEN vr_chave_nivris IS NULL;
 
-      --Gera no arquivo linhas referente a valor de liberação de contrato
+      
       IF vr_tab_pese_nivris(vr_chave_nivris).vlslddev > 0 THEN
         IF vr_chave_nivris IN ('A','AA') THEN
-          vr_destino := 3321;  --provisão
-          vr_origem  := 3321;  --reversão
+          vr_destino := 3321;  
+          vr_origem  := 3321;  
         ELSIF vr_chave_nivris = 'B' THEN
-          vr_destino := 3332; --provisão
-          vr_origem  := 3332; --reversão
+          vr_destino := 3332; 
+          vr_origem  := 3332; 
         ELSIF vr_chave_nivris = 'C' THEN
-          vr_destino := 3342; --provisão
-          vr_origem  := 3342; --reversão
+          vr_destino := 3342; 
+          vr_origem  := 3342; 
         ELSIF vr_chave_nivris = 'D' THEN
-          vr_destino := 3352; --provisão
-          vr_origem  := 3352; --reversão
+          vr_destino := 3352; 
+          vr_origem  := 3352; 
         ELSIF vr_chave_nivris = 'E' THEN
-          vr_destino := 3362; --provisão
-          vr_origem  := 3362; --reversão
+          vr_destino := 3362; 
+          vr_origem  := 3362; 
         ELSIF vr_chave_nivris = 'F' THEN
-          vr_destino := 3372; --provisão
-          vr_origem  := 3372; --reversão
+          vr_destino := 3372; 
+          vr_origem  := 3372; 
         ELSIF vr_chave_nivris = 'G' THEN
-          vr_destino := 3382; --provisão
-          vr_origem  := 3382; --reversão
+          vr_destino := 3382; 
+          vr_origem  := 3382; 
         ELSIF vr_chave_nivris IN ('H','HH') THEN
-          vr_destino := 3392; --provisão
-          vr_origem  := 3392; --reversão
+          vr_destino := 3392; 
+          vr_origem  := 3392; 
         END IF;
 
-        --Gerar linhas de PROVISÃO
+        
         vr_setlinha := fn_set_cabecalho('20'
                                        ,pr_dtrefere
                                        ,pr_dtrefere
@@ -1322,10 +1262,10 @@ DECLARE
                                        ,vr_tab_pese_nivris(vr_chave_nivris).vlslddev
                                        ,'"RECLASSIFICACAO CONTABIL REF. REPASSE BNDES PESE"');
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
 
-        --Gerar linhas de REVERSÃO
+        
         vr_setlinha := fn_set_cabecalho('20'
                                        ,vr_dtmvtopr
                                        ,vr_dtmvtopr
@@ -1334,8 +1274,8 @@ DECLARE
                                        ,vr_tab_pese_nivris(vr_chave_nivris).vlslddev
                                        ,'"REVERSAO RECLASSIFICACAO CONTABIL REF. REPASSE BNDES PESE"');
 
-        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file --> Handle do arquivo aberto
-                                      ,pr_des_text => vr_setlinha); --> Texto para escrita
+        cecred.gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_input_file 
+                                      ,pr_des_text => vr_setlinha); 
       END IF;
 
       vr_chave_nivris := vr_tab_pese_nivris.next(vr_chave_nivris);
@@ -1354,7 +1294,7 @@ DECLARE
     cecred.gene0001.pc_oscommand_shell(pr_des_comando => 'ux2dos '||vr_nom_diretorio||'/'||vr_nmarqmic||' > '||vr_nom_dir_copia||'/'||vr_nmarqmic||' 2>/dev/null'
                                ,pr_typ_saida   => vr_typ_said
                                ,pr_des_saida   => vr_dscritic);
-    -- Testar erro
+    
     IF vr_typ_said = 'ERR' THEN
       vr_dscritic := 'Erro ao copiar o arquivo '||vr_nmarqmic||': '||vr_dscritic;
       RAISE vr_exc_erro;
