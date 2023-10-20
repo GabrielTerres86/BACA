@@ -17,5 +17,9 @@ select 'MARCAF', opc.cddopcao, ope.cdoperad, null, 3, 1, 1, 2
  where ope.cdcooper = 3
    and lower(ope.cdoperad) in ( 'f0033673');
  
-COMMIT;
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
 END;
