@@ -1,0 +1,13 @@
+BEGIN    
+  UPDATE CRAPACA
+     SET LSTPARAM = LSTPARAM || ', pr_cdoperad'
+   WHERE NMPROCED = 'CREDITO.obterBloqueioDebito'
+     AND NMDEACAO = 'CONSULTA_BLOQ_DEBITO_OP_CREDITO';
+   
+    COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+	RAISE_application_error(-20500, SQLERRM);
+END;
+/
