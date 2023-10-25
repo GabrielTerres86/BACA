@@ -22,6 +22,8 @@ BEGIN
   UPDATE GESTAODERISCO.TBRISCO_CRAPRIS SET INNIVRIS = 5 WHERE cdcooper = 1 AND nrdconta = 12732885 AND nrctremp = 6413593 AND dtrefere = to_date('30/09/2023', 'DD/MM/RRRR');
   COMMIT;
   
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
+  
   FOR rw_crapcop IN cr_crapcop LOOP
     vr_jobname := 'gera_relato_' || to_char(rw_crapcop.cdcooper) || '_K';
     vr_dsplsql := 'DECLARE' || chr(13) ||
