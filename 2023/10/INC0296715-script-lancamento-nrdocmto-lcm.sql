@@ -4,7 +4,8 @@ DECLARE
        cdcooper cecred.craplcm.cdcooper%TYPE,
        nrdconta cecred.craplcm.nrdconta%TYPE,
        cdhistor cecred.craplcm.cdhistor%TYPE,
-       novo_nrdocmto cecred.craplcm.nrdocmto%TYPE);
+       novo_nrdocmto cecred.craplcm.nrdocmto%TYPE,
+       progress_recid cecred.craplcm.progress_recid%TYPE);
   TYPE typ_tab_lcm IS TABLE OF typ_reg_lcm INDEX BY PLS_INTEGER;
   
   vr_tab_lcm typ_tab_lcm;
@@ -16,12 +17,14 @@ BEGIN
              SELECT cdcooper,
                     nrdconta,
                     cdhistor,
-                    novo_nrdocmto
+                    novo_nrdocmto,
+                    progress_recid
   BULK COLLECT INTO vr_tab_lcm 
                FROM(SELECT a.cdcooper,
                            a.nrdconta,
                            a.cdhistor,      
-                           SUBSTR(a.cdpesqbb, TRIM(LENGTH('Desconto do Borderô')+1)) AS novo_nrdocmto   
+                           SUBSTR(a.cdpesqbb, TRIM(LENGTH('Desconto do Borderô')+1)) AS novo_nrdocmto,
+                           a.progress_recid 
                       FROM cecred.craplcm a 
                      WHERE a.cdhistor = 2664 
                        AND a.nrdocmto IS NULL);
@@ -33,10 +36,7 @@ BEGIN
         
         UPDATE cecred.craplcm a
            SET a.nrdocmto = vr_tab_lcm(i).novo_nrdocmto
-         WHERE a.cdcooper = vr_tab_lcm(i).cdcooper
-           AND a.nrdconta = vr_tab_lcm(i).nrdconta
-           AND a.cdhistor = vr_tab_lcm(i).cdhistor
-           AND a.nrdocmto IS NULL;
+         WHERE a.progress_recid = vr_tab_lcm(i).progress_recid;
 
         IF MOD(vr_qtregistro,100) = 0 THEN
           COMMIT;
