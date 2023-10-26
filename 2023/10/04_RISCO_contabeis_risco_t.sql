@@ -26,7 +26,13 @@ BEGIN
     IF TRIM(vr_dscritic) IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
-
+    
+    CECRED.RISC0001_NOVA_CENTRAL.pc_risco_g(pr_cdcooper => rw_crapcop.cdcooper
+                                           ,pr_dtrefere => vr_dtrefere_ris
+                                           ,pr_dscritic => vr_dscritic);
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
   END LOOP;
   
   COMMIT;
