@@ -13,7 +13,7 @@ Begin
   delete from CECRED.tbcc_lancamentos_pendentes t
    where t.nrdconta = 16615000
      and t.cdcooper = 2
-     and t.dtmvtolt = to_date('24/10/2023')
+     and t.dtmvtolt = to_date('24/10/2023', 'DD/MM/RRRR')
      and t.nrdcmto = 2003;
 
   select t.dtmvtolt
