@@ -1,23 +1,17 @@
 DECLARE
 
-  vr_nrseqrdr cecred.craprdr.nrseqrdr%type;
+  vr_nrseqrdr cecred.craprdr.nrseqrdr%TYPE;
 
 BEGIN
 
   INSERT INTO cecred.craprdr
-    (nmprogra
-    ,dtsolici)
+    (nmprogra, dtsolici)
   VALUES
-    ('TELA_RESERV'
-    ,SYSDATE)
+    ('TELA_RESERV', SYSDATE)
   RETURNING nrseqrdr INTO vr_nrseqrdr;
 
   INSERT INTO cecred.crapaca
-    (nmdeacao
-    ,nmpackag
-    ,nmproced
-    ,lstparam
-    ,nrseqrdr)
+    (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
   VALUES
     ('OBTER_RESERV_LANC'
     ,NULL
@@ -88,7 +82,10 @@ BEGIN
            ,' '
            ,' '
            ,50
-           ,(SELECT MAX(g.nrordprg)+1 FROM cecred.crapprg g WHERE g.cdcooper = cop.cdcooper AND g.nrsolici = 50)
+           ,(SELECT MAX(g.nrordprg) + 1
+              FROM cecred.crapprg g
+             WHERE g.cdcooper = cop.cdcooper
+                   AND g.nrsolici = 50)
            ,1
            ,0
            ,0
@@ -101,6 +98,23 @@ BEGIN
        FROM cecred.crapcop cop
       WHERE cop.flgativo = 1);
 
+  INSERT INTO  cecred.crapaca
+    (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  VALUES
+    ('INCLUIR_CRED_RESERV'
+    ,NULL
+    ,'CREDITO.incluirCreditoCcReservaWeb'
+    ,'pr_nrdconta, pr_vllanmto'
+    ,vr_nrseqrdr);
+
+  INSERT INTO cecred.crapaca
+    (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  VALUES
+    ('OBTER_SALDO_RESERVA'
+    ,NULL
+    ,'credito.obterValorReservaWeb'
+    ,'pr_nrdconta'
+    ,vr_nrseqrdr);
 
   COMMIT;
 
