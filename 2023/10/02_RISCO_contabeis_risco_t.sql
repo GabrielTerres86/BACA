@@ -16,7 +16,6 @@ DECLARE
 BEGIN
   
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
-  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = ''.,''';
   
   FOR rw_crapcop IN cr_crapcop LOOP
   
