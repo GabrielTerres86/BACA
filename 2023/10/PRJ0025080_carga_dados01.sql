@@ -1,4 +1,3 @@
---PRJ0025080 Carga configuração inicial VAN de Transmissão
 declare 
   type TREG is record ( idproduto         RAW(16)
                       , nmproduto         VARCHAR2(20)
@@ -49,7 +48,6 @@ declare
   v_idvan_cooperado RAW(16) := null;
   
 begin
-  --atualiza custódia de cheque para trabalhar com VAN
   open c5;
   fetch c5 into r5;
   if c5%found then
@@ -61,7 +59,6 @@ begin
   end if;
   close c5;
 
-  --insere van de transmissão nexxera
   open c2 (03813865000165);
   fetch c2 into r2;
   if c2%notfound then 
@@ -74,7 +71,6 @@ begin
   end if;
   close c2;
   
-  --Associa a VAN ao cooperado
   open c3 (1,99914492);
   fetch c3 into r3;
   if c3%notfound then 
@@ -87,58 +83,49 @@ begin
   end if;
   close c3;
  
-  --Insere produtos possíveis de transmissão por VAN
   vseq_tab := 0;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Custódia de cheques';
   ntab(vseq_tab).dsmascara_arquivo    := 'CST_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'CST';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Extrato C/C';
   ntab(vseq_tab).dsmascara_arquivo    := 'EXT_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'EXT';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'TED/Transferência';
   ntab(vseq_tab).dsmascara_arquivo    := 'TED_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'TED';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Folha de Pagamento';
   ntab(vseq_tab).dsmascara_arquivo    := 'FOL_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'FOL';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Pagamentos';
   ntab(vseq_tab).dsmascara_arquivo    := 'PGT_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'PGT';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Cobrança Bancária';
   ntab(vseq_tab).dsmascara_arquivo    := 'CBR_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'CBR';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Transferência PIX';
   ntab(vseq_tab).dsmascara_arquivo    := 'PIX_XXX_YYYYYYYYYYYYY_ZZZZZZ.RRR';
   ntab(vseq_tab).cdproduto            := 'PIX';
   ntab(vseq_tab).dhregistro           := SYSDATE;
-  --
   vseq_tab := vseq_tab + 1;
   ntab(vseq_tab).idproduto            := SYS_GUID();
   ntab(vseq_tab).nmproduto            := 'Recebimento DDA';
@@ -153,7 +140,6 @@ begin
     if c1%notfound then
       insert into pagamento.TAVANS_PRODUTO (idproduto , nmproduto, dsmascara_arquivo, cdproduto, dhregistro )
         values (ntab(x).idproduto,ntab(x).nmproduto, ntab(x).dsmascara_arquivo ,ntab(x).cdproduto,ntab(x).dhregistro );
-      --Fase 1: vamos trabalhar apenas com Custódia de cheques 
       if ntab(x).cdproduto = 'CST' then
         insert into pagamento.tbvans_van_cooperado_produto (idvan_cooperado, idproduto)
           values (v_idvan_cooperado,ntab(x).idproduto);  
@@ -162,7 +148,6 @@ begin
     close c1;    
   end loop;
   
-  --
   commit;
 exception
   when others then
