@@ -119,8 +119,7 @@ BEGIN
           raise_application_error(-20003,'Erro ao excluir registro na crapbat: '||SQLERRM);
     END;
   END IF;
-
-  -- INICIO Inclui parametro CONSIGNADO Neurotech  
+  
   SELECT MAX(cdpartar) INTO aux_cdpartar_add FROM cecred.crappat; 
   aux_cdpartar_add := aux_cdpartar_add + 1;
 
@@ -134,9 +133,7 @@ BEGIN
     INSERT INTO cecred.crappco (CDPARTAR, CDCOOPER, DSCONTEU)
     VALUES (aux_cdpartar_add, rw_crapdat.cdcooper,  'N');
   END LOOP;
-  -- FIM Inclui parametro CONSIGNADO Neurotech
   
-  -- INICIO Inclui parametros RENEGOCIACAO Neurotech
   SELECT MAX(cdpartar) INTO aux_cdpartar_add FROM cecred.crappat;
   aux_cdpartar_add := aux_cdpartar_add + 1;
   
@@ -164,9 +161,7 @@ BEGIN
     INSERT INTO cecred.crappco (CDPARTAR, CDCOOPER, DSCONTEU)
     VALUES (aux_cdpartar_add, rw_crapdat.cdcooper,  'N');
   END LOOP;
-  -- FIM Inclui parametros RENEGOCIACAO Neurotech
   
-  -- INICIO Inclui parametros IMOBILIARIO Neurotech
   SELECT MAX(cdpartar) INTO aux_cdpartar_add FROM cecred.crappat;
   aux_cdpartar_add := aux_cdpartar_add + 1;
 
@@ -194,7 +189,6 @@ BEGIN
     INSERT INTO cecred.crappco (CDPARTAR, CDCOOPER, DSCONTEU)
     VALUES (aux_cdpartar_add, rw_crapdat.cdcooper,  'N');
   END LOOP;
-  -- FIM Inclui parametros IMOBILIARIO Neurotech
   
   COMMIT;
 
@@ -203,5 +197,3 @@ EXCEPTION
     ROLLBACK;    
     raise_application_error(-20000,'ERRO AO EXECUTAR SCRIPT: '||SQLERRM); 
 END;
-
-
