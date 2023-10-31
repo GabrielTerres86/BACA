@@ -4,13 +4,14 @@ DECLARE
   vr_retfile          VARCHAR2(500);
   vr_cdcritic         NUMBER;
   
-  vr_dtrefere_ris     VARCHAR2(50) := '30/09/2023';
+  vr_dtrefere_ris     VARCHAR2(50) := '31/10/2023';
   
   CURSOR cr_crapcop IS
     SELECT cdcooper
       FROM cecred.crapcop a
      WHERE a.flgativo = 1
-     AND a.cdcooper IN (1,2,3,5,6,7,8,9,10,11,12,13,14,16);
+     AND a.cdcooper IN (1,2,3,5,6,7,8,9,10,11,12,13,14,16)
+     ORDER BY c.cdcooper DESC;
   rw_crapcop cr_crapcop%ROWTYPE;
   
 BEGIN
