@@ -94,12 +94,12 @@ vr_dslog := vr_dslog||chr(13)||''tbrisco_Operacao_Garantia: ''||SQL%ROWCOUNT;
       WHERE t.idcentral_carga = o.idcentral_carga AND t.dtrefere = rw_carga.dtrefere AND t.cdcooper = rw_carga.cdcooper);
 vr_dslog := vr_dslog||chr(13)||''tbrisco_info_adicional: ''||SQL%ROWCOUNT;
 
-    rollback;
+commit;
     gerar_log(vr_dslog);
 
   END LOOP;  
 
-  rollback;  
+commit;  
   gerar_log(pr_dslog => NULL,
             pr_dstiplog => ''F'');
     
