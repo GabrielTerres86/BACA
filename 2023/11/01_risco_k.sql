@@ -19,7 +19,9 @@ DECLARE
   rw_crapcop cr_crapcop%ROWTYPE;
   
 BEGIN
-
+  
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
+  
   FOR rw_crapcop IN cr_crapcop LOOP
     vr_jobname := 'gera_relato_' || to_char(rw_crapcop.cdcooper) || '_K';
     vr_dsplsql := 'DECLARE' || chr(13) ||
