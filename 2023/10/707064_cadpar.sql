@@ -10,7 +10,7 @@ declare
   vr_nmpartar crappat.nmpartar%type := 'HORÁRIO LIMITE VALIDAÇÃO DE EMPRESTIMOS EM ATRASO NO RECEBIMENTO DE VALOR';
   vr_tpdedado crappat.tpdedado%type := 2;
   vr_cdprodut crappat.cdprodut%type := 0;
-  vr_dsconteu crappco.dsconteu%type := 'S';
+  vr_dsconteu crappco.dsconteu%type := '20:59:00';
 
 begin
 
