@@ -11,7 +11,7 @@ DECLARE
         AND cpa.nrcpfcgc = tcp.nrcpfcgc
         AND tcp.nrcpfcgc = p_cpf_cgc
         AND NOT EXISTS (SELECT 1
-                          FROM tbcalris_tanque ttq
+                          FROM cecred.tbcalris_tanque ttq
                          WHERE ttq.nrcpfcgc      = cpa.nrcpfcgc
                            AND ttq.tpcalculadora = 1)
    GROUP BY cpa.nrcpfcgc, 
