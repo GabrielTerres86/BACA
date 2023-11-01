@@ -5,8 +5,8 @@ DECLARE
             1 cdstatus,
             tcp.tpcadastro tpcalculadora,
             MIN(cpa.cdcooper) cdcooper
-       FROM crapass cpa, 
-            tbcadast_pessoa tcp 
+       FROM cecred.crapass cpa, 
+            cecred.tbcadast_pessoa tcp 
       WHERE cpa.dtdemiss IS NULL
         AND cpa.nrcpfcgc = tcp.nrcpfcgc
         AND tcp.nrcpfcgc = p_cpf_cgc
@@ -34,7 +34,7 @@ BEGIN
          --
          FOR ROWITEM IN c_colab(TO_NUMBER(TRIM(v_cpf_cnpj))) LOOP
             --
-            INSERT INTO tbcalris_tanque
+            INSERT INTO cecred.tbcalris_tanque
                  (nrcpfcgc, 
                   tpcooperado,
                   cdstatus,
