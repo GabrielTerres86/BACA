@@ -9,8 +9,8 @@ Declare
   vr_nrdrowid ROWID;
 
 
-  vc_dstransaSensbCRAPSLD             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSLD) por script - INC0299049';
-  vc_dstransaSensbCRAPSDA             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSDA) por script - INC0299049';
+  vc_dstransaSensbCRAPSLD             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSLD) por script - INC0299049_B';
+  vc_dstransaSensbCRAPSDA             CONSTANT VARCHAR2(4000) := 'Sensibilizacao do Saldo (CRAPSDA) por script - INC0299049_B';
   vc_dtinicioCRAPSDA                  CONSTANT DATE           := to_date('01/11/2023','dd/mm/yyyy');
 
   vr_erro_geralog EXCEPTION;
