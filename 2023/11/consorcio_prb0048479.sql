@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crapprg p
+  UPDATE CECRED.crapprg p
      SET p.nrsolici = 9658
         ,p.inlibprg = 2
    WHERE p.cdcooper = 3
