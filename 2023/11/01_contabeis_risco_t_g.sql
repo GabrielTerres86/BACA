@@ -16,6 +16,8 @@ DECLARE
   
 BEGIN
   
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
+  
   FOR rw_crapcop IN cr_crapcop LOOP
   
     CECRED.RISC0001_NOVA_CENTRAL.pc_risco_t(pr_cdcooper => rw_crapcop.cdcooper
