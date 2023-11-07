@@ -9,7 +9,7 @@ DECLARE
  vr_nrdrowid ROWID;
 
 
- vc_dstransa CONSTANT VARCHAR2(4000) := 'Alteração da situação da conta - INC0298458';
+ vc_dstransa CONSTANT VARCHAR2(4000) := 'Alteração da situação da conta - INC0298458,INC0298150,INC0298461,INC0298690';
  
  
  
