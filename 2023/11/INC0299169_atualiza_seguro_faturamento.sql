@@ -52,7 +52,7 @@ Begin
      SET dhseguro = SYSDATE
    WHERE nrproposta = pnrproposta;   
 
-  update crapseg s 
+  update cecred.crapseg s 
     set s.CDMOTCAN = null
   where s.NRCTRSEG = 1463380
     and s.NRDCONTA = 10378065
