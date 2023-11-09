@@ -88,7 +88,7 @@ BEGIN
   INTO vr_globalname
   FROM GLOBAL_NAME;
 
-  OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => 1);
+  OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => 6);
   FETCH cecred.btch0001.cr_crapdat INTO rw_crapdat;
   
   IF cecred.btch0001.cr_crapdat%NOTFOUND THEN
