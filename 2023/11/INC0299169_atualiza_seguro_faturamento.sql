@@ -50,8 +50,13 @@ Begin
 
   UPDATE cecred.tbseg_nrproposta
      SET dhseguro = SYSDATE
-   WHERE nrproposta = pnrproposta;
+   WHERE nrproposta = pnrproposta;   
 
-  commit;  
-  
+  update crapseg s 
+    set s.CDMOTCAN = null
+  where s.NRCTRSEG = 1463380
+    and s.NRDCONTA = 10378065
+    and CDCOOPER = 1;
+    
+  commit;    
 end;
