@@ -171,7 +171,7 @@ BEGIN
    END LOOP;
    
   
---  COMMIT;
+  COMMIT;
 
 EXCEPTION
   WHEN vr_erro_geralog THEN
