@@ -1,7 +1,6 @@
 Declare
   pnrproposta tbseg_nrproposta.NRPROPOSTA%type;
-Begin
-
+Begin 
   update cecred.crapseg s
      set s.CDMOTCAN = 4
    where s.NRDCONTA = 16871820
@@ -16,14 +15,8 @@ Begin
      and p.NRCTRSEG = 535071
      and p.NRCTREMP = 324226;
 
-  update cecred.crapseg s
-     set s.CDMOTCAN = 4
-   where s.NRDCONTA = 7298846
-     and s.CDCOOPER = 1
-     and s.NRCTRSEG = 696466;
-
   update cecred.tbseg_prestamista p
-     set p.TPREGIST = 0
+     set p.TPREGIST = 0   
    where p.NRDCONTA = 7298846
      and p.CDCOOPER = 1
      and p.NRPROPOSTA = '770349780976'
@@ -39,6 +32,7 @@ Begin
 
   update cecred.tbseg_prestamista p
      set p.NRPROPOSTA = pnrproposta
+   select p.NRPROPOSTA from tbseg_prestamista p    
    where p.NRDCONTA = 7298846
      and p.CDCOOPER = 1
      and p.NRCTRSEG = 1571215
@@ -47,6 +41,7 @@ Begin
 
   update cecred.crawseg w
      set w.NRPROPOSTA = pnrproposta
+    select w.NRPROPOSTA from crawseg w       
    where w.NRDCONTA = 7298846
      and w.CDCOOPER = 1
      and w.NRCTRSEG = 1571215
