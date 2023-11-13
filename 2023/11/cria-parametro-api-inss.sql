@@ -1,4 +1,9 @@
 BEGIN
+  DELETE crapprm
+   WHERE cdcooper = 0
+     AND cdacesso = 'ATIVO_CADASTRO_API_INSS';
+  COMMIT;
+    
   INSERT INTO crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
   VALUES
