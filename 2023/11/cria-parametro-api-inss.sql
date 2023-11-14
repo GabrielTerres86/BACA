@@ -1,0 +1,11 @@
+BEGIN
+  INSERT INTO cecred.crapprm
+    (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+  VALUES
+    ('CRED',
+     0,
+     'ATIVO_CADASTRO_API_INSS',
+     'Indica se o serviço via API INSS está ativo (S/N)',
+     'N');
+  COMMIT;
+END;
