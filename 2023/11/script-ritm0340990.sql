@@ -1,7 +1,7 @@
 DECLARE 
 
   vr_nmdireto    VARCHAR2(100);
-  vr_nmarquiv    VARCHAR2(50) := 'retorno-capitaç.csv';
+  vr_nmarquiv    VARCHAR2(50) := 'retorno-capital.csv';
   vr_input_file  UTL_FILE.FILE_TYPE;
   vr_setlinha    VARCHAR2(10000);
   vr_cdprograma   VARCHAR2(40) := 'BACA-DEVOLUCAO-CAPITAl';
