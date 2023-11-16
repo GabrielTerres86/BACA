@@ -72,7 +72,7 @@ Begin
                                    ||10104);
 
 
-          INSERT INTO craplci
+          INSERT INTO cecred.craplci
                      (cdcooper
                      ,dtmvtolt
                      ,cdagenci
@@ -99,7 +99,7 @@ Begin
                              pr_dsdchave => '16757874;14',
                              pr_flgdecre => 'N');  
 
-          INSERT INTO craplci
+          INSERT INTO cecred.craplci
                      (cdcooper
                      ,dtmvtolt
                      ,cdagenci
@@ -168,7 +168,7 @@ Begin
     end;    
   end loop;
   
-          INSERT INTO craplci
+          INSERT INTO cecred.craplci
                      (cdcooper
                      ,dtmvtolt
                      ,cdagenci
@@ -195,7 +195,7 @@ Begin
                              pr_dsdchave => '16290348;10',
                              pr_flgdecre => 'N');  
 
-          INSERT INTO craplci
+          INSERT INTO cecred.craplci
                      (cdcooper
                      ,dtmvtolt
                      ,cdagenci
