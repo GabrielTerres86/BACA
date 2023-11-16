@@ -1,5 +1,4 @@
 begin
-  
  insert into cecred.crapneg (nrdconta, nrseqdig, dtiniest, cdhisest, cdobserv, nrdctabb, nrdocmto, vlestour, qtdiaest, vllimcre, cdbanchq, cdtctant, cdagechq, cdtctatu, nrctachq, cdoperad, cdcooper, flgctitg, idseqttl) values (38156, fn_sequence('CRAPNEG','NRSEQDIG',14||';'||38156) , to_date('01/11/2023','dd/mm/yyyy'), 1, 12, 38156,1554, 500, 0 ,3000, 85, 0, 113, 0, 38156, '1', 14, 0, 0);
  insert into cecred.crapneg (nrdconta, nrseqdig, dtiniest, cdhisest, cdobserv, nrdctabb, nrdocmto, vlestour, qtdiaest, vllimcre, cdbanchq, cdtctant, cdagechq, cdtctatu, nrctachq, cdoperad, cdcooper, flgctitg, idseqttl) values (42919, fn_sequence('CRAPNEG','NRSEQDIG',14||';'||42919) , to_date('01/11/2023','dd/mm/yyyy'), 1, 12, 42919,582, 2000, 0 ,4000, 85, 0, 113, 0, 42919, '1', 14, 0, 0);
  insert into cecred.crapneg (nrdconta, nrseqdig, dtiniest, cdhisest, cdobserv, nrdctabb, nrdocmto, vlestour, qtdiaest, vllimcre, cdbanchq, cdtctant, cdagechq, cdtctatu, nrctachq, cdoperad, cdcooper, flgctitg, idseqttl) values (118753, fn_sequence('CRAPNEG','NRSEQDIG',13||';'||118753) , to_date('01/11/2023','dd/mm/yyyy'), 1, 12, 118753,230, 328, 0 ,1000, 85, 0, 112, 0, 118753, '1', 13, 0, 0);
@@ -145,7 +144,5 @@ begin
  insert into cecred.crapneg (nrdconta, nrseqdig, dtiniest, cdhisest, cdobserv, nrdctabb, nrdocmto, vlestour, qtdiaest, vllimcre, cdbanchq, cdtctant, cdagechq, cdtctatu, nrctachq, cdoperad, cdcooper, flgctitg, idseqttl) values (16813820, fn_sequence('CRAPNEG','NRSEQDIG',14||';'||16813820) , to_date('01/11/2023','dd/mm/yyyy'), 1, 12, 16813820,221, 331.98, 0 ,5000, 85, 0, 113, 0, 16813820, '1', 14, 0, 0);
  insert into cecred.crapneg (nrdconta, nrseqdig, dtiniest, cdhisest, cdobserv, nrdctabb, nrdocmto, vlestour, qtdiaest, vllimcre, cdbanchq, cdtctant, cdagechq, cdtctatu, nrctachq, cdoperad, cdcooper, flgctitg, idseqttl) values (16920732, fn_sequence('CRAPNEG','NRSEQDIG',1||';'||16920732) , to_date('01/11/2023','dd/mm/yyyy'), 1, 12, 16920732,108, 6900, 0 ,0, 85, 0, 101, 0, 16920732, '1', 1, 0, 0);
  insert into cecred.crapneg (nrdconta, nrseqdig, dtiniest, cdhisest, cdobserv, nrdctabb, nrdocmto, vlestour, qtdiaest, vllimcre, cdbanchq, cdtctant, cdagechq, cdtctatu, nrctachq, cdoperad, cdcooper, flgctitg, idseqttl) values (17316430, fn_sequence('CRAPNEG','NRSEQDIG',14||';'||17316430) , to_date('01/11/2023','dd/mm/yyyy'), 1, 12, 17316430,205, 10500, 0 ,0, 85, 0, 113, 0, 17316430, '1', 14, 0, 0);
-
 commit;
-
 end;
