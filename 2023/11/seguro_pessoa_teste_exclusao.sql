@@ -1,11 +1,9 @@
 begin
 delete
-  from crapseg p
- where p.progress_recid in (
-1476639,
-1480485,
-1485088
-);
+  from tbseg_prestamista p
+ where p.cdcooper = 1
+  and p.nrdconta = 90479998
+  and p.nrctrseg = 1555135;
 commit;
 end;
 /
