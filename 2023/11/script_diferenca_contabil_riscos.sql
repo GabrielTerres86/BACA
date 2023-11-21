@@ -661,9 +661,10 @@ BEGIN
   dbms_output.put_line('  ');
 
   vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '1;822525;2738;51,38;0;0|' ||
-                                                             '1;1237659;2719;3000,00;0;0|' 
+                                                             '1;1237659;2719;3000,00;0;0|' ||
+                                                             '1;1237659;2408;6000,00;0;0|' 
                                                 ,pr_delimit => '|');
-                                               
+                                                
   IF vr_conta.COUNT > 0 THEN
     FOR vr_idx_lst IN 1 .. vr_conta.COUNT - 1 LOOP
       vr_reg_conta := cecred.GENE0002.fn_quebra_string(pr_string  => vr_conta(vr_idx_lst),
