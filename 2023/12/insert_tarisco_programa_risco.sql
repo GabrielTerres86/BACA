@@ -9,5 +9,11 @@ BEGIN
   INSERT INTO GESTAODERISCO.TARISCO_PROGRAMA_RISCO (IDPROGRAMA_RISCO, NMPROGRAMA, DSOBJETIVO, TPPROGRAMA)
   VALUES (3, 'RELATORIOS-CONTABEIS', 'Rotinas responsaveis em gerar relatorios contabeis apos geração da central de risco', 3);
 
+  INSERT INTO GESTAODERISCO.TARISCO_PROGRAMA_RISCO (IDPROGRAMA_RISCO, NMPROGRAMA, DSOBJETIVO, TPPROGRAMA)
+  VALUES (4, 'ATUALIZA-PROVI-BNDES', 'Rotina que atualiza dados de provisao BNDES que eram feitos na crps280_i', 3);
+
+  INSERT INTO GESTAODERISCO.TARISCO_PROGRAMA_RISCO (IDPROGRAMA_RISCO, NMPROGRAMA, DSOBJETIVO, TPPROGRAMA)
+  VALUES (5, 'LIMPEZA-DIA-ANTERIOR', 'Rotina que expurga registros do antepenúltimo dia da central para manter o último dia + mensais na tabela', 4);
+
   COMMIT;
 END;
