@@ -26,6 +26,5 @@ BEGIN
  COMMIT;     
 EXCEPTION
   WHEN OTHERS THEN
-     DBMS_OUTPUT.put_line('Erro: '||sqlerrm);
- 
+     SISTEMA.excecaoInterna(pr_cdcooper => 3);
 END;
