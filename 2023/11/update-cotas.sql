@@ -1,6 +1,6 @@
 BEGIN
 
-  UPDATE crapprm
+  UPDATE cecred.crapprm
      SET dsvlrprm =  '15,2664,270,3665'
  WHERE nmsistem = 'CRED'
    AND cdcooper = 0
