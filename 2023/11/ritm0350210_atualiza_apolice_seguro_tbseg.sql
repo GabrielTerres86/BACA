@@ -127,7 +127,6 @@ DECLARE
         END LOOP;
       END LOOP;
       COMMIT;
-
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' COMMIT;');
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' END; ');
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,'/ ');
