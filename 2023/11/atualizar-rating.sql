@@ -79,25 +79,34 @@ BEGIN
                        ,pr_nrdconta => vr_vet_dados(2)
                        ,pr_nrctremp => vr_vet_dados(3));
         FETCH cr_crapris INTO rw_crapris;
+        IF cr_crapris%FOUND THEN
+          UPDATE cecred.tbrisco_operacoes a 
+             SET a.inrisco_rating = vr_vet_dados(4)
+           WHERE a.cdcooper = vr_vet_dados(1)
+             AND a.nrdconta = vr_vet_dados(2)
+             AND a.nrctremp = vr_vet_dados(3);
+          
+          gene0002.pc_escreve_xml(vr_dados_rollback
+                                 ,vr_texto_rollback
+                                 ,'UPDATE cecred.tbrisco_operacoes o' || chr(13) || 
+                                  '   SET o.inrisco_rating = ' || nvl(to_char(rw_crapris.inrisco_rating), 'null') || chr(13) || 
+                                  ' WHERE o.cdcooper = ' || vr_vet_dados(1) || chr(13) || 
+                                  '   AND o.nrdconta = ' || vr_vet_dados(2) || chr(13) || 
+                                  '   AND o.nrctremp = ' || vr_vet_dados(3) || 
+                                  ';' ||chr(13)||chr(13), FALSE); 
+        
+        ELSE
+          gene0002.pc_escreve_xml(vr_dados_rollback
+                                 ,vr_texto_rollback
+                                 ,'Contrato nao encontrado - cdcooper = ' || vr_vet_dados(1) ||
+                                  ' nrdconta = ' || vr_vet_dados(2) || 
+                                  ' nrctremp = ' || vr_vet_dados(3) || 
+                                  ';' ||chr(13)||chr(13), FALSE); 
+        END IF;
         CLOSE cr_crapris;
-        
-        UPDATE cecred.tbrisco_operacoes a 
-           SET a.inrisco_rating = vr_vet_dados(4)
-         WHERE a.cdcooper = vr_vet_dados(1)
-           AND a.nrdconta = vr_vet_dados(2)
-           AND a.nrctremp = vr_vet_dados(3);
-        
-        gene0002.pc_escreve_xml(vr_dados_rollback
-                               ,vr_texto_rollback
-                               ,'UPDATE cecred.tbrisco_operacoes o' || chr(13) || 
-                                '   SET o.inrisco_rating = ' || nvl(to_char(rw_crapris.inrisco_rating), 'null') || chr(13) || 
-                                ' WHERE o.cdcooper = ' || vr_vet_dados(1) || chr(13) || 
-                                '   AND o.nrdconta = ' || vr_vet_dados(2) || chr(13) || 
-                                '   AND o.nrctremp = ' || vr_vet_dados(3) || 
-                                ';' ||chr(13)||chr(13), FALSE); 
-        
-        END IF;        
-      END LOOP;
+          
+      END IF;        
+    END LOOP;
 
   EXCEPTION
     WHEN no_data_found THEN        
