@@ -12,9 +12,7 @@ update cecred.craptab
                    '#F0016748|0 0101_digit_9.ailos.coop.br;' ||
                    '#F0015395|0 0101_digit_9.ailos.coop.br;' ||
                    '#F0016218|0 0101_digit_9.ailos.coop.br;' ||
-                   '#F0016271|0 0101_digit_9.ailos.coop.br;' ||
-                   '#F0016837|0 0101_digit_9.ailos.coop.br;' ||
-                   '#F0016748|0 0101_digit_9.ailos.coop.br;' 
+                   '#F0016837|0 0101_digit_9.ailos.coop.br;'
            
 where UPPER(nmsistem) = 'CRED'
    and UPPER(tptabela) = 'GENERI'
