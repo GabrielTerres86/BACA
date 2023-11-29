@@ -1,29 +1,38 @@
 declare
-  vr_nrseqrdr cecred.CRAPACA.nrseqrdr%type;
+  vr_nrseqrdr cecred.crapaca.nrseqrdr%type;
 begin
-  INSERT INTO CECRED.CRAPRDR
-    (NMPROGRA, DTSOLICI)
-  VALUES
-    ('VAN', SYSDATE)
+  insert into cecred.craprdr
+    (nmprogra, dtsolici)
+  values
+    ('VAN', sysdate)
   returning nrseqrdr into vr_nrseqrdr;
 
-  INSERT INTO CECRED.crapaca
-    (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  VALUES
-    ('INSERIRADESAOVAN',
+  insert into cecred.crapaca
+    (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+  values
+    ('INSERIRADESAOVANXML',
      null,
-     'PAGAMENTO.inserirAdesaoVan',
+     'pagamento.inserirAdesaoVanXml',
      'pr_cdcooperativa,pr_nrconta_corrente,pr_cdproduto',
      vr_nrseqrdr);
 
-  INSERT INTO CECRED.crapaca
-    (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  insert into cecred.crapaca
+    (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
   values
-    ('CANCELARADESAOVAN',
+    ('CANCELARADESAOVANXML',
      null,
-     'PAGAMENTO.cancelarAdesaoVan',
+     'pagamento.cancelarAdesaoVanXml',
      'pr_cdcooperativa,pr_nrconta_corrente,pr_cdproduto',
      vr_nrseqrdr);
+     
+  insert into cecred.crapaca
+    (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+  values
+    ('VALIDARADESAOVANXML',
+     null,
+     'pagamento.validarAdesaoVanXml',
+     'pr_cdcooperativa,pr_nrconta_corrente,pr_cdproduto',
+     vr_nrseqrdr);     
 
   commit;
 exception
