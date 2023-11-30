@@ -435,4 +435,3 @@ EXCEPTION
     CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq, vr_dscritic);
     ROLLBACK;
 END;
-/
