@@ -44,14 +44,6 @@ BEGIN
    
   COMMIT; 
   
-  BEGIN
-    sys.dbms_scheduler.drop_job(job_name => 'CECRED.JBCONTAB_PROCESSA_CONTABIL');
-  EXCEPTION
-    WHEN OTHERS THEN
-      DBMS_OUTPUT.put_line('Erro no drop JBCONTAB_PROCESSA_CONTABIL: ' || SQLERRM);
-  END;
-  
-  COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
