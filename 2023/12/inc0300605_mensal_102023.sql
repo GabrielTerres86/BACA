@@ -17,13 +17,15 @@ DECLARE
   TYPE t_dados_tab IS TABLE OF dados_typ;
   v_dados t_dados_tab := t_dados_tab();
 
-  CURSOR cr_crapass(pr_cdcooper IN cecred.crapass.cdcooper%TYPE
-                   ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE) IS
+  CURSOR cr_crapepr(pr_cdcooper IN cecred.crapepr.cdcooper%TYPE
+                   ,pr_nrdconta IN cecred.crapepr.nrdconta%TYPE
+				   ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
     SELECT ass.cdagenci
-      FROM cecred.crapass ass
+      FROM cecred.crapepr ass
      WHERE ass.cdcooper = pr_cdcooper
-       AND ass.nrdconta = pr_nrdconta;
-  rw_crapass cr_crapass%ROWTYPE;
+       AND ass.nrdconta = pr_nrdconta
+       AND ass.nrctremp = pr_nrctremp;
+  rw_crapepr cr_crapepr%ROWTYPE;
 
 BEGIN
 
@@ -1882,17 +1884,17 @@ BEGIN
       INTO rw_crapdat;
     CLOSE cecred.btch0001.cr_crapdat;
 
-    OPEN cr_crapass(pr_cdcooper => v_dados(x).vr_cdcooper, pr_nrdconta => v_dados(x).vr_nrdconta);
-    FETCH cr_crapass
-      INTO rw_crapass;
-    CLOSE cr_crapass;
+    OPEN cr_crapepr(pr_cdcooper => v_dados(x).vr_cdcooper, pr_nrdconta => v_dados(x).vr_nrdconta, pr_nrctremp => v_dados(x).vr_nrctremp);
+    FETCH cr_crapepr
+      INTO rw_crapepr;
+    CLOSE cr_crapepr;
 
     cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => v_dados(x).vr_cdcooper,
                                            pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                                           pr_cdagenci => rw_crapass.cdagenci,
+                                           pr_cdagenci => rw_crapepr.cdagenci,
                                            pr_cdbccxlt => 100,
                                            pr_cdoperad => 1,
-                                           pr_cdpactra => rw_crapass.cdagenci,
+                                           pr_cdpactra => rw_crapepr.cdagenci,
                                            pr_tplotmov => 5,
                                            pr_nrdolote => 600031,
                                            pr_nrdconta => v_dados(x).vr_nrdconta,
