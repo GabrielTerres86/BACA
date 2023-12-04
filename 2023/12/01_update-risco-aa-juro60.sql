@@ -1,4 +1,6 @@
 BEGIN
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
+  
   UPDATE gestaoderisco.tbrisco_crapris t
      SET t.innivris = 2
    WHERE t.cdcooper = 1
