@@ -1,21 +1,10 @@
--- Script reducao de limite de credito
-/*
--- Verificar antes de executar
-   - Caminho dos arquivos a serem utilizados no ambiente correto
-   - Arquivo de LOG e ROLLBACK precisam existir e ter chmod777
-   - Variaveis do Vetor da carga do arquivo
-*/
-
 DECLARE
-
-  -- Variaveis auxiliares
-  /*########################*/
+  
   vr_aux_ambiente INTEGER       := 2;                -- Em qual ambiente rodar: 1=Local, 2=Test, 3=Producao
   vr_aux_diretor  VARCHAR2(100) := 'RITM0348517';    -- Usar numero do chamado para nomear diretorio
   vr_aux_arquivo  VARCHAR2(100) := 'contas_reducao'; -- Nome do arquivo
   vr_aux_cdcooper NUMBER        := 2;                --Acredicoop
-  /*########################*/
-  
+    
   -- Variável de críticas
   vr_cdcritic crapcri.cdcritic%TYPE;
   vr_dscritic crapcri.dscritic%TYPE;
@@ -44,7 +33,7 @@ DECLARE
   vr_des_reto       VARCHAR2(3);
   vr_tab_erro       GENE0001.typ_tab_erro;
  
-  /***Campos do arquivo***/
+
   --Conta
   --Limite novo 
   
@@ -72,8 +61,6 @@ DECLARE
     rw_craplim cr_craplim%ROWTYPE;
 
 BEGIN 
-  
---##################################################################################### 
   -- Definir em qual ambiente ira buscar os arquivos para leitura/escrita
   IF vr_aux_ambiente = 1 THEN --LOCAL      
     vr_nmarq_carga    := '/progress/t0035419/micros/script_renovacao/'|| vr_aux_diretor ||'/'|| vr_aux_arquivo ||'.csv';           -- Arquivo a ser lido
@@ -91,10 +78,9 @@ BEGIN
     vr_dscritic := 'Erro ao apontar ambiente de execucao.';
     RAISE vr_exc_erro;
   END IF;
---##################################################################################### 
+
 
       
---##################################################################################### 
       -- Leitura do arquivo com registros
       GENE0001.pc_abre_arquivo(pr_nmcaminh => vr_nmarq_carga
                               ,pr_tipabert => 'R'
@@ -167,12 +153,7 @@ BEGIN
             RAISE vr_exc_erro;
         END;
       END LOOP; -- Fim loop de leitura do arquivo     
---#####################################################################################
       
-
- 
-
---#####################################################################################     
       -- Escrever cabecalho do arquivo de LOG 
       gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
                                     ,pr_des_text => 'Coop;Conta;Contrato;Critica');
@@ -185,10 +166,8 @@ BEGIN
       if vr_des_erro is not null then
         vr_dscritic := 'Erro ao abrir arquivo de ROLLBACK: ' || vr_des_erro;
         RAISE vr_exc_erro;
-      end if;          
---#####################################################################################                                         
-  
-  
+      end if;                                               
+ 
       FOR vr_idx1 IN vr_tab_carga.first .. vr_tab_carga.last LOOP
           IF vr_tab_carga.exists(vr_idx1) THEN 
 
@@ -238,9 +217,7 @@ BEGIN
                   -- Verificar se a reducao do limite vai deixar a conta com limite disponivel negativo
                   IF  vr_tab_sald(0).vllimcre > 0 AND 
                      (vr_tab_sald(0).vlsddisp + vr_tab_carga(vr_idx1).vllimite) >= 0 THEN
-                      
-                          
-                      --#######   
+                                                                     
                           BEGIN
                             UPDATE craplim SET
                                    vllimite = vr_tab_carga(vr_idx1).vllimite
@@ -268,8 +245,7 @@ BEGIN
                                                                         ||'   AND nrctrlim = '||rw_craplim.nrctrlim
                                                                         ||'   AND insitlim = 2'
                                                                         ||'   AND tpctrlim = 1;' -- Limite Credito        
-                                                                         );
-                      --#######                                                   
+                                                                         );                                                                        
                           BEGIN
                             UPDATE crawlim SET
                                    vllimite = vr_tab_carga(vr_idx1).vllimite
@@ -297,8 +273,7 @@ BEGIN
                                                                         ||'   AND insitlim = 2;'     
                                                                          );                                               
                           
-                          
-                          --#######                                                   
+                                                                                                      
                           BEGIN
                             UPDATE crapass SET
                                    vllimcre = vr_tab_carga(vr_idx1).vllimite
@@ -340,9 +315,7 @@ BEGIN
 
           END IF;
       END LOOP;
-  
-      
- --#####################################################################################
+        
       -- Fechar arquivo de Rollback e log 
       
       -- Escrever horario do arquivo de LOG 
@@ -353,9 +326,7 @@ BEGIN
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle);
           
       gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);              
---#####################################################################################       
-      
-      
+                 
       
 EXCEPTION
     
