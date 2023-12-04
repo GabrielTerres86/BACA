@@ -5,8 +5,8 @@ BEGIN
      AND c.nrdocmto IN (47, 44);
 
   UPDATE cecred.crapcob c
-     SET c.vltitulo = 2
-   WHERE c.nrdconta = 84606444
+     SET c.vltitulo = 4
+   WHERE c.nrdconta = 82475920
      AND c.nrdocmto IN (13, 14);
 
   COMMIT;
