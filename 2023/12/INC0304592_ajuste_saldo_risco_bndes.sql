@@ -24,7 +24,7 @@ DECLARE
     SELECT c.cdcooper
       FROM cecred.crapcop c
      WHERE c.flgativo = 1
-       AND c.cdcooper IN (1,13);
+       AND c.cdcooper IN (1,13,14);
   rw_crapcop cr_crapcop%ROWTYPE;
   
   CURSOR cr_contratos_bndes(pr_cdcooper IN cecred.crapris.cdcooper%TYPE
@@ -73,7 +73,7 @@ DECLARE
        AND r.cdcooper = pr_cdcooper
        AND r.dtrefere = pr_dtrefere
        AND r.dsinfaux = 'BNDES'
-       AND (r.nrdconta,r.nrctremp) IN ((3855821,7525591),(323675,325571));
+       AND (r.nrdconta,r.nrctremp) IN ((3855821,7525591),(323675,325571),(16034945,2625171));
   rw_contratos_bndes cr_contratos_bndes%ROWTYPE;
   
 BEGIN
