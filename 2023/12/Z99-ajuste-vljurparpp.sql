@@ -28,6 +28,10 @@ DECLARE
        AND r.vljurparpp <> j.vljurparpp;
   rw_principal cr_principal%ROWTYPE;
 BEGIN
+  
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = '',.''';
+  
   FOR rw_crapcop IN cr_crapcop LOOP
     FOR rw_principal IN cr_principal(pr_cdcooper => rw_crapcop.cdcooper
                                     ,pr_dtrefere => vr_dtrefere) LOOP
