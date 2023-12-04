@@ -1,5 +1,5 @@
 DECLARE
-  vr_dtrefere CECRED.crapdat.dtmvtolt%TYPE := to_date('31/10/2023', 'DD/MM/RRRR');
+  vr_dtrefere CECRED.crapdat.dtmvtolt%TYPE := to_date('30/11/2023', 'DD/MM/RRRR');
   
   CURSOR cr_crapcop IS
     SELECT cdcooper
