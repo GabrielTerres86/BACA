@@ -7,13 +7,6 @@ DECLARE
   vr_incrineg    INTEGER;
   vr_exc_saida   EXCEPTION;
   rw_crapdat     datasCooperativa;
-  
-  cursor cr_lancamentos_adp is
-    select idhistorico_juros_adp 
-      from gestaoderisco.tbcc_historico_juros_adp his 
-     where his.cdcooper = vr_cdcooper 
-       and his.nrdconta = vr_nrdconta
-       and his.dtmvtolt = rw_crapdat.dtmvtoan;
     
 BEGIN
   rw_crapdat := datasCooperativa(pr_cdcooper => vr_cdcooper);
@@ -25,9 +18,9 @@ BEGIN
                                      pr_cdbccxlt    => 100,
                                      pr_nrdolote    => 8450,
                                      pr_nrseqdig    => 1,
-                                     pr_nrdocmto    => 99992,
+                                     pr_nrdocmto    => 99991,
                                      pr_nrdconta    => vr_nrdconta,
-                                     pr_cdhistor    => 2952,
+                                     pr_cdhistor    => 1667,
                                      pr_vllanmto    => 56.92,
                                      pr_cdpesqbb    => 'Estorno historico 37 ref. 07/2023', 
                                      pr_cdoperad    => 1,
@@ -49,7 +42,7 @@ BEGIN
                                      pr_nrseqdig    => 2,
                                      pr_nrdocmto    => 99992,
                                      pr_nrdconta    => vr_nrdconta,
-                                     pr_cdhistor    => 2952,
+                                     pr_cdhistor    => 1667,
                                      pr_vllanmto    => 65.45,
                                      pr_cdpesqbb    => 'Estorno historico 37 ref. 08/2023', 
                                      pr_cdoperad    => 1,
@@ -69,9 +62,9 @@ BEGIN
                                      pr_cdbccxlt    => 100,
                                      pr_nrdolote    => 8450,
                                      pr_nrseqdig    => 3,
-                                     pr_nrdocmto    => 99992,
+                                     pr_nrdocmto    => 99993,
                                      pr_nrdconta    => vr_nrdconta,
-                                     pr_cdhistor    => 2952,
+                                     pr_cdhistor    => 1667,
                                      pr_vllanmto    => 28.46,
                                      pr_cdpesqbb    => 'Estorno historico 37 ref. 09/2023', 
                                      pr_cdoperad    => 1,
@@ -129,5 +122,6 @@ EXCEPTION
   WHEN vr_exc_saida THEN
     ROLLBACK;
   WHEN OTHERS THEN
+    dbms_output.put_line(sqlerrm);
     ROLLBACK;
 END;
