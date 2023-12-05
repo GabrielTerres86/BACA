@@ -1,6 +1,6 @@
 DECLARE
   vr_cdcooper    crapcop.cdcooper%TYPE := 1;
-  vr_nrdconta    crapass.nrdconta%TYPE := 89505832; --prod conta 10494103
+  vr_nrdconta    crapass.nrdconta%TYPE := 89505832;
   vr_cdcritic    crapcri.cdcritic%TYPE;
   vr_dscritic    crapcri.dscritic%TYPE;
   vr_tab_retorno LANC0001.typ_reg_retorno;
@@ -18,7 +18,7 @@ DECLARE
 BEGIN
   rw_crapdat := datasCooperativa(pr_cdcooper => vr_cdcooper);
   
-  --LANCAMENTOS NAO PRODUCAO - AMBIENTE TEST
+
   LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => vr_cdcooper,
                                      pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                      pr_cdagenci    => 1,
