@@ -36,7 +36,7 @@ DECLARE
        AND d.idseqttl = 1
        AND d.tpendass = 10
        AND ((c.dtcancel IS NULL  
-       AND p.tpregist IN (1,3)) or (p.tpregist = 0 and p.nrctrseg in (360458,360459)))
+       AND p.tpregist IN (1,3)) or (p.tpregist = 0 and p.nrctrseg in (360458,360459,1477550,1477551,1477552,1477553)))
        AND NOT EXISTS ( SELECT 0 
                           FROM CECRED.crawseg w 
                          WHERE w.cdcooper = p.cdcooper 
