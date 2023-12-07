@@ -146,7 +146,7 @@ BEGIN
       raise vr_exc_saida;
     end if;
     
-    update crapsld sld 
+    update cecred.crapsld sld 
        set sld.vliofmes = 0
      where sld.cdcooper = vr_cdcooper
        and sld.nrdconta = vr_nrdconta;
