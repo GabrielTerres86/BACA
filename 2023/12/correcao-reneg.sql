@@ -18,7 +18,7 @@ BEGIN
     AND a.nrctremp IN (5755532,5755555); 
     
   UPDATE cecred.tbepr_renegociacao a 
-  SET a.dtlibera = '04/12/2023'
+  SET a.dtlibera = TO_DATE('04/12/2023','DD/MM/YYYY')
   WHERE a.cdcooper = vr_cdcooper 
     AND a.nrdconta = vr_nrdconta
     AND a.nrctremp = 7651259; 
