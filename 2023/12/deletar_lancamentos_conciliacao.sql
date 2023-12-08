@@ -1,7 +1,8 @@
  begin
    delete from craplcm a
-    where a.progress_recid in
-          (2094764913);
+   WHERE cdcooper = 8
+   AND nrdconta = 99939673
+   and cdhistor in (2937,2936,2967,2969);
    commit;
  
  end;
