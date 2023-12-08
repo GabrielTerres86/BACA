@@ -1,10 +1,7 @@
-BEGIN
+ begin
+   delete from craplcm a
+    where a.progress_recid in
+          (2094766199, 2094766200, 2094764905, 2094764904);
+   commit;
  
-  DELETE FROM craplcm
-   WHERE cdcooper = 3  
-     AND nrdconta = 99999862  
-     AND dtmvtolt = to_date('05/12/2023', 'dd/mm/yyyy')  
-     AND nrdocmto > 21950;
-    COMMIT;
- 
-END;
+ end;
