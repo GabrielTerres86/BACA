@@ -1,6 +1,6 @@
 DECLARE 
   vr_nrdrowid        ROWID;
-  vr_nmprograma      CECRED.tbgen_prglog.cdprograma%TYPE := 'Remover Progamas Batch - RITM745552'; 
+  vr_nmprograma      CECRED.tbgen_prglog.cdprograma%TYPE := 'Remover Progamas Batch - RITM0353034'; 
   vr_next_nrordprg   CECRED.crapprg.nrordprg%TYPE := 0;
    
   CURSOR cr_crapprg IS
@@ -39,7 +39,7 @@ BEGIN
                                ,pr_dttransa => TRUNC(SYSDATE)
                                ,pr_flgtrans => 1
                                ,pr_hrtransa => CECRED.GENE0002.fn_busca_time
-                               ,pr_nmdatela => 'RITM745552'
+                               ,pr_nmdatela => 'RITM0353034'
                                ,pr_nrdrowid => vr_nrdrowid);
                   
     CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
