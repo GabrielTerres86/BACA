@@ -25,7 +25,7 @@ BEGIN
                                      pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                      pr_cdagenci    => 1,
                                      pr_cdbccxlt    => 100,
-                                     pr_nrdolote    => 1475,
+                                     pr_nrdolote    => 1473,
                                      pr_nrdocmto    => 180,
                                      pr_nrdconta    => 10791540,
                                      pr_cdhistor    => 2670,
