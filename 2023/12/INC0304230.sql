@@ -8,7 +8,7 @@ DECLARE
   vr_vldcotasGeral       cecred.crapcot.vldcotas%type;
   vr_dtmvtolt            cecred.crapdat.dtmvtolt%type;
   vr_arq_path            VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/INC0304230';
-  vr_nmarquiv            VARCHAR2(100) := 'contas_viacredi_PROD.txt';
+  vr_nmarquiv            VARCHAR2(100) := 'contas_viacrediav_PROD.txt';
   vr_nmarqbkp            VARCHAR2(100) := 'INC0304230_script_rollback_test.sql';
   vr_nmarqcri            VARCHAR2(100) := 'INC0304230_script_log_test.txt';
   
