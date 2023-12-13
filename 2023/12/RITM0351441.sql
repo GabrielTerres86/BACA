@@ -271,10 +271,12 @@ BEGIN
           pc_escreve_xml_critica('Erro ao encontrar cooperativa e conta ' || vr_dstxtlid  || chr(10));
         END IF;               
         
-        TrocaPA(vr_cdcooper
-               ,vr_nrdconta
-               ,vr_cdagenew
-               ,vr_dscriticGeral);
+		if vr_cdagenew is not null then
+           TrocaPA(vr_cdcooper
+                  ,vr_nrdconta
+                  ,vr_cdagenew
+                  ,vr_dscriticGeral);
+		end if;
                     
         IF TRIM(vr_dscriticGeral) IS NOT NULL THEN
            pc_escreve_xml_critica('Não foi possível efetuar a troca do PA (' || vr_cdcooper || '/' || vr_nrdconta || '). ' || vr_dscriticGeral);
