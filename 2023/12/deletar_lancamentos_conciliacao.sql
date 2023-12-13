@@ -1,8 +1,15 @@
- begin
+begin
    delete from craplcm a
-   WHERE a.cdcooper = 8
-   AND a.nrdconta = 99969505
-   and a.cdpesqbb = '000092435138;000000009999888;00000045;991172';
+   WHERE cdcooper = 8
+   AND nrdconta in (99968258, 99969505)
+   and cdhistor in (2937,2936,2967,2969);
    commit;
- 
+ end;
+
+  begin
+   delete from craplcm a
+   WHERE cdcooper = 3
+   AND nrdconta in (99999862)
+   and a.dtmvtolt >to_date('10/12/2023', 'dd/mm/yyyy')
+   commit;
  end;
