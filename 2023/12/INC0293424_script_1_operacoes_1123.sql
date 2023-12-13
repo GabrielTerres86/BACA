@@ -13,7 +13,7 @@ DECLARE
   vr_campo                GENE0002.typ_split;
 
   vr_texto_padrao         VARCHAR2(800);
-  vr_nrctremp             crapepr.nrctremp%TYPE;
+  vr_nrctremp             cecred.crapepr.nrctremp%TYPE;
 
   TYPE typ_tab_idexterno  IS TABLE OF NUMBER INDEX BY VARCHAR2(15);
 
@@ -27,7 +27,7 @@ DECLARE
           ,epr.cdfinemp
           ,epr.cdlcremp
           ,peac.idpeac_contrato
-      FROM crapepr epr,
+      FROM cecred.crapepr epr,
            credito.tbcred_peac_contrato peac
      WHERE epr.cdlcremp IN (4600, 5600, 508)
        AND epr.cdcooper = peac.cdcooper (+)
