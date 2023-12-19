@@ -1,5 +1,7 @@
 begin
-     delete from craplcm a
-     WHERE NRDCONTA = 99966409 AND CDPESQBB = '000092436686;991828;000000009999888;00000013';
+   delete from craplcm 
+WHERE cdcooper = 3
+   AND nrdconta = 99999862
+   AND dtmvtolt = to_date('19/12/2023', 'dd/mm/yyyy');
    commit;
  end;
