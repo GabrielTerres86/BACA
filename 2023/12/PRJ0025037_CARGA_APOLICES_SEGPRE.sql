@@ -16,11 +16,10 @@ DECLARE
       FROM cecred.crapcop c
      WHERE c.flgativo = 1      
        AND c.cdcooper <> 3
+       AND c.cdcooper = 14
     ORDER BY c.cdcooper; 
   
 BEGIN
-
-  DELETE FROM CECRED.tbseg_parametros_prst where idseqpar = 1000;
 
   FOR rw_crapcop IN cr_crapcop LOOP
 
@@ -94,13 +93,13 @@ BEGIN
        rw_tbseg_parametros_prst.idadedps,
        0.30380,
        1,
-       TO_DATE('27/11/2023', 'dd/mm/yyyy'),
-       TO_DATE('27/11/2024', 'dd/mm/yyyy'),
+       TO_DATE('01/11/2023', 'dd/mm/yyyy'),
+       TO_DATE('01/11/2054', 'dd/mm/yyyy'),
        rw_tbseg_parametros_prst.lminsoci,
-       rw_tbseg_parametros_prst.dtctrmista); 
+       TO_DATE('01/11/2023', 'dd/mm/yyyy')); 
 
     UPDATE cecred.tbseg_parametros_prst p
-       SET p.dtfimvigencia = to_date('26/11/2023','dd/mm/yyyy')
+       SET p.dtfimvigencia = to_date('31/10/2023','dd/mm/yyyy')
      WHERE p.idseqpar = rw_tbseg_parametros_prst.idseqpar;
 
     INSERT INTO cecred.tbseg_param_prst_cap_seg
