@@ -66,6 +66,14 @@ BEGIN
   v_dados(v_dados.last()).vr_nrctremp := 350358;
   v_dados(v_dados.last()).vr_vllanmto := 422.23;
   v_dados(v_dados.last()).vr_cdhistor := 3918;
+  v_dados(v_dados.last()).vr_nrparepr := 0;  
+  
+  v_dados.extend();
+  v_dados(v_dados.last()).vr_cdcooper := 12;
+  v_dados(v_dados.last()).vr_nrdconta := 197394;
+  v_dados(v_dados.last()).vr_nrctremp := 70441;
+  v_dados(v_dados.last()).vr_vllanmto := 9776.22;
+  v_dados(v_dados.last()).vr_cdhistor := 3918;
   v_dados(v_dados.last()).vr_nrparepr := 0; 
   
   FOR x IN NVL(v_dados.first(), 1) .. nvl(v_dados.last(), 0) LOOP
