@@ -7,7 +7,7 @@ DECLARE
   vr_cdagenew            number;
   vr_vldcotasGeral       cecred.crapcot.vldcotas%type;
   vr_dtmvtolt            cecred.crapdat.dtmvtolt%type;
-  vr_arq_path            VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/RITM0356352_viacredi';
+  vr_arq_path            VARCHAR2(1000):= cecred.gene0001.fn_param_sistema('CRED',0,'ROOT_MICROS') || 'cpd/bacas/RITM0356352';
   vr_nmarquiv            VARCHAR2(100) := 'contas_viacredi_PROD.txt';
   vr_nmarqbkp            VARCHAR2(100) := 'RITM0356352_viacredi_script_rollback.sql';
   vr_nmarqcri            VARCHAR2(100) := 'RITM0356352_viacredi_script_log.txt';
