@@ -10,6 +10,7 @@ DECLARE
   vr_cdcritic       crapcri.cdcritic%TYPE;
   vr_dscritic       crapcri.dscritic%TYPE;
   vr_vlslddia_preju NUMBER;
+  vr_rowidlog       VARCHAR2(100);
 
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                     
@@ -871,6 +872,8 @@ BEGIN
     
     END IF;
   
+    vr_vlslddia_preju := 0;
+  
     pc_retorna_lancamentos_prej(pr_cdcooper       => i.cdcooper,
                                 pr_nrdconta       => i.nrdconta,
                                 pr_dtiniper       => rw_crapdat.dtmvtolt,
@@ -898,6 +901,7 @@ BEGIN
       END IF;
     
     END IF;
+  
     pc_reabrir_conta_corrente(pr_cdcooper => i.cdcooper,
                               pr_nrdconta => i.nrdconta,
                               pr_dtprejuz => rw_crapdat.dtmvtolt,
@@ -938,6 +942,19 @@ BEGIN
       END IF;
     
     END IF;
+  
+    gene0001.pc_gera_log(pr_cdcooper => i.cdcooper,
+                         pr_cdoperad => 1,
+                         pr_dscritic => ' ',
+                         pr_dsorigem => gene0001.vr_vet_des_origens(7),
+                         pr_dstransa => 'Desfazer efetivacao de prejuizo de conta corrente realizado no dia 19/12/2023',
+                         pr_dttransa => trunc(SYSDATE),
+                         pr_flgtrans => 1,
+                         pr_hrtransa => to_char(SYSDATE, 'SSSSS'),
+                         pr_idseqttl => 1,
+                         pr_nmdatela => 'PREJUIZO',
+                         pr_nrdconta => i.nrdconta,
+                         pr_nrdrowid => vr_rowidlog);
   
   END LOOP;
 
