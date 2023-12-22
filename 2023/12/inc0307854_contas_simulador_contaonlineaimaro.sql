@@ -2,7 +2,7 @@ DECLARE
 
 BEGIN
 
-  -- CRAPASS
+
 insert into CRAPASS (INDNIVEL, NRDCONTA, CDAGENCI, NRCADAST, NMPRIMTL, DTNASCTL, XXX_DSNACION, DSPROFTL, DTADMISS, DTDEMISS, NRCPFCGC, DTULTALT, TPDOCPTL, NRDOCPTL, CDSEXOTL, DSFILIAC, DTADMEMP, CDTURNOS, NRRAMEMP, NRCTACTO, CDTIPSFX, CDDSENHA, CDSECEXT, CDSITDCT, CDSITDTL, CDSRCHEQ, CDTIPCTA, DTABTCCT, DTASITCT, DTATIPCT, DTCNSSPC, DTDSDSPC, INADIMPL, INEDVMTO, INLBACEN, NRFLCHEQ, QTEXTMES, VLLIMCRE, XXX_DSREGCAS, XXX_NMSEGNTL, XXX_TPDOCSTL, XXX_NRDOCSTL, XXX_CDGRAUPR, XXX_CDDSECAO, DTULTLCR, INPESSOA, INMATRIC, INISIPMF, TPLIMCRE, XXX_DTNASSTL, XXX_DSFILSTL, XXX_NRCPFSTL, DTELIMIN, VLEDVMTO, DTEDVMTO, QTFOLMES, TPEXTCTA, XXX_CDOEDPTL, XXX_CDOEDSTL, XXX_CDOEDRSP, CDUFDPTL, XXX_CDUFDSTL, XXX_CDUFDRSP, XXX_NMRESPON, XXX_INHABMEN, XXX_NRCPFRSP, XXX_NRDOCRSP, XXX_TPDOCRSP, XXX_DTEMDSTL, DTEMDPTL, XXX_DTEMDRSP, XXX_QTDEPEND, XXX_DSENDCOL, TPAVSDEB, INISCPMF, NRCTAPRP, XXX_CDOEDTTL, XXX_CDUFDTTL, XXX_DSFILTTL, XXX_DTNASTTL, XXX_NMTERTL, XXX_NRCPFTTL, XXX_NRDOCTTL, XXX_TPDOCTTL, XXX_DTEMDTTL, TPVINCUL, XXX_NRFONEMP, DTCNSCPF, CDSITCPF, XXX_NMPAITTL, XXX_NMPAISTL, NMPAIPTL, XXX_NMMAETTL, XXX_NMMAESTL, NMMAEPTL, INCCFCOP, DTCCFCOP, INDRISCO, INARQCBR, XXX_DSDEMAIL, QTFOLTAL, NRDCTITG, FLCHQITG, FLGCTITG, DTABCITG, NRCTAINV, CDOPERAT, FLGATRAT, DTATURAT, VLUTLRAT, FLGIDDEP, DTLIMDEB, CDCOOPER, VLLIMDEB, CDMOTDEM, FLGDBITG, DSNIVRIS, DTECTITG, CDOPEDEM, DTMVTOLT, CDBANTRF, CDAGETRF, NRCTATRF, DTMVCITG, DTCNSSCR, NRCPFPPT, DTDEVQST, DTENTQST, CDBCOCHQ, DTCADQST, NRNOTATL, INRISCTL, DTRISCTL, FLGRESTR, NRCTACNS, NREMPCRD, FLGCRDPA, CDOPLCPA, INCADPOS, FLGRENLI, CDCLCNAE, NMTTLRFB, INCONRFB, HRINICAD, HRFIMCAD, INDSERMA, CDCONSUL, IDASTCJT, IDIMPRTR, INSERASA, CDOPEORI, CDAGEORI, DTINSORI, DTDSCORE, DSDSCORE, QTMINAST, FLMAJORA, DSMOTMAJ, CDOPEMAJ, CDNACION, IDORGEXP, INTIPSAI, ININCTVA, FLBLQTAL, CDCATEGO, FLCNAULC, NRCPFCNPJ_BASE, INPREJUZ, CDVINCULACAO, CDSITDCT_ORIGINAL, FLPERMITECREDITO_DIGITAL, DTBLOQCREDITO_DIGITAL, FLEXTRATO_UNIFICADO_PIX)
 values (3, 15352927, 1, 0, 'ALLANA CARDOSO', to_date('04-10-1989', 'dd-mm-yyyy'), ' ', ' ', to_date('23-08-2022', 'dd-mm-yyyy'), null, 81560047000101, to_date('23-08-2022', 'dd-mm-yyyy'), ' ', ' ', 0, ' ', null, 0, 0, 0, 1, ' ', 999, 1, 1, ' ', 19, to_date('23-08-2022', 'dd-mm-yyyy'), null, null, null, null, 0, 0, 0, 0, 0, 0.00, ' ', ' ', ' ', ' ', 0, 0, null, 2, 1, 0, 0, null, ' ', 0, null, 0.00, null, 0, 0, ' ', ' ', ' ', ' ', ' ', ' ', ' ', 0, 0, ' ', ' ', null, null, null, 0, ' ', 0, 0, 0, ' ', ' ', ' ', null, ' ', 0, ' ', ' ', null, ' ', ' ', to_date('08-02-2022', 'dd-mm-yyyy'), 9, ' ', ' ', ' ', ' ', ' ', ' ', 0, null, ' ', 0, ' ', 10, ' ', 0, 3, null, 615352928, ' ', 0, null, 0.00, 0, null, 1, 0.00, 0, 3, ' ', null, ' ', to_date('23-08-2022', 'dd-mm-yyyy'), 0, 0, 0.00, null, null, 0, null, null, 85, null, 0.00, ' ', null, 0, 0, 0, 0, ' ', 2, 1, 4930202, 'MAYA NASCIMENTO', 0, 52466, 0, 0, 0, 0, 0, 0, 'f0032989', 1, to_date('26-09-2022', 'dd-mm-yyyy'), null, ' ', 2, 1, ' ', ' ', 0, 0, 0, 0, 0, 1, 1, 81560047, 0, null, 0, 1, null, 1);
 
@@ -43,7 +43,7 @@ insert into CRAPASS (INDNIVEL, NRDCONTA, CDAGENCI, NRCADAST, NMPRIMTL, DTNASCTL,
 values (3, 1070274, 1, 0, 'FELIPE PEREIRA', to_date('04-12-2002', 'dd-mm-yyyy'), ' ', ' ', to_date('22-09-2022', 'dd-mm-yyyy'), null, 5463212000129, to_date('23-09-2022', 'dd-mm-yyyy'), ' ', ' ', 0, ' ', null, 0, 0, 0, 1, ' ', 999, 1, 1, ' ', 19, to_date('22-09-2022', 'dd-mm-yyyy'), null, null, null, null, 0, 0, 0, 0, 0, 0.00, ' ', ' ', ' ', ' ', 0, 0, null, 2, 1, 0, 0, null, ' ', 0, null, 0.00, null, 0, 0, ' ', ' ', ' ', ' ', ' ', ' ', ' ', 0, 0, ' ', ' ', null, null, null, 0, ' ', 0, 0, 0, ' ', ' ', ' ', null, ' ', 0, ' ', ' ', null, ' ', ' ', to_date('04-08-2022', 'dd-mm-yyyy'), 9, ' ', ' ', ' ', ' ', ' ', ' ', 0, null, ' ', 0, ' ', 10, ' ', 0, 3, null, 601070275, ' ', 0, null, 0.00, 0, null, 16, 0.00, 0, 3, ' ', null, ' ', to_date('22-09-2022', 'dd-mm-yyyy'), 0, 0, 0.00, null, null, 0, null, null, 85, null, 0.00, ' ', null, 0, 0, 0, 0, ' ', 2, 1, 6424702, 'BRUNA DE CAMPOS', 0, 58303, 0, 0, 0, 0, 0, 0, 'f0032989', 1, to_date('26-09-2022', 'dd-mm-yyyy'), null, ' ', 2, 1, ' ', ' ', 0, 0, 0, 0, 0, 1, 1, 5463212, 0, null, 0, 1, null, 1);
 
 
-  -- CRAPSNH
+
 insert into CRAPSNH (NRDCONTA, TPDSENHA, IDSEQTTL, CDCOOPER, CDSITSNH, CDOPERAD, DTLIBERA, HRTRANSA, DTALTSNH, DTALTSIT, CDDSENHA, DSSENWEB, DTEMSENH, VLLIMWEB, DTULTACE, HRULTACE, DTVLDSNH, FLGBOLET, VLLBOLET, VLLIMTRF, VLLIMPGO, QTACERRO, NRCPFCGC, DTDBOLET, DSDINSTR, VLLIMTED, DTLIMTRF, DTLIMPGO, DTLIMWEB, DTLIMTED, VLLIMVRB, DTLIMVRB, DTBLUTSH, CDOPEORI, CDAGEORI, DTINSORI, CDOPEPAG, CDAGEPAG, VLPAGINI, DTINSPAG, CDOPETRA, CDAGETRA, VLTRAINI, DTINSTRA, DTACEMOB, HRACEMOB, VLLIMFLP, DTLIMFLP, HRAMBANT, DTAMBANT, HRAIBANT, DTAIBANT, VLLIMITE_DEP_CHEQ_MOB, DTALT_LIM_DEP_CHQ_MOB, VLLIMITE_PIX, DTLIMITE_PIX, VLLIMITE_PIX_COOPERADO, VLAGETED, VLLIMNOTTRANS, VLLIMNOTPGBO, DTLIMAGENOT, DTHBOLETO, DTHTRANS)
 values (15352927, 1, 1, 1, 1, 'f0032989', to_date('23-08-2022', 'dd-mm-yyyy'), 54081, to_date('18-10-2022', 'dd-mm-yyyy'), to_date('23-08-2022', 'dd-mm-yyyy'), 'gilxjiaiDjidiaFF', 'dxopicandFimdkkf', null, 0.00, to_date('17-11-2022', 'dd-mm-yyyy'), 47818, to_date('23-08-2022', 'dd-mm-yyyy'), 0, 0.00, 10000.00, 10000.00, 0, 8251513928, null, ' ', 10000.00, to_date('11-10-2022', 'dd-mm-yyyy'), to_date('11-10-2022', 'dd-mm-yyyy'), null, to_date('11-10-2022', 'dd-mm-yyyy'), 10000.00, to_date('30-09-2022', 'dd-mm-yyyy'), null, 'f0032989', 1, to_date('30-09-2022', 'dd-mm-yyyy'), 'f0032989', 1, 10000.00, to_date('11-10-2022', 'dd-mm-yyyy'), 'f0032989', 1, 10000.00, to_date('11-10-2022', 'dd-mm-yyyy'), null, 0, 0.00, null, 0, null, 37781, to_date('17-11-2022', 'dd-mm-yyyy'), 10000.00, to_date('30-09-2022', 'dd-mm-yyyy'), 10000.00, to_date('30-09-2022', 'dd-mm-yyyy'), 10000.00, 1000.00, 0.00, 0.00, null, null, null);
 
@@ -123,10 +123,10 @@ insert into CRAPSNH (NRDCONTA, TPDSENHA, IDSEQTTL, CDCOOPER, CDSITSNH, CDOPERAD,
 values (1070274, 3, 1, 16, 1, 'f0032989', to_date('22-09-2022', 'dd-mm-yyyy'), 0, to_date('23-09-2022', 'dd-mm-yyyy'), null, 'AkjWlcybpjkadccm', ' ', null, 0.00, null, 0, null, 0, 0.00, 0.00, 0.00, 0, 0, null, ' ', 0.00, null, null, null, null, 0.00, null, null, 'f0032989', 0, to_date('26-09-2022', 'dd-mm-yyyy'), ' ', 0, 0.00, null, ' ', 0, 0.00, null, null, 0, 0.00, null, 0, null, 0, null, 0.00, null, 0.00, null, 0.00, 0.00, 0.00, 0.00, null, null, null);
 
 
-  --CRAPTTL
+
 
   
-  --CRAPPOD
+
 
 insert into CRAPPOD (CDCOOPER, NRCTAPRO, NRCPFPRO, CDDPODER, FLGCONJU, FLGISOLA, DSOUTPOD, NRDCONTA)
 values (1, 86069918, 8251513928, 1, 1, 0, ' ', 15352927);
@@ -879,7 +879,7 @@ insert into CRAPPOD (CDCOOPER, NRCTAPRO, NRCPFPRO, CDDPODER, FLGCONJU, FLGISOLA,
 values (16, 99017903, 7558407982, 10, 0, 0, ' ', 1070274);
 
 
-  --CRAPAVT
+
 
 insert into CRAPAVT (NRDCONTA, NRCTREMP, NRCPFCGC, NMDAVALI, NRCPFCJG, NMCONJUG, TPDOCCJG, NRDOCCJG, TPDOCAVA, NRDOCAVA, DSENDRES##1, DSENDRES##2, NRFONRES, DSDEMAIL, TPCTRATO, NRCEPEND, NMCIDADE, CDUFRESD, DTMVTOLT, CDCOOPER, XXX_DSNACION, NRENDERE, COMPLEND, NMBAIRRO, NRCXAPST, NRTELEFO, NMEXTEMP, CDDBANCO, CDAGENCI, DSPROFTL, NRDCTATO, XXX_CDOEDDOC, DTEMDDOC, CDUFDDOC, DTVALIDA, NMMAECTO, NMPAICTO, DTNASCTO, DSNATURA, CDSEXCTO, CDESTCVL, DSRELBEM##1, DSRELBEM##2, DSRELBEM##3, DSRELBEM##4, DSRELBEM##5, DSRELBEM##6, PERSEMON##1, PERSEMON##2, PERSEMON##3, PERSEMON##4, PERSEMON##5, PERSEMON##6, QTPREBEM##1, QTPREBEM##2, QTPREBEM##3, QTPREBEM##4, QTPREBEM##5, QTPREBEM##6, VLPREBEM##1, VLPREBEM##2, VLPREBEM##3, VLPREBEM##4, VLPREBEM##5, VLPREBEM##6, VLRDOBEM##1, VLRDOBEM##2, VLRDOBEM##3, VLRDOBEM##4, VLRDOBEM##5, VLRDOBEM##6, VLRENMES, VLEDVMTO, DTADMSOC, PERSOCIO, FLGDEPEC, VLOUTREN, DSOUTREN, INHABMEN, DTHABMEN, FLGIMPRI, INPESSOA, DTDRISCO, QTOPESCR, QTIFOPER, VLTOTSFN, VLOPESCR, VLPREJUZ, IDMSGVCT, CDNACION, IDORGEXP, VLRENCJG, CDSITCPF, DHALTERA, CDOPERADALT)
 values (15352927, 0, 8251513928, ' ', 0.00, ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', 6, 0, ' ', ' ', to_date('23-08-2022', 'dd-mm-yyyy'), 1, ' ', 0, ' ', ' ', 0, '0', ' ', 0, 0, 'SOCIO/PROPRIETARIO', 86069918, ' ', null, ' ', to_date('01-01-2030', 'dd-mm-yyyy'), ' ', ' ', null, ' ', 0, 0, ' ', ' ', ' ', ' ', ' ', ' ', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, to_date('15-08-2022', 'dd-mm-yyyy'), 100.00, 1, 0.00, ' ', 0, null, 1, 0, null, 0, 0, 0.00, 0.00, 0.00, 0, 0, 0, 0.00, 1, null, ' ');
@@ -921,7 +921,7 @@ insert into CRAPAVT (NRDCONTA, NRCTREMP, NRCPFCGC, NMDAVALI, NRCPFCJG, NMCONJUG,
 values (1070274, 0, 7159852990, 'EDUARDA CASTRO', 0.00, ' ', ' ', ' ', 'CI', '098973180', 'PASSARELA ENZO OLIVEIRA, 1229', ' ', ' ', 'xfyvvror@xxserver.com.br', 6, 83880000, 'RIO NEGRO', 'PR', null, 16, ' ', 193, 'xxxx', 'VILA PARAISO', 0, null, ' ', 0, 0, 'SOCIO/PROPRIETARIO', 0, ' ', to_date('15-08-2012', 'dd-mm-yyyy'), 'PR', to_date('01-01-2030', 'dd-mm-yyyy'), 'CALEB DA SILVA', 'HELOISA MOURA', to_date('14-02-1996', 'dd-mm-yyyy'), 'MAFRA', 2, 1, ' ', ' ', ' ', ' ', ' ', ' ', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, to_date('15-09-2022', 'dd-mm-yyyy'), 100.00, 1, 0.00, ' ', 0, null, 0, 0, null, 0, 0, 0.00, 0.00, 0.00, 0, 42, 66, 0.00, 1, null, ' ');
 
 
-  --CRAPOPI
+
 
 insert into CRAPOPI (CDCOOPER, NRDCONTA, NRCPFOPE, NMOPERAD, DTLIBERA, DTULTALT, FLGSITOP, DSDSENHA, DSDFRASE, DTALTSNH, DTULTACE, HRULTACE, DSDCARGO, QTACERRO, DSDEMAIL, DTBLUTSH, VLLBOLET, VLLIMTRF, VLLIMTED, VLLIMVRB, VLLIMFLP, DTAIBANT, HRAIBANT, TPOPERAI)
 values (1, 15352927, 8994177957, 'Joice cauane', to_date('25-10-2022 15:28:13', 'dd-mm-yyyy hh24:mi:ss'), to_date('25-10-2022 15:28:13', 'dd-mm-yyyy hh24:mi:ss'), 1, 'jaiilichAnchlanh', ' ', to_date('25-10-2022 15:28:13', 'dd-mm-yyyy hh24:mi:ss'), null, 0, 'Administrao', 2, 'joice.malvino@ailos.coop.br', null,  0.00, 0.00, 0.00, 0.00, 0.00, null, 0, 0);
@@ -935,15 +935,15 @@ values (9, 564699, 829628045, 'RAQUEL DA SILVA', to_date('07-11-2022 16:04:42', 
 
 
 
-  --CRAPCTI
+  
 insert into CRAPCTI (CDCOOPER, NRDCONTA, HRTRANSA, DTTRANSA, CDOPERAD, INSITCTA, INTIPDIF, DSPROTOC, CDDBANCO, CDAGEBAN, INPESSOA, NMTITULA, NRCPFCGC, INTIPCTA, NRSEQCAD, NRCTATRF, INSITFAV, NRISPBIF, INENVTED)
 values (9, 564699, 58373, to_date('13-10-2022', 'dd-mm-yyyy'), '996', 2, 2, ' ', 104, 409, 2, 'JACY ADUCCI DE SOUZA', 33056734000141.00, 1, 1, 8137729613.00, 1, 0, 0);
 
 
-  --CRAPEFP
+  
 
 
-  --CRAPCEB
+  
 
 insert into CRAPCEB (CDCOOPER, NRDCONTA, NRCONVEN, NRCNVCEB, DTCADAST, CDOPERAD, INSITCEB, INARQCBR, CDDEMAIL, FLGCRUNI, FLGCEBHM, CDHOMOLO, FLCOOEXP, FLCEEEXP, FLSERASA, CDOPEORI, CDAGEORI, DTINSORI, CDOPEEXC, CDAGEEXC, DTINSEXC, FLPROTES, QTDECPRZ, QTDFLOAT, IDRECIPR, DHANALIS, CDOPEANA, INENVCOB, FLGREGON, FLGPGDIV, QTLIMAXP, QTLIMMIP, INSRVPRT, FLGDIGIT, FLTERCAN, FLGAPIHM, CDHOMAPI, DHHOMAPI)
 values (1, 15352927, 101002, 0, to_date('23-08-2022', 'dd-mm-yyyy'), 'f0032989', 1, 0, 0, 1, 0, 'f0032989', 1, 1, 1, 'f0032989', 0, to_date('26-09-2022 16:44:22', 'dd-mm-yyyy hh24:mi:ss'), ' ', 0, null, 1, 59, 1, 90984, null, ' ', 1, 1, 1, 15, 5, 1, 0, 0, 0, ' ', null);
@@ -988,7 +988,7 @@ insert into CRAPCEB (CDCOOPER, NRDCONTA, NRCONVEN, NRCNVCEB, DTCADAST, CDOPERAD,
 values (16, 1070274, 115002, 0, to_date('22-09-2022', 'dd-mm-yyyy'), 'f0032989', 1, 0, 0, 1, 0, 'f0032989', 1, 1, 1, 'f0032989', 0, to_date('26-09-2022 16:45:19', 'dd-mm-yyyy hh24:mi:ss'), ' ', 0, null, 1, 59, 1, 90985, null, ' ', 1, 1, 1, 15, 5, 1, 0, 0, 0, ' ', null);
 
 
-  --CRAPEMP
+  
 update crapemp set nrdconta = 15352927 where cdcooper = 1 and cdempres = 9862;
 update crapemp set nrdconta = 1178520 where cdcooper = 2 and cdempres = 893;
 update crapemp set nrdconta = 365343 where cdcooper = 5 and cdempres = 697;
