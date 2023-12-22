@@ -1,7 +1,7 @@
 BEGIN
   
   UPDATE credito.tbepr_reserva_atraso a
-     SET a.vlreserva = 4955,36
+     SET a.vlreserva = 4955.36
    WHERE a.id_reserva_atraso = 9750;
   
   COMMIT;
