@@ -7611,7 +7611,7 @@ BEGIN
 	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598355',null,1);
 	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598356',null,1);
 	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598357',null,1);
-	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('2023195983',null,1);58
+	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598358',null,1);
 	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598359',null,1);
 	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598360',null,1);
 	insert into cecred.tbseg_nrproposta(NRPROPOSTA, DHSEGURO, TPCUSTEI) values ('202319598361',null,1);
