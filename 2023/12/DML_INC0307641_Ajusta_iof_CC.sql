@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-363
 DECLARE 
 
   pr_dtrefere DATE := to_date('21/12/2023','DD/MM/RRRR');
@@ -363,5 +361,3 @@ EXCEPTION
     
     ROLLBACK;  
 END;
-0
-0
