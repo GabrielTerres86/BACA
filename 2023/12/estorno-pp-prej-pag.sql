@@ -81,7 +81,7 @@ DECLARE
             ,e.progress_recid ) x
     WHERE x.qtd_atraso_calc < 180    
     AND x.cdcooper = 1 
-    AND x.nrdconta in (10756922,10870849,10147268,6809430);
+    AND x.nrdconta in (10756922,10870849,10147268,6809430,6667503,3998924);
                  
   rw_crapepr cr_crapepr%rowtype;  
      
@@ -828,26 +828,31 @@ DECLARE
              NVL((SUM(CASE WHEN c.cdhistor IN (2411) THEN c.vllanmto ELSE 0 END) - 
                   SUM(CASE WHEN c.cdhistor IN (2423) THEN c.vllanmto ELSE 0 END)),0) sum_jrmulta_2411,
              NVL((SUM(CASE WHEN c.cdhistor IN (2415) THEN c.vllanmto ELSE 0 END) - 
-                  SUM(CASE WHEN c.cdhistor IN (2416) THEN c.vllanmto ELSE 0 END)),0) sum_jrmora_2415
+                  SUM(CASE WHEN c.cdhistor IN (2416) THEN c.vllanmto ELSE 0 END)),0) sum_jrmora_2415,
+             nvl((SUM(CASE WHEN c.cdhistor IN (2348) THEN c.vllanmto ELSE 0 END) 
+                - SUM(CASE WHEN c.cdhistor IN (2472) THEN c.vllanmto ELSE 0 END)),0) sum_jrmult_2348,
+             nvl((SUM(CASE WHEN c.cdhistor IN (2349) THEN c.vllanmto ELSE 0 END) 
+                - SUM(CASE WHEN c.cdhistor IN (2359) THEN c.vllanmto ELSE 0 END)), 0) sum_jrmult_2349                   
         FROM craplem c
        WHERE c.cdcooper = prc_cdcooper
          AND c.nrdconta = prc_nrdconta
          AND c.nrctremp = prc_nrctremp
-         AND c.cdhistor in (2382,2384,2397,2399,2409,2422,2411,2423,2415,2416); 
+         AND c.cdhistor in (2382,2384,2397,2399,2409,2422,2411,2423,2415,2416, 2348,2472,2349,2359)
+         AND c.dtmvtolt >= '19/12/2023'; 
     
     CURSOR cr_vlprincipal (prc_cdcooper craplem.cdcooper%TYPE
                           ,prc_nrdconta craplem.nrdconta%TYPE
                           ,prc_nrctremp craplem.nrctremp%TYPE) IS
                   
-      SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2381) THEN c.vllanmto ELSE 0 END) - 
+      SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2381, 2878) THEN c.vllanmto ELSE 0 END) - 
                   SUM(CASE WHEN c.cdhistor IN (2383) THEN c.vllanmto ELSE 0 END)),0) sum_empr_2381, 
-             NVL((SUM(CASE WHEN c.cdhistor IN (2396) THEN c.vllanmto ELSE 0 END) - 
+             NVL((SUM(CASE WHEN c.cdhistor IN (2396, 2885) THEN c.vllanmto ELSE 0 END) - 
                   SUM(CASE WHEN c.cdhistor IN (2398) THEN c.vllanmto ELSE 0 END)),0) sum_fina_2396          
         FROM craplem c
        WHERE c.cdcooper = prc_cdcooper
          AND c.nrdconta = prc_nrdconta
          AND c.nrctremp = prc_nrctremp
-         AND c.cdhistor in (2381,2396,2383,2398);          
+         AND c.cdhistor in (2381,2396,2383,2398, 2878,2885);          
    
     CURSOR cr_crapepr (prc_cdcooper craplem.cdcooper%TYPE
                       ,prc_nrdconta craplem.nrdconta%TYPE) IS
@@ -869,6 +874,8 @@ DECLARE
     vr_vljratuz  NUMBER;
     vr_cdhismul  INTEGER;
     vr_vljrmult  NUMBER;
+    vr_cdhismulp INTEGER;
+    vr_vljrmultp NUMBER;    
     vr_cdhismor  INTEGER;
     vr_vljrmora  NUMBER;
     vr_vlprinci  NUMBER;
@@ -1164,7 +1171,16 @@ DECLARE
               vr_cdhismor := 2416;
               vr_vljrmora := rw_lanc_lem.sum_jrmora_2415;
             END IF;    
-            
+
+           IF rw_lanc_lem.sum_jrmult_2348 > 0 THEN
+             vr_cdhismulp := 2472;
+             vr_vljrmultp := rw_lanc_lem.sum_jrmult_2348;
+           END IF;
+
+           IF rw_lanc_lem.sum_jrmult_2349 > 0 THEN
+             vr_cdhismulp := 2359;
+             vr_vljrmultp := rw_lanc_lem.sum_jrmult_2349;
+           END IF;            
          
             IF vr_vljuro60 > 0 THEN
              
@@ -1266,7 +1282,42 @@ DECLARE
               END IF;
             END IF;
             
-          
+            -- Multa do contrato POS
+            IF vr_vljrmultp > 0 THEN
+              -- Realizar o lançamento do estorno para valor principal
+              empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper,
+                                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                              pr_cdagenci => pr_cdagenci,
+                                              pr_cdbccxlt => 100,
+                                              pr_cdoperad => pr_cdoperad,
+                                              pr_cdpactra => pr_cdagenci,
+                                              pr_tplotmov => 5,
+                                              pr_nrdolote => 600029,
+                                              pr_nrdconta => pr_nrdconta,
+                                              pr_cdhistor => vr_cdhismulp,
+                                              pr_nrctremp => pr_nrctremp,
+                                              pr_vllanmto => vr_vljrmultp,
+                                              pr_dtpagemp => rw_crapdat.dtmvtolt,
+                                              pr_txjurepr => 0,
+                                              pr_vlpreemp => 0,
+                                              pr_nrsequni => 0,
+                                              pr_nrparepr => 0,
+                                              pr_flgincre => TRUE,
+                                              pr_flgcredi => FALSE,
+                                              pr_nrseqava => 0,
+                                              pr_cdorigem => 7 -- batch
+                                             ,
+                                              pr_cdcritic => vr_cdcritic,
+                                              pr_dscritic => vr_dscritic);
+    
+              IF vr_dscritic IS NOT NULL THEN
+                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM PÓS (Multa da operação): ' ||
+                               vr_dscritic;
+                pr_des_reto := 'NOK';
+                RAISE vr_exc_erro;
+              END IF;
+            END IF;
+                      
             IF vr_vljrmora > 0 THEN
  
               empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
@@ -1468,7 +1519,7 @@ BEGIN
     FETCH cr_acordo INTO rw_acordo;
     CLOSE cr_acordo;        
                                                                       
-    IF rw_crapepr.tpemprst = 1 THEN
+    IF rw_crapepr.tpemprst IN (1, 2) THEN
       
       pc_estorno_trf_prejuizo_PP(pr_cdcooper => rw_crapepr.Cdcooper,
                                  pr_cdagenci => 1,
