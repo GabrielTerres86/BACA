@@ -322,7 +322,7 @@ DECLARE
 BEGIN
   
   vr_diretorio := sistema.obterParametroSistema(pr_nmsistem => 'CRED'
-                                               ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/RISCO/BNDES';
+                                               ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/RISCO/INC0307641';
                                                
   pc_abrir_arquivos;
 
