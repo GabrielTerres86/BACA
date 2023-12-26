@@ -3,6 +3,30 @@ DECLARE
   vr_tab_reto gene0001.typ_tab_erro;
   vr_descritc VARCHAR2(4000) := NULL;
   gl_nrdolote NUMBER;
+  vr_vllanmtosai_princ NUMBER;
+  vr_cdcritica NUMBER;
+  vr_dscritica VARCHAR2(4000);
+  vr_idvlrmin  NUMBER;
+  vr_vltotpag  NUMBER;
+  
+ CURSOR cr_acordo(pr_cdcooper in number
+                 ,pr_nrdconta in number
+                 ,pr_nrctremp in number) IS
+  SELECT a.NRACORDO,
+         MAX(p.nrparcela) nrparcela
+  FROM  tbrecup_acordo a
+       ,tbrecup_acordo_contrato c
+       ,tbrecup_acordo_parcela p
+  WHERE a.cdcooper = pr_cdcooper
+     AND a.nrdconta = pr_nrdconta
+     AND c.nrctremp =  pr_nrctremp
+     AND c.cdorigem = 3
+     AND a.cdsituacao = 1
+     AND c.nracordo = a.nracordo 
+     AND p.nracordo = c.nracordo
+     AND p.vlpago > 0  
+     GROUP BY a.NRACORDO;
+ rw_acordo cr_acordo%ROWTYPE;     
   
   CURSOR cr_crapepr_est(pr_cdcooper in number
                        ,pr_nrdconta in number
@@ -55,7 +79,10 @@ DECLARE
             ,b.cdorigem
             ,e.tpemprst
             ,e.progress_recid ) x
-    WHERE x.qtd_atraso_calc < 180;           
+    WHERE x.qtd_atraso_calc < 180    
+    AND x.cdcooper = 1 
+    AND x.nrdconta in (10756922,10870849,10147268,6809430);
+                 
   rw_crapepr cr_crapepr%rowtype;  
      
   CURSOR cr_crapdat(pr_cdcooper cecred.crapepr.cdcooper%TYPE) IS
@@ -99,6 +126,7 @@ DECLARE
                                 ,pr_nrdconta in number
                                 ,pr_nrctremp in number
                                 ,pr_dtmvtolt in DATE
+                                ,pr_vllanmtosai OUT NUMBER
                                 ,pr_des_reto OUT VARCHAR
                                 ,pr_tab_erro OUT gene0001.typ_tab_erro) IS
     
@@ -108,8 +136,7 @@ DECLARE
       TYPE typ_tab_historicos IS TABLE OF typ_reg_historico INDEX BY PLS_INTEGER;
       
       vr_tab_historicos typ_tab_historicos;
-
-
+      
     CURSOR c_craplem (prc_cdcooper craplem.cdcooper%TYPE
                      ,prc_nrdconta craplem.nrdconta%TYPE
                      ,prc_nrctremp craplem.nrctremp%TYPE
@@ -136,8 +163,7 @@ DECLARE
                                 ,2389  
                                 ,2390  
                                 ,2475  
-                                ,2391  
-                                );
+                                ,2391);
  
     CURSOR c_busca_prx_lote(pr_dtmvtolt DATE
                            ,pr_cdcooper NUMBER
@@ -160,7 +186,7 @@ DECLARE
          AND t.nrdconta = prc_nrdconta
          AND t.cdhistor = 2386
          AND t.cdbccxlt = 100
-         AND TO_NUMBER(trim(replace(t.cdpesqbb,'.',''))) = prc_nrctremp
+         AND to_number(TRIM(REPLACE(REPLACE(t.cdpesqbb, '.', ''),'Desconto de Título do Borderô',''))) = prc_nrctremp
          AND t.dtmvtolt = prc_dtmvtolt
          AND t.vllanmto = prc_vllanmto;
 
@@ -190,7 +216,7 @@ DECLARE
          AND craplcm.dtmvtolt = pr_dtmvtolt
          AND craplcm.cdhistor = 2386
          AND craplcm.cdbccxlt = 100         
-         AND TO_NUMBER(TRIM(REPLACE(craplcm.cdpesqbb,'.',''))) = pr_nrctremp
+         AND to_number(TRIM(REPLACE(REPLACE(craplcm.cdpesqbb, '.', ''),'Desconto de Título do Borderô',''))) = pr_nrctremp
          AND craplcm.vllanmto = pr_vllanmto;
       rw_craplcm cr_craplcm%ROWTYPE;
       
@@ -255,7 +281,7 @@ DECLARE
     vr_dscritic    varchar2(1000);
     vr_cdcritic    integer;
     vr_flgativo    integer;
-    vr_nrdolote    number;
+    vr_nrdolote    number;   
     vr_nrdrowid    rowid;
     vr_inBloqueioDebito number;
 
@@ -504,6 +530,8 @@ DECLARE
                                           ,pr_idlautom => 0
                                           ,pr_des_reto => vr_des_reto
                                           ,pr_tab_erro => vr_tab_erro );
+                                          
+            pr_vllanmtosai := NVL(vr_vllanmto,0) + NVL(pr_vllanmtosai,0);
 
             IF vr_des_reto <> 'OK' THEN
               IF vr_tab_erro.count() > 0 THEN
@@ -655,7 +683,6 @@ DECLARE
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
      when others then
-        ROLLBACK;
          if vr_dscritic is null then
             vr_dscritic := 'Falha geral rotina pc_estorno_pagamento: ' || sqlerrm;
          end if;
@@ -672,7 +699,6 @@ DECLARE
                              ,pr_nmdatela => 'crps780'
                              ,pr_nrdconta => pr_nrdconta
                              ,pr_nrdrowid => vr_nrdrowid);
-        COMMIT;
   END pc_estorno_pagamento;  
   
   Procedure pc_reabrir_conta_corrente(pr_cdcooper in number
@@ -774,6 +800,7 @@ DECLARE
                                        ,pr_nrdconta IN NUMBER
                                        ,pr_dtmvtolt IN DATE
                                        ,pr_nrctremp IN NUMBER
+                                       ,pr_vllanmtosai_princ OUT NUMBER
                                        ,pr_des_reto OUT VARCHAR 
                                        ,pr_tab_erro OUT gene0001.typ_tab_erro  ) IS
 
@@ -845,6 +872,7 @@ DECLARE
     vr_cdhismor  INTEGER;
     vr_vljrmora  NUMBER;
     vr_vlprinci  NUMBER;
+    vr_vllanmtosai_princ NUMBER := 0;
     vr_nrdrowid  ROWID;
     vr_exc_erro  EXCEPTION; 
     vr_existe_prejuizo NUMBER(1);  
@@ -875,10 +903,9 @@ DECLARE
                             pr_nrdconta => pr_nrdconta,
                             pr_nrctremp => pr_nrctremp,
                             pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                            pr_vllanmtosai => pr_vllanmtosai_princ,
                             pr_des_reto => vr_des_reto,
-                            pr_tab_erro => vr_tab_erro);
-       
-       
+                            pr_tab_erro => vr_tab_erro);    
                      
         IF vr_des_reto <> 'OK' THEN
 
@@ -1434,8 +1461,15 @@ BEGIN
      OPEN btch0001.cr_crapdat(rw_crapepr.cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
     CLOSE btch0001.cr_crapdat;
+    
+     OPEN cr_acordo(rw_crapepr.Cdcooper,
+                    rw_crapepr.nrdconta,
+                    rw_crapepr.nrctremp);
+    FETCH cr_acordo INTO rw_acordo;
+    CLOSE cr_acordo;        
                                                                       
     IF rw_crapepr.tpemprst = 1 THEN
+      
       pc_estorno_trf_prejuizo_PP(pr_cdcooper => rw_crapepr.Cdcooper,
                                  pr_cdagenci => 1,
                                  pr_nrdcaixa => 1,
@@ -1443,12 +1477,30 @@ BEGIN
                                  pr_nrdconta => rw_crapepr.nrdconta,
                                  pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                  pr_nrctremp => rw_crapepr.nrctremp,
+                                 pr_vllanmtosai_princ => vr_vllanmtosai_princ,
                                  pr_des_reto => vr_des_reto,
-                                 pr_tab_erro => vr_tab_reto);                                                                 
+                                 pr_tab_erro => vr_tab_reto);                           
+                                 
+      recp0001.pc_pagar_contrato_emprestimo(pr_cdcooper => rw_crapepr.Cdcooper,
+                                            pr_nrdconta => rw_crapepr.nrdconta,
+                                            pr_cdagenci => 1,
+                                            pr_crapdat => rw_crapdat,
+                                            pr_nrctremp => rw_crapepr.nrctremp,
+                                            pr_nracordo => rw_acordo.nracordo,
+                                            pr_nrparcel => rw_acordo.nrparcela,
+                                            pr_cdoperad => '1',
+                                            pr_vlparcel => NVL(vr_vllanmtosai_princ,0),
+                                            pr_idorigem => 7,
+                                            pr_nmtelant => 'ATENDA',
+                                            pr_idvlrmin => vr_idvlrmin,
+                                            pr_vltotpag => vr_vltotpag,
+                                            pr_cdcritic => vr_cdcritica,
+                                            pr_dscritic => vr_dscritica);
+                                            
+    COMMIT;
+                                                                                                                                                                                                                                                                                                 
     END IF;
   END LOOP;
-  
-  COMMIT;
 EXCEPTION                                         
   WHEN OTHERS THEN
     ROLLBACK; 
