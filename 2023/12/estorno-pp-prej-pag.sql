@@ -304,7 +304,7 @@ DECLARE
       vr_dscritic := 'Não é permitido estorno, empréstimo não está em prejuízo: ';
       raise vr_erro;
     END IF;
-    --
+    
     vr_inBloqueioDebito := 0;
     credito.verificarBloqueioDebito(pr_cdcooper => pr_cdcooper,
                                     pr_nrdconta => pr_nrdconta,
@@ -564,7 +564,7 @@ DECLARE
               raise vr_erro;
             END IF;
             
-            --
+            
             IF r_craplem.cdhistor IN (2391, 2701) THEN
               BEGIN
                 UPDATE craplem lem
@@ -807,7 +807,7 @@ DECLARE
          AND c.nrdconta = prc_nrdconta
          AND c.nrctremp = prc_nrctremp
          AND c.cdhistor in (2382,2384,2397,2399,2409,2422,2411,2423,2415,2416); 
-    --
+    
     CURSOR cr_vlprincipal (prc_cdcooper craplem.cdcooper%TYPE
                           ,prc_nrdconta craplem.nrdconta%TYPE
                           ,prc_nrctremp craplem.nrctremp%TYPE) IS
