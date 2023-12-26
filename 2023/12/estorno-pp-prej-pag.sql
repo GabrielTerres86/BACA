@@ -1281,10 +1281,8 @@ DECLARE
                 RAISE vr_exc_erro;
               END IF;
             END IF;
-            
-            -- Multa do contrato POS
+
             IF vr_vljrmultp > 0 THEN
-              -- Realizar o lançamento do estorno para valor principal
               empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper,
                                               pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                               pr_cdagenci => pr_cdagenci,
@@ -1305,7 +1303,7 @@ DECLARE
                                               pr_flgincre => TRUE,
                                               pr_flgcredi => FALSE,
                                               pr_nrseqava => 0,
-                                              pr_cdorigem => 7 -- batch
+                                              pr_cdorigem => 7
                                              ,
                                               pr_cdcritic => vr_cdcritic,
                                               pr_dscritic => vr_dscritic);
