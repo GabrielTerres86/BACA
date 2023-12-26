@@ -10,7 +10,7 @@ DECLARE
      INNER JOIN crapass b
         ON a.cdcooper = b.cdcooper
        AND a.nrdconta = b.nrdconta
-     WHERE a.progress_recid IN (1390545, 1768261);
+     WHERE a.progress_recid = 1768261;
 
 BEGIN
 
