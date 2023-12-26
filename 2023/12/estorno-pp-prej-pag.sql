@@ -5,8 +5,8 @@ DECLARE
   gl_nrdolote NUMBER;
   
   CURSOR cr_crapepr_est(pr_cdcooper in number
-                        ,pr_nrdconta in number
-                        ,pr_nrctremp in number) IS
+                       ,pr_nrdconta in number
+                       ,pr_nrctremp in number) IS
     SELECT *
       FROM crapepr
      WHERE crapepr.cdcooper = pr_cdcooper
@@ -55,7 +55,7 @@ DECLARE
             ,b.cdorigem
             ,e.tpemprst
             ,e.progress_recid ) x
-    WHERE x.qtd_atraso_calc < 180;
+    WHERE x.qtd_atraso_calc < 180;           
   rw_crapepr cr_crapepr%rowtype;  
      
   CURSOR cr_crapdat(pr_cdcooper cecred.crapepr.cdcooper%TYPE) IS
@@ -129,7 +129,7 @@ DECLARE
           where lem.cdcooper = prc_cdcooper
             and lem.nrdconta = prc_nrdconta
             and lem.nrctremp = prc_nrctremp
-            and lem.dtmvtolt = prc_dtmvtolt
+            and lem.dtmvtolt BETWEEN TO_DATE('19/12/2023','dd/mm/yyyy') AND TO_DATE('26/12/2023','dd/mm/yyyy') 
             and lem.cdhistor in (2701  
                                 ,2388  
                                 ,2473  
