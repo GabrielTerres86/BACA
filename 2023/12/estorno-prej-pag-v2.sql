@@ -154,7 +154,7 @@ DECLARE
           where lem.cdcooper = prc_cdcooper
             and lem.nrdconta = prc_nrdconta
             and lem.nrctremp = prc_nrctremp
-            and lem.dtmvtolt BETWEEN TO_DATE('19/12/2023','dd/mm/yyyy') AND TO_DATE('26/12/2023','dd/mm/yyyy') 
+            and lem.dtmvtolt BETWEEN TO_DATE('19/12/2023','dd/mm/yyyy') AND TO_DATE('27/12/2023','dd/mm/yyyy') 
             and lem.cdhistor in (2701  
                                 ,2388  
                                 ,2473  
