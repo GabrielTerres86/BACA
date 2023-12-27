@@ -71,6 +71,7 @@ DECLARE
   PROCEDURE pc_escreve_linha(pr_dsdlinha IN VARCHAR2, pr_fechaarq IN BOOLEAN DEFAULT FALSE) IS
     vr_des_dados VARCHAR2(32000);
     BEGIN
+    
       vr_des_dados := pr_dsdlinha||chr(10);
       
       gene0002.pc_escreve_xml(vr_desclob, 
