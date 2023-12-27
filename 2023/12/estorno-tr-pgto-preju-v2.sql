@@ -1467,6 +1467,22 @@ BEGIN
                                               pr_cdcritic => vr_cdcritic,
                                               pr_dscritic => vr_dscritic);
       
+        IF (nvl(vr_cdcritic, 0) > 0 OR TRIM(vr_dscritic) IS NOT NULL) THEN
+          
+          cecred.pc_log_programa(pr_dstiplog      => 'E',
+                                 pr_cdprograma    => 'ESTORNO_PREJUIZO_TR',
+                                 pr_cdcooper      => rw_crapepr.cdcooper,
+                                 pr_tpexecucao    => 0,
+                                 pr_tpocorrencia  => 1,
+                                 pr_cdcriticidade => 1,
+                                 pr_cdmensagem    => nvl(vr_cdcritic, 0),
+                                 pr_dsmensagem    => 'recp0001.pc_pagar_contrato_emprestimo - Erro: ' ||
+                                                     vr_dscritic,
+                                 pr_flgsucesso    => 0,
+                                 pr_idprglog      => vr_idprglog);
+          RAISE vr_exc_erro;
+        END IF;
+      
       END IF;
       COMMIT;
     
