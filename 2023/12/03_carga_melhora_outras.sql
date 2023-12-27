@@ -69,7 +69,9 @@ DECLARE
   rw_principal cr_principal%ROWTYPE;
   
   PROCEDURE pc_escreve_linha(pr_dsdlinha IN VARCHAR2, pr_fechaarq IN BOOLEAN DEFAULT FALSE) IS
+
     vr_des_dados VARCHAR2(32000);
+    
     BEGIN
       vr_des_dados := pr_dsdlinha||chr(10);
       
