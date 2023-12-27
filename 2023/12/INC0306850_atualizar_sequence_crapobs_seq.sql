@@ -1,9 +1,3 @@
-rem PL/SQL Developer Test Script
-
-set feedback off
-set autoprint off
-
-rem Execute PL/SQL Block
 DECLARE
   vr_progress_recid crapobs.progress_recid%type;
   
@@ -17,4 +11,3 @@ exception
   when others then
     dbms_output.put_line('erro:' || sqlerrm);
 END;
-/
