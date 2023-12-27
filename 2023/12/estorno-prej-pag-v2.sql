@@ -184,7 +184,7 @@ DECLARE
          AND t.nrdconta = prc_nrdconta
          AND t.cdhistor = 2386
          AND t.cdbccxlt = 100
-         AND to_number(TRIM(REPLACE(REPLACE(t.cdpesqbb, '.', ''),'Desconto de Título do Borderô',''))) = prc_nrctremp
+         AND to_number(TRIM(REPLACE(REPLACE(t.cdpesqbb, '.', ''),'Desconto de TÃ­tulo do BorderÃ´',''))) = prc_nrctremp
          AND t.dtmvtolt = prc_dtmvtolt
          AND t.vllanmto = prc_vllanmto;
 
@@ -214,7 +214,7 @@ DECLARE
          AND craplcm.dtmvtolt = pr_dtmvtolt
          AND craplcm.cdhistor = 2386
          AND craplcm.cdbccxlt = 100         
-         AND to_number(TRIM(REPLACE(REPLACE(craplcm.cdpesqbb, '.', ''),'Desconto de Título do Borderô',''))) = pr_nrctremp
+         AND to_number(TRIM(REPLACE(REPLACE(craplcm.cdpesqbb, '.', ''),'Desconto de TÃ­tulo do BorderÃ´',''))) = pr_nrctremp
          AND craplcm.vllanmto = pr_vllanmto;
       rw_craplcm cr_craplcm%ROWTYPE;
       
@@ -320,12 +320,12 @@ DECLARE
     IF vr_existbpr_baixado > 0 THEN
       vr_cdcritic := 0;
       pr_des_reto := 'NOK';
-      vr_dscritic := 'Não é permitido estorno, existe baixa da alienação: ';
+      vr_dscritic := 'NÃ£o Ã© permitido estorno, existe baixa da alienaÃ§Ã£o: ';
       raise vr_erro;
     END IF;
 
     IF nvl(rw_crapepr_est.inprejuz,0) = 0 THEN
-      vr_dscritic := 'Não é permitido estorno, empréstimo não está em prejuízo: ';
+      vr_dscritic := 'NÃ£o Ã© permitido estorno, emprÃ©stimo nÃ£o estÃ¡ em prejuÃ­zo: ';
       raise vr_erro;
     END IF;
     
@@ -759,7 +759,7 @@ DECLARE
         FROM craplcm c
        WHERE c.cdcooper = pr_cdcooper
          AND c.nrdconta = pr_nrdconta
-         AND to_number(TRIM(REPLACE(REPLACE(c.cdpesqbb, '.', ''),'Desconto de Título do Borderô',''))) = pr_nrctremp
+         AND to_number(TRIM(REPLACE(REPLACE(c.cdpesqbb, '.', ''),'Desconto de TÃ­tulo do BorderÃ´',''))) = pr_nrctremp
          AND c.cdhistor in(2386,2387); 
      
     CURSOR cr_craplem IS
@@ -931,7 +931,7 @@ DECLARE
       
       IF r_crapepr.inprejuz = 0 THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'Contrato não esta em prejuizo!';
+        vr_dscritic := 'Contrato nÃ£o esta em prejuizo!';
 
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -1055,7 +1055,7 @@ DECLARE
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic := 0;
-              vr_dscritic := 'Erro na exclusão dos lançamentos!' || sqlerrm;
+              vr_dscritic := 'Erro na exclusÃ£o dos lanÃ§amentos!' || sqlerrm;
               pr_des_reto := 'NOK';
               RAISE vr_exc_erro;
           END;
@@ -1132,7 +1132,7 @@ DECLARE
                                              ,pr_dscritic => vr_dscritic);
                                                                  
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (valor principal): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu erro ao retornar gravaÃ§Ã£o LEM (valor principal): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 RAISE vr_exc_erro;
               END IF;
@@ -1207,7 +1207,7 @@ DECLARE
                                              ,pr_dscritic => vr_dscritic);
                                                                  
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM PP(Juros +60): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu erro ao retornar gravaÃ§Ã£o LEM PP(Juros +60): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 RAISE vr_exc_erro;
               END IF;
@@ -1240,7 +1240,7 @@ DECLARE
                                              ,pr_dscritic => vr_dscritic);
                                                                  
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM PP (Juros Atualizado): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu erro ao retornar gravaÃ§Ã£o LEM PP (Juros Atualizado): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 RAISE vr_exc_erro;
               END IF;
@@ -1274,7 +1274,7 @@ DECLARE
                                              ,pr_dscritic => vr_dscritic);
                                                                  
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM PP (valor Multa): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu erro ao retornar gravaÃ§Ã£o LEM PP (valor Multa): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 RAISE vr_exc_erro;
               END IF;
@@ -1307,7 +1307,7 @@ DECLARE
                                               pr_dscritic => vr_dscritic);
     
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM PÓS (Multa da operação): ' ||
+                vr_dscritic := 'Ocorreu erro ao retornar gravaÃ§Ã£o LEM PÃ“S (Multa da operaÃ§Ã£o): ' ||
                                vr_dscritic;
                 pr_des_reto := 'NOK';
                 RAISE vr_exc_erro;
@@ -1341,7 +1341,7 @@ DECLARE
                                              ,pr_dscritic => vr_dscritic);
                                                                  
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Ocorreu erro ao retornar gravação LEM PP (Juros Mora): ' || vr_dscritic;
+                vr_dscritic := 'Ocorreu erro ao retornar gravaÃ§Ã£o LEM PP (Juros Mora): ' || vr_dscritic;
                 pr_des_reto := 'NOK';
                 RAISE vr_exc_erro;
               END IF;
@@ -1501,6 +1501,8 @@ DECLARE
   END pc_estorno_trf_prejuizo_PP;   
   
 BEGIN
+
+  EXECUTE IMMEDIATE 'ALTER SESSION SET nls_date_format = ''DD/MM/RRRR''';
   
   FOR rw_crapepr IN cr_crapepr LOOP
                               
@@ -1517,7 +1519,7 @@ BEGIN
                                                                       
     IF rw_crapepr.tpemprst IN (1, 2) THEN
       
-      pc_estorno_trf_prejuizo_PP(pr_cdcooper => rw_crapepr.Cdcooper,
+      /*pc_estorno_trf_prejuizo_PP(pr_cdcooper => rw_crapepr.Cdcooper,
                                  pr_cdagenci => 1,
                                  pr_nrdcaixa => 1,
                                  pr_cdoperad => '1',
@@ -1526,9 +1528,13 @@ BEGIN
                                  pr_nrctremp => rw_crapepr.nrctremp,
                                  pr_vllanmtosai_princ => vr_vllanmtosai_princ,
                                  pr_des_reto => vr_des_reto,
-                                 pr_tab_erro => vr_tab_reto);                           
-      
+                                 pr_tab_erro => vr_tab_reto);      
+      */
+
+      vr_vllanmtosai_princ := 1800;
+
       IF NVL(vr_vllanmtosai_princ,0) > 0 THEN                           
+
         recp0001.pc_pagar_contrato_emprestimo(pr_cdcooper => rw_crapepr.Cdcooper,
                                               pr_nrdconta => rw_crapepr.nrdconta,
                                               pr_cdagenci => 1,
