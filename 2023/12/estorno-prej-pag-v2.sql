@@ -1527,25 +1527,25 @@ BEGIN
                                  pr_vllanmtosai_princ => vr_vllanmtosai_princ,
                                  pr_des_reto => vr_des_reto,
                                  pr_tab_erro => vr_tab_reto);                           
-                                 
-      recp0001.pc_pagar_contrato_emprestimo(pr_cdcooper => rw_crapepr.Cdcooper,
-                                            pr_nrdconta => rw_crapepr.nrdconta,
-                                            pr_cdagenci => 1,
-                                            pr_crapdat => rw_crapdat,
-                                            pr_nrctremp => rw_crapepr.nrctremp,
-                                            pr_nracordo => rw_acordo.nracordo,
-                                            pr_nrparcel => rw_acordo.nrparcela,
-                                            pr_cdoperad => '1',
-                                            pr_vlparcel => NVL(vr_vllanmtosai_princ,0),
-                                            pr_idorigem => 7,
-                                            pr_nmtelant => 'ATENDA',
-                                            pr_idvlrmin => vr_idvlrmin,
-                                            pr_vltotpag => vr_vltotpag,
-                                            pr_cdcritic => vr_cdcritica,
-                                            pr_dscritic => vr_dscritica);
-                                            
-    COMMIT;
-                                                                                                                                                                                                                                                                                                 
+      
+      IF vr_vllanmtosai_princ > 0 THEN                           
+        recp0001.pc_pagar_contrato_emprestimo(pr_cdcooper => rw_crapepr.Cdcooper,
+                                              pr_nrdconta => rw_crapepr.nrdconta,
+                                              pr_cdagenci => 1,
+                                              pr_crapdat => rw_crapdat,
+                                              pr_nrctremp => rw_crapepr.nrctremp,
+                                              pr_nracordo => rw_acordo.nracordo,
+                                              pr_nrparcel => rw_acordo.nrparcela,
+                                              pr_cdoperad => '1',
+                                              pr_vlparcel => NVL(vr_vllanmtosai_princ,0),
+                                              pr_idorigem => 7,
+                                              pr_nmtelant => 'ATENDA',
+                                              pr_idvlrmin => vr_idvlrmin,
+                                              pr_vltotpag => vr_vltotpag,
+                                              pr_cdcritic => vr_cdcritica,
+                                              pr_dscritic => vr_dscritica);
+      END IF;                                        
+    COMMIT;                                                                                                                                                                                                                                                                                                
     END IF;
   END LOOP;
 EXCEPTION                                         
