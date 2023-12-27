@@ -817,9 +817,9 @@ DECLARE
     CURSOR cr_lanc_lem (prc_cdcooper craplem.cdcooper%TYPE
                        ,prc_nrdconta craplem.nrdconta%TYPE
                        ,prc_nrctremp craplem.nrctremp%TYPE) IS                  
-      SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2382) THEN c.vllanmto ELSE 0 END) - 
+      SELECT NVL((SUM(CASE WHEN c.cdhistor IN (2382, 2882,2954,2953,2883) THEN c.vllanmto ELSE 0 END) - 
                   SUM(CASE WHEN c.cdhistor IN (2384) THEN c.vllanmto ELSE 0 END)),0) sum_jr60_2382,
-             NVL((SUM(CASE WHEN c.cdhistor IN (2397) THEN c.vllanmto ELSE 0 END) - 
+             NVL((SUM(CASE WHEN c.cdhistor IN (2397, 2886,2956,2955,2887) THEN c.vllanmto ELSE 0 END) - 
                   SUM(CASE WHEN c.cdhistor IN (2399) THEN c.vllanmto ELSE 0 END)),0) sum_jr60_2397,
              NVL((SUM(CASE WHEN c.cdhistor IN (2409) THEN c.vllanmto ELSE 0 END) - 
                   SUM(CASE WHEN c.cdhistor IN (2422) THEN c.vllanmto ELSE 0 END)),0) sum_jratz_2409,
@@ -835,7 +835,7 @@ DECLARE
        WHERE c.cdcooper = prc_cdcooper
          AND c.nrdconta = prc_nrdconta
          AND c.nrctremp = prc_nrctremp
-         AND c.cdhistor in (2382,2384,2397,2399,2409,2422,2411,2423,2415,2416, 2348,2472,2349,2359)
+         AND c.cdhistor in (2382,2384,2397,2399,2409,2422,2411,2423,2415,2416, 2348,2472,2349,2359, 2882,2954,2953,2883, 2886,2956,2955,2887)
          AND c.dtmvtolt >= TO_DATE('19/12/2023','DD/MM/YYYY'); 
     
     CURSOR cr_vlprincipal (prc_cdcooper craplem.cdcooper%TYPE
