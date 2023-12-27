@@ -68,6 +68,7 @@ BEGIN
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);    
   gene0002.pc_escreve_xml(vr_dados_rollback, vr_texto_rollback, 'Rollback das informacoes'||chr(13), FALSE);
+  
 
   vr_dsdireto := GENE0001.fn_param_sistema('CRED',3,'ROOT_MICROS');
   vr_nmdireto := vr_dsdireto||'cpd/bacas/MELHORA_ACORDO'; 
