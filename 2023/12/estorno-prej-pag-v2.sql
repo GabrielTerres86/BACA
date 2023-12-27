@@ -1528,7 +1528,7 @@ BEGIN
                                  pr_des_reto => vr_des_reto,
                                  pr_tab_erro => vr_tab_reto);                           
       
-      IF vr_vllanmtosai_princ > 0 THEN                           
+      IF NVL(vr_vllanmtosai_princ,0) > 0 THEN                           
         recp0001.pc_pagar_contrato_emprestimo(pr_cdcooper => rw_crapepr.Cdcooper,
                                               pr_nrdconta => rw_crapepr.nrdconta,
                                               pr_cdagenci => 1,
