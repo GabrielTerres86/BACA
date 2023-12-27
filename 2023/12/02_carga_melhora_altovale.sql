@@ -84,6 +84,7 @@ BEGIN
   vr_nmarqcsv := 'ALTOVALE_'||TO_CHAR(SYSDATE,'DDMMYYYYHH24MISS');
    
   vr_nmdireto := gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/VIRADACENTRAL';
+  
  
   vr_desclob := NULL;
   dbms_lob.createtemporary(vr_desclob, TRUE);
