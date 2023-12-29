@@ -1,9 +1,10 @@
 DECLARE
   vr_cooperativa INTEGER := 8;
   vr_conta       INTEGER := 84335629;
-  vr_cartao      NUMBER(25) := 6393500065179583;
-  vr_nrctrcrd    INTEGER := 99999712;
+  vr_cartao      NUMBER(25) := 6393500012985783;
+  vr_nrctrcrd    INTEGER := 9999971;
   vr_cpf_titular NUMBER(20);
+  
 BEGIN
 
   FOR cartao IN (SELECT DISTINCT a.nrcpftit
