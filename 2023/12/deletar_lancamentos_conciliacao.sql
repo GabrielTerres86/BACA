@@ -1,5 +1,5 @@
 begin
    delete from craplcm 
-   WHERE NRDCONTA in (99969505,82665990) AND CDPESQBB = 'teste deposito varejista';
+   WHERE NRDCONTA = 84335629 AND CDPESQBB = '000092438201;992671;000000009999888;00000045';
    commit;
  end;
