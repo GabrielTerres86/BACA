@@ -1,0 +1,13 @@
+BEGIN
+  UPDATE CRAPMUN
+     SET CDCOMARC = 2401859
+   WHERE CDUFIBGE = 24
+     AND CDCIDBGE = 1859;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    sistema.excecaointerna(pr_cdcooper => 3, pr_compleme => 'INC0306274');
+    RAISE;
+  
+END;
