@@ -188,7 +188,7 @@ DECLARE
                          pr_utlfileh => vr_arquivo_log,
                          pr_dscritic => vr_dscritic);
     IF vr_dscritic IS NOT NULL THEN
-      vr_dscritic := 'Arquivo contas.txt não encontrado.';
+      vr_dscritic := 'Arquivo contas.txt nÃ£o encontrado.';
       RAISE vr_excerro;
     END IF;
     
@@ -199,7 +199,7 @@ DECLARE
                          pr_dscritic => vr_dscritic);
                          
     IF vr_dscritic IS NOT NULL THEN
-      vr_dscritic := 'Arquivo contas.txt não encontrado.';
+      vr_dscritic := 'Arquivo contas.txt nÃ£o encontrado.';
       RAISE vr_excerro;
     END IF;
   
@@ -255,7 +255,7 @@ pc_gera_log('L','--> Alterado crapris');
 'UPDATE cecred.crapris r 
     SET r.vldivida = '|| rw_crapris_acordo.vldivida_dez ||',
         r.vljura60 = '|| rw_crapris_acordo.vljura60_nov  ||'
-  WHERE r.rowid =  '''||rw_crapris_acordo.rowid_dez||''''); 
+  WHERE r.rowid =  '''||rw_crapris_acordo.rowid_dez||''';'); 
      
     DELETE cecred.crapvri v
      WHERE v.cdcooper = rw_crapris_acordo.cdcooper
