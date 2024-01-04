@@ -2,10 +2,6 @@ DECLARE
   vr_cdcooper cecred.crapcop.cdcooper%TYPE := 3;
   vr_nrdctaat cecred.crapass.nrdconta%TYPE := 850004;
   vr_nrdctanv cecred.crapass.nrdconta%TYPE;
-  vr_dsvlrprm cecred.crapprm.dsvlrprm%TYPE;
-  vr_dsdchave cecred.crapsqu.dsdchave%TYPE;
-  vr_qtregdel NUMBER;
-  vr_qtregins NUMBER;
 BEGIN
   SELECT b.nrdconta
     INTO vr_nrdctanv
@@ -15,8 +11,7 @@ BEGIN
 
   UPDATE cecred.crapprm a
      SET a.dsvlrprm = vr_nrdctanv
-   WHERE a.cdacesso = 'COBTIT_NRDCONTA_BNF'
-     AND a.cdcooper IN (8, 9);
+   WHERE a.cdacesso = 'COBEMP_NRDCONTA_BNF';
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
