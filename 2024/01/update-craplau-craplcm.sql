@@ -1,10 +1,11 @@
 
 begin 
   
-UPDATE CECRED.CRAPLCM LCM SET LCM.CDCOOPER = 1
-WHERE LCM.NRDCONTA = 97213543 AND LCM.DTMVTOLT = TRUNC(SYSDATE)
-AND LCM.NRDOCMTO IN (18187560, 18187561) AND LCM.CDHISTOR=48;
+update cecred.craplcm set nrdocmto = 184226160, 
+where nrdolote = 10004  and nrdconta = 97802212 and nrdocmto = 18422616;
 
+update cecred.craplau set nrdocmto = 184226160, 
+where cdseqtel = 202406  and nrdconta = 97802212 and nrdocmto = 18422616;
 
 commit;
 end;
