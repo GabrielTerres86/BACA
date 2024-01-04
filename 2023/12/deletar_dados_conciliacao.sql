@@ -1,5 +1,5 @@
 DECLARE
-  vr_codigo INTEGER := 5746;
+  vr_codigo INTEGER := 5744;
 
 BEGIN
 
