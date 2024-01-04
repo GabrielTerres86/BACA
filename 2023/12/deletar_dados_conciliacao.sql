@@ -1,5 +1,5 @@
 DECLARE
-  vr_codigo INTEGER := 5744;
+  vr_codigo INTEGER := 5743;
 
 BEGIN
 
@@ -15,4 +15,3 @@ DELETE FROM TAA.TBTAA_SEP_ARQ WHERE IDARQUIVO = vr_codigo;
 
  COMMIT;
 END;
-
