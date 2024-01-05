@@ -1,10 +1,7 @@
 declare
   vr_nrseqrdr number;
 BEGIN
-
-  -- Criação dos acessos de novas telas
   FOR rw_crapcop IN (SELECT cdcooper FROM crapcop where cdcooper = 3) LOOP 
-    -- TANQUE
     insert into craptel (NMDATELA, NRMODULO, CDOPPTEL, TLDATELA, TLRESTEL, FLGTELDF, FLGTELBL, NMROTINA, LSOPPTEL, INACESSO, CDCOOPER, IDSISTEM, IDEVENTO, NRORDROT, NRDNIVEL, NMROTPAI, IDAMBTEL)
     values ('TANQUE', 5, '@,C', 'Listar e reprocessar lançamentos Pix', 'Listar e reprocessar lançamentos Pix', 0, 1, ' ', 'ACESSO,CONSULTAR,INSERIR,ALTERAR,EXCLUIR', 2, rw_crapcop.cdcooper, 1, 0, 0, 0, ' ', 0);
 	
