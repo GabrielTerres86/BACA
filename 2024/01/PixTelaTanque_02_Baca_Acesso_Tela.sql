@@ -3,7 +3,7 @@ BEGIN
   select 'TANQUE','@',crapope.cdoperad,null,3,1,0,2
   from crapope 
   where lower(crapope.cdoperad) IN(
-	'f0033406',
+	'f0032543',
 	'f0030606',
 	'f0033550',
 	'f0033197',
@@ -23,7 +23,7 @@ BEGIN
   select 'TANQUE','C',crapope.cdoperad,null,3,1,0,2
   from crapope 
   where lower(crapope.cdoperad) IN(
-	'f0033406',
+	'f0032543',
 	'f0030606',
 	'f0033550',
 	'f0033197',
