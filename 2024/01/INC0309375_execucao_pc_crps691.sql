@@ -7,8 +7,8 @@ DECLARE
   
 BEGIN
   
-  cecred.pc_crps691(pr_cdcooper => 1 -- Viacredi
-                   ,pr_flgresta => 0 -- Não se trata de restart
+  cecred.pc_crps691(pr_cdcooper => 1 
+                   ,pr_flgresta => 0 
                    ,pr_stprogra => vr_stprogra
                    ,pr_infimsol => vr_infimsol
                    ,pr_cdcritic => vr_cdcritic
