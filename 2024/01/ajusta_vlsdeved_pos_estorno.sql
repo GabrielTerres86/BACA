@@ -11,6 +11,7 @@ DECLARE
        AND r.cdcooper=t.cdcooper
        AND r.nrdconta=t.nrdconta
        AND r.nrctremp=t.nrctremp
+       AND r.inddocto=1
        AND r.DTREFERE=to_date('30/11/2023', 'DD/MM/YYYY')
        AND t.dtmvtolt >= to_date('01/12/2023', 'DD/MM/YYYY')
        AND t.CDHISTOR IN (2358,2342,2346,2373,2345,2472,2330,2344,2471,2347,2343,2349,2363,2365,2348,2371,2331,2359)
