@@ -15,6 +15,7 @@ BEGIN
 	'f0033559',
 	'f0033734',
 	'f0034561',
+	'f0033184',
 	't0036027') 
     and crapope.cdsitope = 1
     and crapope.cdcooper = 3; 
@@ -35,6 +36,7 @@ BEGIN
 	'f0033559',
 	'f0033734',
 	'f0034561',
+	'f0033184',
 	't0036027')
     and crapope.cdsitope = 1
     and crapope.cdcooper = 3;     
