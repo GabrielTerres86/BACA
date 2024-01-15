@@ -27,7 +27,7 @@ DECLARE
               AND s.cdsitseg = 1
               AND p.cdcooper = pr_cdcooper
               AND (SELECT COUNT(*)
-                     FROM tbseg_prestamista p1
+                     FROM CECRED.tbseg_prestamista p1
                     WHERE p1.cdcooper = p.cdcooper
                       AND p1.nrdconta = p.nrdconta
                       AND p1.nrctremp = p.nrctremp
