@@ -167,9 +167,9 @@ BEGIN
         END IF;
         CLOSE cr_crapris;
 
-/*        IF Mod (vr_contador,1000) = 0 THEN
+        IF Mod (vr_contador,1000) = 0 THEN
           COMMIT;
-        END IF;*/
+        END IF;
 
       END IF;
     END LOOP;
