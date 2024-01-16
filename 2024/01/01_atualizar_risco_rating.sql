@@ -104,8 +104,8 @@ BEGIN
                 ,a.inpontos_rating      = vr_vet_dados(5)
                 ,a.insegmento_rating    = TRIM(vr_vet_dados(6))
                 ,a.cdoperad_rating      = '1'
-                ,a.insituacao_rating    = 4 -- 4 Efetivado INSITUACAO_RATING
-                ,a.inorigem_rating      = 1 -- 1 MOTOR NORIGEM_RATING
+                ,a.insituacao_rating    = 4
+                ,a.inorigem_rating      = 1
                 ,a.flintegrar_sas       = 0
            WHERE a.cdcooper = vr_vet_dados(1)
              AND a.nrdconta = vr_vet_dados(2)
