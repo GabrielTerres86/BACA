@@ -206,7 +206,7 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 
---  COMMIT;
+  COMMIT;
 
   dbms_lob.close(vr_dados_rollback);
   dbms_lob.freetemporary(vr_dados_rollback);
