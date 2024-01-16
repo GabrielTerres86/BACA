@@ -173,31 +173,6 @@ BEGIN
                                                                                                             
               ELSE
                   CLOSE cr_craplim;
-                    
-                    extr0001.pc_obtem_saldo_dia(pr_cdcooper   => rw_craplim.cdcooper
-                                               ,pr_rw_crapdat => rw_crapdat
-                                               ,pr_cdagenci   => 1
-                                               ,pr_nrdcaixa   => 1
-                                               ,pr_cdoperad   => '1'
-                                               ,pr_nrdconta   => rw_craplim.nrdconta
-                                               ,pr_vllimcre   => rw_craplim.vllimite
-                                               ,pr_dtrefere   => rw_crapdat.dtmvtolt
-                                               ,pr_flgcrass   => FALSE
-                                               ,pr_des_reto   => vr_des_reto
-                                               ,pr_tab_sald   => vr_tab_sald
-                                               ,pr_tab_erro   => vr_tab_erro);
-                      
-                  IF vr_des_reto = 'NOK' THEN
-                     vr_dscritic := 'Erro ao buscar saldo. - ' ||  vr_tab_erro(vr_tab_erro.first).dscritic || ' - ' || SQLERRM;
-                     gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_handle_log
-                                                   ,pr_des_text => vr_tab_carga(vr_idx1).cdcooper || ';' || 
-                                                                   vr_tab_carga(vr_idx1).nrdconta || ';' ||
-                                                                   rw_craplim.nrctrlim || ';' || 
-                                                                   vr_dscritic);                                                                                                             
-                                                                   
-                    vr_tab_erro.DELETE; 
-                    CONTINUE;
-                  END IF;
                                                                                        
                           BEGIN
                             UPDATE craplim SET
