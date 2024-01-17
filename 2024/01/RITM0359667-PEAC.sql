@@ -1,11 +1,11 @@
 BEGIN
 
-	UPDATE crapprm prm
+	UPDATE cecred.crapprm prm
 	   SET prm.dsvlrprm = prm.dsvlrprm || ',4601,4602'
 	WHERE prm.cdacesso = 'LINHA_PEAC_3040'
 	   AND prm.cdcooper = 0;
 	 
-	INSERT INTO crapprm
+	INSERT INTO cecred.crapprm
 	  (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
 	VALUES
 	  ('CRED',
