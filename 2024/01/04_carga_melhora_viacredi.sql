@@ -11,6 +11,8 @@ DECLARE
   vr_des_erro      VARCHAR2(4000);
   vr_txtcompl      VARCHAR2(32000);
   
+  vr_count         NUMBER;
+  
   TYPE typ_reg_principal IS
   RECORD( cdcooper  cecred.tbrisco_operacoes.cdcooper%type
          ,nrdconta  cecred.tbrisco_operacoes.nrdconta%type
@@ -89,6 +91,8 @@ BEGIN
   dbms_lob.createtemporary(vr_desclob, TRUE);
   dbms_lob.open(vr_desclob, dbms_lob.lob_readwrite);
   
+  vr_count := 0;
+  
   vr_tab_cr_principal_bulk.DELETE;
   OPEN cr_principal;
   FETCH cr_principal BULK COLLECT INTO vr_tab_cr_principal_bulk;
@@ -120,7 +124,12 @@ BEGIN
                           ||');';
 
        pc_escreve_linha(pr_dsdlinha => vr_csv_9805_temp); 
-                                        
+
+       vr_count := vr_count + 1;       
+       IF MOD(vr_count,1000) = 0 THEN
+         pc_escreve_linha(pr_dsdlinha => 'COMMIT;'); 
+       END IF;
+                                       
     END LOOP;
 
     cecred.gene0002.pc_escreve_xml(vr_desclob, vr_txtcompl, '  COMMIT;'||chr(13)||'END; '||chr(13), TRUE);
