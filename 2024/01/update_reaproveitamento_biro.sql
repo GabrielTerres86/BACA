@@ -7,9 +7,9 @@ begin
   
   DELETE
   FROM  crapcbd
-  WHERE crapcbd.inreapro = 0 -- Utilizar somente consultas que nao foram reaproveitadas
-    AND crapcbd.inreterr = 0 -- Que nao teve erros
-    AND crapcbd.nrsdtsoc IS NULL -- Nao pode ser socio, pois as informacoes dos socios vem resumidas
+  WHERE crapcbd.inreapro = 0
+    AND crapcbd.inreterr = 0
+    AND crapcbd.nrsdtsoc IS NULL
     AND trunc(crapcbd.dtconbir) = trunc(SYSDATE);
     
   COMMIT;
