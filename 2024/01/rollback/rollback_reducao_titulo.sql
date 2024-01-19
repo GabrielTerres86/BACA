@@ -1,3 +1,5 @@
+BEGIN
+
 UPDATE craplim SET  vllimite = '150000' WHERE cdcooper = 2   AND nrdconta = 610798   AND nrctrlim = 2288   AND insitlim = 2   AND tpctrlim = 3;
 UPDATE crawlim SET  vllimite = '150000' WHERE cdcooper = 2   AND nrdconta = 610798   AND nrctrlim = 2288   AND insitlim = 2;
 UPDATE crapass SET  vllimcre = '150000' WHERE cdcooper = 2   AND nrdconta = 610798;
@@ -95,3 +97,5 @@ UPDATE craplim SET  vllimite = '20000' WHERE cdcooper = 2   AND nrdconta = 78038
 UPDATE crawlim SET  vllimite = '20000' WHERE cdcooper = 2   AND nrdconta = 780383   AND nrctrlim = 1952   AND insitlim = 2;
 UPDATE crapass SET  vllimcre = '20000' WHERE cdcooper = 2   AND nrdconta = 780383;
 COMMIT;
+
+END;
