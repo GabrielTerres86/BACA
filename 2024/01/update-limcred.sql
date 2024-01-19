@@ -1,9 +1,6 @@
 begin 
-  
-    UPDATE crapass SET
-           vllimcre = 9000
-     WHERE cdcooper = 1
-       AND nrdconta = 99999625; 
+
+UPDATE crapass a SET a.vllimcre = (SELECT NVL(l.vllimite,0) FROM craplim l WHERE l.cdcooper = a.cdcooper AND l.nrdconta = a.nrdconta  AND l.insitlim = 2 AND l.tpctrlim = 1) WHERE a.cdcooper = 1 AND a.nrdconta = 99999625;  
 
 commit;
 
