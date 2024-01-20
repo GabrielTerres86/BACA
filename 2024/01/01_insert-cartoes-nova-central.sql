@@ -54,7 +54,7 @@ BEGIN
               97, 1513);
     EXCEPTION
       WHEN OTHERS THEN
-        dbms_output.put_line('Erro ao inserir crapris - ' || SQLERRM);
+        raise_application_error(-20000, 'Erro ao inserir crapris - ' || SQLERRM);
     END;
   END LOOP;
   
@@ -68,7 +68,7 @@ BEGIN
               97,                  rw_crapvri.cdvencto, rw_crapvri.vldivida, rw_crapvri.cdmodali);
     EXCEPTION
       WHEN OTHERS THEN
-        dbms_output.put_line('Erro ao inserir crapvri - ' || SQLERRM);
+        raise_application_error(-20000, 'Erro ao inserir crapvri - ' || SQLERRM);
     END;
   END LOOP;
   
