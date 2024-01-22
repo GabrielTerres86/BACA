@@ -6,10 +6,10 @@ DECLARE
   
   CURSOR cr_crapcop IS
     SELECT cdcooper
-      FROM cecred.crapcop a
-     WHERE a.flgativo = 1
-       AND a.cdcooper IN (1)
-     ORDER BY a.cdcooper DESC;
+      FROM cecred.crapcop c
+     WHERE c.flgativo = 1
+       AND c.cdcooper IN (1)
+     ORDER BY c.cdcooper DESC;
   rw_crapcop cr_crapcop%ROWTYPE;
   
 BEGIN
