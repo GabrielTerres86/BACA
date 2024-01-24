@@ -10,8 +10,8 @@ DECLARE
   vr_texto_padrao VARCHAR2(200);
   vr_cont         NUMBER(6) := 0;
   vr_dscritic     VARCHAR2(32767);
-  vr_data         DATE := SYSDATE; -- inicializar a data
-  vr_registros_data  PLS_INTEGER := 500; -- quantidade de registros por dia
+  vr_data         DATE := SYSDATE; 
+  vr_registros_data  PLS_INTEGER := 500; 
   vr_cont_data PLS_INTEGER := 1;
   
   vr_cdcooper tbcalris_colaboradores.cdcooper%TYPE;
