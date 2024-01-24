@@ -1,0 +1,23 @@
+BEGIN
+  INSERT INTO CECRED.crapmpc
+    (CDPRODUT
+    ,QTDIACAR
+    ,QTDIAPRZ
+    ,VLRFAIXA
+    ,VLPERREN
+    ,VLTXFIXA)
+  VALUES
+    (1007
+    ,30
+    ,3600
+    ,0.01
+    ,100.000000
+    ,0.000000);  
+  
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    SISTEMA.excecaoInterna(pr_compleme => 'RITM0364064');
+    ROLLBACK;
+END;
+
