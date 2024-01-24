@@ -1,14 +1,7 @@
 BEGIN
-  INSERT INTO cobranca.tbcobran_ailosmais_conta_corrente
-    (nrconta_corrente
-    ,cdcooperativa
-    ,dsdominio
-    ,dhregistro)
-  VALUES
-    (11708796
-    ,1
-    ,'RECUPERACAO_BOLETO'
-    ,SYSDATE);
+  UPDATE cobranca.tbcobran_ailosmais_conta_corrente a
+    SET nrconta_corrente = 17708796
+WHERE a.idailosmais_conta_corrente = '0FB124CE29540660E0630ACC8206B2F5';
   COMMIT;
 exception
   when others then
