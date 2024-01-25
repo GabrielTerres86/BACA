@@ -14,7 +14,7 @@ DECLARE
      WHERE c.flgativo = 1
        AND c.cdcooper <> 3
        AND c.cdcooper = d.cdcooper
-       AND c.cdcooper IN (1, 16);
+       ;
 
   CURSOR cr_principal(pr_cdcooper CECRED.crapseg.cdcooper%TYPE) IS
     SELECT x.*,xp.idseqtra,xw.progress_recid crawseg_progress_recid,xs.progress_recid crapseg_progress_recid
@@ -33,7 +33,7 @@ DECLARE
                       AND p1.nrctremp = p.nrctremp
                       AND p1.tpcustei = p.tpcustei
                       AND p1.tpregist = p.tpregist
-                      AND p1.dtinivig = p.dtinivig
+                      
                       AND p1.tpregist = 1) >1
            GROUP BY p.cdcooper,p.nrdconta,p.nrctremp) x,
           CECRED.crapseg xs,
