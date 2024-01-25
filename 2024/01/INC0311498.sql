@@ -1,5 +1,5 @@
 DECLARE
-  vr_dscritic  crapcri.dscritic%TYPE;
+  vr_dscritic  cecred.crapcri.dscritic%TYPE;
   vr_diretorio VARCHAR2(200);
   vr_listarq   VARCHAR2(200);
   vr_dslinha   VARCHAR2(2000);
@@ -11,8 +11,8 @@ DECLARE
   vr_arquivo   utl_file.file_type;
   vr_exec_erro EXCEPTION;
 BEGIN
-  vr_diretorio := obterParametroSistema(pr_nmsistem => 'CRED'
-                                       ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0311498';
+  vr_diretorio := sistema.obterParametroSistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdacesso => 'ROOT_MICROS') || 'cpd/bacas/INC0311498';
 
   sistema.abrirArquivo(pr_nmdireto => vr_diretorio,
                        pr_nmarquiv => 'codigo.csv',
