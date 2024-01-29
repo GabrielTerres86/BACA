@@ -3,6 +3,7 @@ DECLARE
 BEGIN
   OPEN  BTCH0001.cr_crapdat(pr_cdcooper => 1);
   FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+  CLOSE BTCH0001.cr_crapdat;
         
   UPDATE CECRED.crappep
      SET inliquid = 1,        
