@@ -37,7 +37,8 @@ BEGIN
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);     
   
   vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '9;1168063;101031;C;F|'||
-                                                             '14;1543491;147433;B;D'
+                                                             '14;1543491;147433;B;D|'||
+                                                             '14;1463605;147776;D;E'
                                                              ,
                                                pr_delimit => '|');
                                              
