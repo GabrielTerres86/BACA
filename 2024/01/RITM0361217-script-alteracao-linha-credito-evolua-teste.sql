@@ -1,6 +1,6 @@
 DECLARE
    vr_aux_ambiente    INTEGER       := 3;             
-   vr_aux_diretor     VARCHAR2(100) := 'RITM0361217';     
+   vr_aux_diretor     VARCHAR2(100) := 'RITM0361217E';     
    vr_aux_arquivo     VARCHAR2(100) := 'registros';
    vr_aux_cdcooper    NUMBER := 14; 
    vr_handle          UTL_FILE.FILE_TYPE; 
