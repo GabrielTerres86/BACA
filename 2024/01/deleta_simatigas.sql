@@ -23,7 +23,7 @@ declare
                            WHERE wpr.cdcooper = sim.cdcooper
                              AND wpr.nrdconta = sim.nrdconta
                              AND wpr.nrsimula = sim.nrsimula)
-         AND sim.dtmvtolt  < '01/11/2023'; 
+         AND TO_DATE(sim.dtmvtolt)  < '01/11/2023'; 
          rw_crapsim cr_crapsim%rowtype;
          
      CURSOR cr_crapass IS
