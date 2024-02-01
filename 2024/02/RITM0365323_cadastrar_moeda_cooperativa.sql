@@ -1,6 +1,6 @@
-declare 
+DECLARE 
   pr_cdcooper PLS_INTEGER := 9; 
-  pr_dtmaxima DATE := '31/12/2024'; 
+  pr_dtmaxima DATE := to_date('31/12/2024','dd/mm/yyyy'); 
 
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
   vr_data DATE;
@@ -9,12 +9,12 @@ declare
   
   CURSOR cr_crapmfx IS
     SELECT DISTINCT crapmfx.tpmoefix
-      FROM crapmfx
+      FROM CECRED.crapmfx
      WHERE cdcooper = pr_cdcooper;
 
   CURSOR cr_crapmfx_2(pr_tpmoefix PLS_INTEGER) IS
       SELECT crapmfx.vlmoefix 
-        FROM crapmfx 
+        FROM CECRED.crapmfx 
        WHERE cdcooper = pr_cdcooper 
          AND tpmoefix = pr_tpmoefix
        ORDER BY dtmvtolt DESC;  
@@ -43,7 +43,7 @@ begin
     LOOP
       vr_data := vr_data + 1;
       BEGIN
-        INSERT INTO crapmfx
+        INSERT INTO CECRED.crapmfx
           (dtmvtolt,
            tpmoefix,
            vlmoefix,
@@ -69,6 +69,6 @@ begin
   END LOOP;
   dbms_output.put_line('Erro: '||vr_erro);
   dbms_output.put_line('Correto: '||vr_correto);
-  end loop;
+  END LOOP;
   COMMIT;
 end;
