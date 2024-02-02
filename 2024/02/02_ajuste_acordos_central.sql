@@ -60,7 +60,7 @@ DECLARE
                    ,pr_nrdconta IN cecred.crapepr.nrdconta%TYPE
                    ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE
                    ,pr_dtrefere IN cecred.crapris.dtrefere%TYPE) IS
-    SELECT e.vlsdevat
+    SELECT e.vlsdeved
           ,r.vljura60
           ,r.vljurantpp
           ,r.qtparcel
@@ -143,7 +143,8 @@ BEGIN
 
         gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv
                                     ,pr_des_text => vr_dslinha);
-
+        
+        vr_dslinha := REPLACE(vr_dslinha, chr(13));
         vr_vet_dados := gene0002.fn_quebra_string(pr_string => vr_dslinha, pr_delimit => ';');
         
         OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_vet_dados(1));
@@ -199,9 +200,9 @@ BEGIN
         FETCH cr_crapepr INTO rw_crapepr;
         CLOSE cr_crapepr;
 
-        vr_vlParcelas := (rw_crapepr.vlsdevat - nvl(rw_crapepr.vljura60,0) - nvl(rw_crapepr.vljurantpp,0)) / greatest(rw_crapepr.qtparcel,1);
+        vr_vlParcelas := (rw_crapepr.vlsdeved - nvl(rw_crapepr.vljura60,0) - nvl(rw_crapepr.vljurantpp,0)) / greatest(rw_crapepr.qtparcel,1);
 
-        vr_vlParcelasJ60 := (rw_crapepr.vlsdevat / greatest(rw_crapepr.qtparcel,1));
+        vr_vlParcelasJ60 := (rw_crapepr.vlsdeved / greatest(rw_crapepr.qtparcel,1));
         
         vr_tab_ris_acordo.delete;
         vr_tab_vri_acordo.delete;
@@ -283,9 +284,9 @@ BEGIN
                                        ,r.vldivida := ' || rw_crapepr.vldivida || '
                                        ,r.vlprxpar := ' || rw_crapepr.vlprxpar || '
                                        ,r.dtprxpar := ' || rw_crapepr.dtprxpar || 
-                                ' WHERE w.cdcooper = ' || vr_vet_dados(1) || chr(13) || 
-                                '   AND w.nrdconta = ' || vr_nrdconta || chr(13) || 
-                                '   AND w.nrctremp = ' || vr_vet_dados(3) || 
+                                ' WHERE r.cdcooper = ' || vr_vet_dados(1) || chr(13) || 
+                                '   AND r.nrdconta = ' || vr_nrdconta || chr(13) || 
+                                '   AND r.nrctremp = ' || vr_vet_dados(3) || 
                                 ';' ||chr(13)||chr(13), FALSE); 
         
       END IF;        
