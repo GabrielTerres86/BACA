@@ -189,7 +189,7 @@ BEGIN
              AND nrctremp = vr_vet_dados(3);
         EXCEPTION
           WHEN OTHERS THEN
-            raise_application_error(-20000, 'Erro ao excluir VRI da conta: ' || vr_nrdconta || ' -- ' || SQLERRM);
+            raise_application_error(-20000, 'Erro ao excluir VRI da conta: ' || vr_nrdconta || ' - ' || SQLERRM);
         END;
         
         OPEN cr_crapepr(pr_cdcooper => vr_vet_dados(1) 
@@ -258,7 +258,7 @@ BEGIN
              AND dtrefere = vr_dtrefere;
         EXCEPTION
           WHEN OTHERS THEN
-            raise_application_error(-20000, 'Erro ao atualizar RIS da conta: ' || vr_nrdconta || ' -- ' || SQLERRM);
+            raise_application_error(-20000, 'Erro ao atualizar RIS da conta: ' || vr_nrdconta || ' - ' || SQLERRM);
         END;
         
         gene0002.pc_escreve_xml(vr_dados_crapris
