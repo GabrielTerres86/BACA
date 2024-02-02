@@ -53,7 +53,8 @@ DECLARE
        AND a.cdsituacao = 1
        AND a.cdcooper   = pr_cdcooper
        AND a.nrdconta   = pr_nrdconta
-       AND c.nrctremp   = pr_nrctremp;
+       AND c.nrctremp   = pr_nrctremp
+       AND c.cdmodelo   = 2;
   rw_acordo cr_acordo%ROWTYPE;
   
   CURSOR cr_crapepr(pr_cdcooper IN cecred.crapepr.cdcooper%TYPE
