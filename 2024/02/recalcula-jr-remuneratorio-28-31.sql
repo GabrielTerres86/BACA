@@ -326,7 +326,7 @@ BEGIN
 
   vr_dsdireto := GENE0001.fn_param_sistema('CRED', 3, 'ROOT_MICROS');
   vr_nmdireto := vr_dsdireto || 'cpd/bacas/RISCO/ACORDOS/';
-  vr_nmarquiv := 'ACORDOS.csv';
+  vr_nmarquiv := 'ACORDOS_V2.csv';
 
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto,
                            pr_nmarquiv => vr_nmarquiv,
