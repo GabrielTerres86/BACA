@@ -100,7 +100,41 @@ DECLARE
            XMLTABLE('ROW' PASSING DBMS_XMLGEN.GETXMLTYPE('SELECT * FROM ' || table_name || ' ' || pr_condicao).EXTRACT('ROWSET/ROW')) t
      WHERE UPPER(table_name) = UPPER(pr_tabela);
   rw_rollback cr_rollback%ROWTYPE;
-
+  
+  CURSOR cr_crapris(pr_cdcooper IN cecred.crapris.cdcooper%TYPE
+                   ,pr_nrdconta IN cecred.crapris.nrdconta%TYPE
+                   ,pr_nrctremp IN cecred.crapris.nrctremp%TYPE
+                   ,pr_dtrefere IN cecred.crapris.dtrefere%TYPE) IS
+    SELECT NVL(r.vljura60,0) vljura60
+          ,(SELECT SUM(v.vlempres)
+              FROM cecred.crapvri v
+             WHERE v.cdcooper = r.cdcooper
+               AND v.nrdconta = r.nrdconta
+               AND v.nrctremp = r.nrctremp
+               AND v.dtrefere = r.dtrefere) total_empres
+      FROM cecred.crapris r
+     WHERE r.cdcooper = pr_cdcooper
+       AND r.nrdconta = pr_nrdconta
+       AND r.nrctremp = pr_nrctremp
+       AND r.dtrefere = pr_dtrefere;
+  rw_crapris cr_crapris%ROWTYPE;
+  
+  CURSOR cr_vencimentos(pr_cdcooper IN cecred.crapris.cdcooper%TYPE
+                       ,pr_nrdconta IN cecred.crapris.nrdconta%TYPE
+                       ,pr_nrctremp IN cecred.crapris.nrctremp%TYPE
+                       ,pr_dtrefere IN cecred.crapris.dtrefere%TYPE
+                       ,pr_vljura60 IN NUMBER
+                       ,pr_vlempres IN NUMBER) IS
+    SELECT j.vlempres + j.vljura60_venc vldivida_novo, j.*
+      FROM (SELECT ROUND((v.vlempres / pr_vlempres) * pr_vljura60, 2) vljura60_venc
+                  ,v.*
+              FROM crapvri v 
+             WHERE v.cdcooper = pr_cdcooper 
+               AND v.dtrefere = pr_dtrefere
+               AND v.nrdconta = pr_nrdconta 
+               AND v.nrctremp = pr_nrctremp) j;
+  rw_vencimentos cr_vencimentos%ROWTYPE;
+  
   rw_crapdat cecred.btch0001.cr_crapdat%ROWTYPE;
 BEGIN
 
@@ -161,134 +195,153 @@ BEGIN
                       ,pr_nrctremp => vr_vet_dados(3));
         FETCH cr_acordo INTO rw_acordo;
         IF cr_acordo%NOTFOUND THEN
-          gene0002.pc_escreve_xml(vr_dados_rollback
-                                ,vr_texto_rollback
-                                ,'Acordo nao encontrado coop: ' || vr_vet_dados(1) || ' conta: ' || vr_nrdconta || ' contrato: ' || vr_vet_dados(3) ||
-                                ';' ||chr(13)||chr(13), FALSE); 
           CLOSE cr_acordo;
-          CONTINUE;
+          OPEN cr_crapris(pr_cdcooper => vr_vet_dados(1) 
+                         ,pr_nrdconta => vr_nrdconta
+                         ,pr_nrctremp => vr_vet_dados(3)
+                         ,pr_dtrefere => vr_dtrefere);
+          FETCH cr_crapris INTO rw_crapris;
+          CLOSE cr_crapris;
+          
+          FOR rw_vencimentos IN cr_vencimentos(pr_cdcooper => vr_vet_dados(1) 
+                                              ,pr_nrdconta => vr_nrdconta
+                                              ,pr_nrctremp => vr_vet_dados(3)
+                                              ,pr_dtrefere => vr_dtrefere
+                                              ,pr_vljura60 => rw_crapris.vljura60
+                                              ,pr_vlempres => rw_crapris.total_empres) LOOP
+            BEGIN
+              UPDATE cecred.crapvri v
+                 SET v.vldivida = rw_vencimentos.vldivida_novo
+               WHERE v.cdcooper = vr_vet_dados(1) 
+                 AND v.nrdconta = vr_nrdconta
+                 AND v.nrctremp = vr_vet_dados(3)
+                 AND v.dtrefere = vr_dtrefere;
+            EXCEPTION
+              WHEN OTHERS THEN
+                raise_application_error(-20000, 'Erro ao atualizar VRI. Conta: ' || vr_nrdconta || ' Contrato: ' || vr_vet_dados(3));
+            END;
+          END LOOP;
         ELSE
           CLOSE cr_acordo;
-        END IF;
-        
-        gene0002.pc_escreve_xml(vr_dados_rollback
-                               ,vr_texto_rollback
-                               ,'DELETE FROM cecred.crapvri WHERE cdcooper = ' || vr_vet_dados(1) || ' AND dtrefere = ''' || vr_dtrefere || '''' || ' AND nrdconta = ' || vr_nrdconta || ' AND nrctremp = ' || vr_vet_dados(3) || ';'
-                               ||chr(13)||chr(13), FALSE); 
-        FOR rw_rollback IN cr_rollback(pr_condicao => 'WHERE cdcooper = ' || vr_vet_dados(1) || ' AND dtrefere = ''' || vr_dtrefere || '''' || ' AND nrdconta = ' || vr_nrdconta || ' AND nrctremp = ' || vr_vet_dados(3)
-                                      ,pr_tabela   => 'CRAPVRI') LOOP
           gene0002.pc_escreve_xml(vr_dados_rollback
                                  ,vr_texto_rollback
-                                 ,rw_rollback.query_insert ||chr(13)||chr(13), FALSE); 
-        END LOOP;
-        
-        BEGIN 
-          DELETE FROM cecred.crapvri 
-           WHERE cdcooper = vr_vet_dados(1) 
-             AND dtrefere = vr_dtrefere 
-             AND nrdconta = vr_nrdconta
-             AND nrctremp = vr_vet_dados(3);
-        EXCEPTION
-          WHEN OTHERS THEN
-            raise_application_error(-20000, 'Erro ao excluir VRI da conta: ' || vr_nrdconta || ' - ' || SQLERRM);
-        END;
-        
-        OPEN cr_crapepr(pr_cdcooper => vr_vet_dados(1) 
-                       ,pr_nrdconta => vr_nrdconta
-                       ,pr_nrctremp => vr_vet_dados(3)
-                       ,pr_dtrefere => vr_dtrefere);
-        FETCH cr_crapepr INTO rw_crapepr;
-        CLOSE cr_crapepr;
-
-        vr_vlParcelas := (rw_crapepr.vlsdeved - nvl(rw_crapepr.vljura60,0) - nvl(rw_crapepr.vljurantpp,0)) / greatest(rw_crapepr.qtparcel,1);
-
-        vr_vlParcelasJ60 := (rw_crapepr.vlsdeved / greatest(rw_crapepr.qtparcel,1));
-        
-        vr_tab_ris_acordo.delete;
-        vr_tab_vri_acordo.delete;
-        GESTAODERISCO.gerarVencimentosRiscoAcordo(pr_cdcooper    => vr_vet_dados(1)
-                                                 ,pr_nrdconta    => vr_nrdconta
-                                                 ,pr_nrctremp    => vr_vet_dados(3)
-                                                 ,pr_nracordo    => rw_acordo.nracordo
-                                                 ,pr_cdmodali    => rw_crapepr.cdmodali
-                                                 ,pr_dtrefere    => vr_dtrefere
-                                                 ,pr_dtmvtolt    => vr_dtrefere
-                                                 ,pr_nrseqctr    => rw_crapepr.nrseqctr
-                                                 ,pr_vlrParcela  => vr_vlParcelas
-                                                 ,pr_vlrParcelaJ60 => vr_vlParcelasJ60
-                                                 ,pr_tab_ris_res => vr_tab_ris_acordo
-                                                 ,pr_tab_crapvri => vr_tab_vri_acordo
-                                                 ,pr_cdcritic    => vr_cdcritic
-                                                 ,pr_dscritic    => vr_dscritic);
-
-        vr_idx_vri := vr_tab_vri_acordo.FIRST;
-        WHILE vr_idx_vri IS NOT NULL LOOP
-          BEGIN
-            INSERT INTO cecred.crapvri(nrdconta, dtrefere, innivris, cdmodali, nrctremp,
-                                       nrseqctr, cdvencto, vldivida, cdcooper, vljura60, vlempres)
-            VALUES(vr_tab_vri_acordo(vr_idx_vri).nrdconta
-                  ,vr_dtrefere
-                  ,rw_crapepr.innivris
-                  ,rw_crapepr.cdmodali
-                  ,vr_vet_dados(3)
-                  ,rw_crapepr.nrseqctr
-                  ,vr_tab_vri_acordo(vr_idx_vri).cdvencto
-                  ,vr_tab_vri_acordo(vr_idx_vri).vldivida
-                  ,vr_vet_dados(1)
-                  ,0
-                  ,vr_tab_vri_acordo(vr_idx_vri).vlempres);
-            vr_idx_vri := vr_tab_vri_acordo.NEXT(vr_idx_vri);
+                                 ,'DELETE FROM cecred.crapvri WHERE cdcooper = ' || vr_vet_dados(1) || ' AND dtrefere = ''' || vr_dtrefere || '''' || ' AND nrdconta = ' || vr_nrdconta || ' AND nrctremp = ' || vr_vet_dados(3) || ';'
+                                 ||chr(13)||chr(13), FALSE); 
+          FOR rw_rollback IN cr_rollback(pr_condicao => 'WHERE cdcooper = ' || vr_vet_dados(1) || ' AND dtrefere = ''' || vr_dtrefere || '''' || ' AND nrdconta = ' || vr_nrdconta || ' AND nrctremp = ' || vr_vet_dados(3)
+                                        ,pr_tabela   => 'CRAPVRI') LOOP
+            gene0002.pc_escreve_xml(vr_dados_rollback
+                                   ,vr_texto_rollback
+                                   ,rw_rollback.query_insert ||chr(13)||chr(13), FALSE); 
+          END LOOP;
+          
+          BEGIN 
+            DELETE FROM cecred.crapvri 
+             WHERE cdcooper = vr_vet_dados(1) 
+               AND dtrefere = vr_dtrefere 
+               AND nrdconta = vr_nrdconta
+               AND nrctremp = vr_vet_dados(3);
+          EXCEPTION
+            WHEN OTHERS THEN
+              raise_application_error(-20000, 'Erro ao excluir VRI da conta: ' || vr_nrdconta || ' - ' || SQLERRM);
           END;
-        END LOOP;
-        
-        BEGIN 
-          UPDATE cecred.crapris
-             SET vldiv060 = vr_tab_ris_acordo(0).vldiv060
-                ,vldiv180 = vr_tab_ris_acordo(0).vldiv180
-                ,vldiv360 = vr_tab_ris_acordo(0).vldiv360
-                ,vldiv999 = vr_tab_ris_acordo(0).vldiv999
-                ,vlvec180 = vr_tab_ris_acordo(0).vlvec180
-                ,vlvec360 = vr_tab_ris_acordo(0).vlvec360
-                ,vlvec999 = vr_tab_ris_acordo(0).vlvec999
-                ,vldivida = vr_tab_ris_acordo(0).vldivida
-                ,vlprxpar = vr_tab_ris_acordo(0).vlprxpar
-                ,dtprxpar = vr_tab_ris_acordo(0).dtprxpar
-           WHERE cdcooper = vr_vet_dados(1)
-             AND nrdconta = vr_nrdconta
-             AND nrctremp = vr_vet_dados(3)
-             AND dtrefere = vr_dtrefere;
-        EXCEPTION
-          WHEN OTHERS THEN
-            raise_application_error(-20000, 'Erro ao atualizar RIS da conta: ' || vr_nrdconta || ' - ' || SQLERRM);
-        END;
-        
-        gene0002.pc_escreve_xml(vr_dados_crapris
-                               ,vr_texto_crapris
-                               ,vr_vet_dados(1) || ';' || 
-                                vr_nrdconta || ';' || 
-                                vr_vet_dados(3) || ';' || 
-                                rw_crapepr.vldivida || ';'|| 
-                                vr_tab_ris_acordo(0).vldivida || chr(13)
-                               ,FALSE);
-        
-        gene0002.pc_escreve_xml(vr_dados_rollback
-                               ,vr_texto_rollback
-                               ,'UPDATE cecred.crapris r' || chr(13) || 
-                                '   SET r.vldiv060 := ' || rw_crapepr.vldiv060 || '
-                                       ,r.vldiv180 := ' || rw_crapepr.vldiv180 || '
-                                       ,r.vldiv360 := ' || rw_crapepr.vldiv360 || '
-                                       ,r.vldiv999 := ' || rw_crapepr.vldiv999 || '
-                                       ,r.vlvec180 := ' || rw_crapepr.vlvec180 || '
-                                       ,r.vlvec360 := ' || rw_crapepr.vlvec360 || '
-                                       ,r.vlvec999 := ' || rw_crapepr.vlvec999 || '
-                                       ,r.vldivida := ' || rw_crapepr.vldivida || '
-                                       ,r.vlprxpar := ' || rw_crapepr.vlprxpar || '
-                                       ,r.dtprxpar := ' || rw_crapepr.dtprxpar || 
-                                ' WHERE r.cdcooper = ' || vr_vet_dados(1) || chr(13) || 
-                                '   AND r.nrdconta = ' || vr_nrdconta || chr(13) || 
-                                '   AND r.nrctremp = ' || vr_vet_dados(3) || 
-                                ';' ||chr(13)||chr(13), FALSE); 
-        
+          
+          OPEN cr_crapepr(pr_cdcooper => vr_vet_dados(1) 
+                         ,pr_nrdconta => vr_nrdconta
+                         ,pr_nrctremp => vr_vet_dados(3)
+                         ,pr_dtrefere => vr_dtrefere);
+          FETCH cr_crapepr INTO rw_crapepr;
+          CLOSE cr_crapepr;
+
+          vr_vlParcelas := (rw_crapepr.vlsdeved - nvl(rw_crapepr.vljura60,0) - nvl(rw_crapepr.vljurantpp,0)) / greatest(rw_crapepr.qtparcel,1);
+
+          vr_vlParcelasJ60 := (rw_crapepr.vlsdeved / greatest(rw_crapepr.qtparcel,1));
+          
+          vr_tab_ris_acordo.delete;
+          vr_tab_vri_acordo.delete;
+          GESTAODERISCO.gerarVencimentosRiscoAcordo(pr_cdcooper    => vr_vet_dados(1)
+                                                   ,pr_nrdconta    => vr_nrdconta
+                                                   ,pr_nrctremp    => vr_vet_dados(3)
+                                                   ,pr_nracordo    => rw_acordo.nracordo
+                                                   ,pr_cdmodali    => rw_crapepr.cdmodali
+                                                   ,pr_dtrefere    => vr_dtrefere
+                                                   ,pr_dtmvtolt    => vr_dtrefere
+                                                   ,pr_nrseqctr    => rw_crapepr.nrseqctr
+                                                   ,pr_vlrParcela  => vr_vlParcelas
+                                                   ,pr_vlrParcelaJ60 => vr_vlParcelasJ60
+                                                   ,pr_tab_ris_res => vr_tab_ris_acordo
+                                                   ,pr_tab_crapvri => vr_tab_vri_acordo
+                                                   ,pr_cdcritic    => vr_cdcritic
+                                                   ,pr_dscritic    => vr_dscritic);
+
+          vr_idx_vri := vr_tab_vri_acordo.FIRST;
+          WHILE vr_idx_vri IS NOT NULL LOOP
+            BEGIN
+              INSERT INTO cecred.crapvri(nrdconta, dtrefere, innivris, cdmodali, nrctremp,
+                                         nrseqctr, cdvencto, vldivida, cdcooper, vljura60, vlempres)
+              VALUES(vr_tab_vri_acordo(vr_idx_vri).nrdconta
+                    ,vr_dtrefere
+                    ,rw_crapepr.innivris
+                    ,rw_crapepr.cdmodali
+                    ,vr_vet_dados(3)
+                    ,rw_crapepr.nrseqctr
+                    ,vr_tab_vri_acordo(vr_idx_vri).cdvencto
+                    ,vr_tab_vri_acordo(vr_idx_vri).vldivida
+                    ,vr_vet_dados(1)
+                    ,0
+                    ,vr_tab_vri_acordo(vr_idx_vri).vlempres);
+              vr_idx_vri := vr_tab_vri_acordo.NEXT(vr_idx_vri);
+            END;
+          END LOOP;
+          
+          BEGIN 
+            UPDATE cecred.crapris
+               SET vldiv060 = vr_tab_ris_acordo(0).vldiv060
+                  ,vldiv180 = vr_tab_ris_acordo(0).vldiv180
+                  ,vldiv360 = vr_tab_ris_acordo(0).vldiv360
+                  ,vldiv999 = vr_tab_ris_acordo(0).vldiv999
+                  ,vlvec180 = vr_tab_ris_acordo(0).vlvec180
+                  ,vlvec360 = vr_tab_ris_acordo(0).vlvec360
+                  ,vlvec999 = vr_tab_ris_acordo(0).vlvec999
+                  ,vldivida = vr_tab_ris_acordo(0).vldivida
+                  ,vlprxpar = vr_tab_ris_acordo(0).vlprxpar
+                  ,dtprxpar = vr_tab_ris_acordo(0).dtprxpar
+             WHERE cdcooper = vr_vet_dados(1)
+               AND nrdconta = vr_nrdconta
+               AND nrctremp = vr_vet_dados(3)
+               AND dtrefere = vr_dtrefere;
+          EXCEPTION
+            WHEN OTHERS THEN
+              raise_application_error(-20000, 'Erro ao atualizar RIS da conta: ' || vr_nrdconta || ' - ' || SQLERRM);
+          END;
+          
+          gene0002.pc_escreve_xml(vr_dados_crapris
+                                 ,vr_texto_crapris
+                                 ,vr_vet_dados(1) || ';' || 
+                                  vr_nrdconta || ';' || 
+                                  vr_vet_dados(3) || ';' || 
+                                  rw_crapepr.vldivida || ';'|| 
+                                  vr_tab_ris_acordo(0).vldivida || chr(13)
+                                 ,FALSE);
+          
+          gene0002.pc_escreve_xml(vr_dados_rollback
+                                 ,vr_texto_rollback
+                                 ,'UPDATE cecred.crapris r' || chr(13) || 
+                                  '   SET r.vldiv060 := ' || rw_crapepr.vldiv060 || '
+                                         ,r.vldiv180 := ' || rw_crapepr.vldiv180 || '
+                                         ,r.vldiv360 := ' || rw_crapepr.vldiv360 || '
+                                         ,r.vldiv999 := ' || rw_crapepr.vldiv999 || '
+                                         ,r.vlvec180 := ' || rw_crapepr.vlvec180 || '
+                                         ,r.vlvec360 := ' || rw_crapepr.vlvec360 || '
+                                         ,r.vlvec999 := ' || rw_crapepr.vlvec999 || '
+                                         ,r.vldivida := ' || rw_crapepr.vldivida || '
+                                         ,r.vlprxpar := ' || rw_crapepr.vlprxpar || '
+                                         ,r.dtprxpar := ' || rw_crapepr.dtprxpar || 
+                                  ' WHERE r.cdcooper = ' || vr_vet_dados(1) || chr(13) || 
+                                  '   AND r.nrdconta = ' || vr_nrdconta || chr(13) || 
+                                  '   AND r.nrctremp = ' || vr_vet_dados(3) || 
+                                  ';' ||chr(13)||chr(13), FALSE); 
+          
+        END IF;
       END IF;        
     END LOOP;
 
