@@ -397,15 +397,15 @@ BEGIN
           INTO rw_operacao;
         CLOSE cr_operacao;        
 
-        IF rw_operacao.dsoperac = 'EMPRESTIMO' THEN
-          vr_cdhistor_remun  := 1037;
-          vr_cdhistor_estorn := 3272;
-          vr_nrdolote        := 600010;
-        ELSIF rw_operacao.dsoperac = 'FINANCIAMENTO' THEN
+        IF rw_operacao.dsoperac = 'FINANCIAMENTO' THEN
           vr_cdhistor_remun  := 1038;
           vr_cdhistor_estorn := 4541;
           vr_nrdolote        := 600011;
-        END IF;
+        ELSE
+          vr_cdhistor_remun  := 1037;
+          vr_cdhistor_estorn := 3272;
+          vr_nrdolote        := 600010;            
+        END IF;  
         
         rw_craplem_jrsremu := NULL;
 
