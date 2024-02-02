@@ -3630,4 +3630,3 @@ values (4531, 'DEVOL RCO COB', 1, 'C', 0, 2, 0.0000, 0, 0, 0, 0, 100, 'CREDITO R
 COMMIT;
 
 END;
-/
