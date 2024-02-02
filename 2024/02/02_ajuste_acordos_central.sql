@@ -91,9 +91,9 @@ DECLARE
   CURSOR cr_rollback(pr_condicao IN VARCHAR2
                     ,pr_tabela   IN VARCHAR2) IS
     SELECT 'INSERT INTO ' || table_name || ' (' ||
-            RTRIM(XMLQUERY('for $i in ROW/* return concat(name($i),",")' PASSING
+            RTRIM(XMLQUERY('for $i in ROW/ * return concat(name($i),",")' PASSING
                            t.column_value.EXTRACT('ROW') RETURNING content),',') || 
-            ') VALUES (' || UTL_I18N.UNESCAPE_REFERENCE(RTRIM(XMLQUERY('for $i in ROW/* return concat("''", $i, "''",",")' PASSING
+            ') VALUES (' || UTL_I18N.UNESCAPE_REFERENCE(RTRIM(XMLQUERY('for $i in ROW/ * return concat("''", $i, "''",",")' PASSING
                            t.column_value.EXTRACT('ROW') RETURNING content),
             ',')) || ');' query_insert
       FROM all_tables,
