@@ -1,0 +1,6 @@
+BEGIN
+  
+  INSERT INTO cecred.craptab (NMSISTEM, TPTABELA, CDEMPRES, CDACESSO    , TPREGIST, DSTEXTAB , CDCOOPER)  
+                      VALUES ('CRED'  , 'GENERI', 0       , 'SAQMAXCASH', 632     , '2000,00', 1);
+  COMMIT;
+END;
