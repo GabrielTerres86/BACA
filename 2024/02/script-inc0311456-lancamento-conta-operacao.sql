@@ -1,6 +1,6 @@
 DECLARE
   vr_cdcooper    crapcop.cdcooper%TYPE := 16;
-  vr_nrdconta    crapass.nrdconta%TYPE := 97792870; -- 2207060 --  97792870 dev
+  vr_nrdconta    crapass.nrdconta%TYPE := 2207060;
   vr_nrborder    crapbdt.nrborder%TYPE := 109412;
   vr_nrdocmto    craptdb.nrdocmto%TYPE := 0;
   vr_cdcritic    crapcri.cdcritic%TYPE;
