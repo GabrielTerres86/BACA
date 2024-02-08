@@ -62,8 +62,8 @@ DECLARE
            AND nrdconta = pr_nrdconta
            AND nrctremp = pr_nrctremp
            AND cdhistor = pr_cdhistor
-           AND a.dtmvtolt BETWEEN to_date('27/12/2023', 'dd/mm/yyyy') AND
-           to_date('31/01/2024', 'dd/mm/yyyy');
+           AND a.dtmvtolt BETWEEN to_date('01/02/2024', 'dd/mm/yyyy') AND
+           to_date('02/02/2024', 'dd/mm/yyyy');
   rw_craplem_jrsremu cr_craplem_jrsremu%ROWTYPE;
 
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
