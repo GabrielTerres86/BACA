@@ -1519,5 +1519,6 @@ BEGIN
   END;
 
   ROLLBACK;
+  COMMIT;
 
 END;
