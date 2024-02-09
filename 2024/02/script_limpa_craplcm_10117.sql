@@ -7,4 +7,4 @@ delete cecred.craplcm
 delete cecred.crapsol where nrsolici = 78;
 
 commit;
-end.
+end;
