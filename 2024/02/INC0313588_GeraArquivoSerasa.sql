@@ -5,14 +5,8 @@ DECLARE
   
   BEGIN
   
-    --********************************
-    --/* INICIO DA ROTINA PRINCIPAL */
-    --********************************
     DECLARE
     
-      /* Cursores da pc_crps330 */
-    
-      -- Cursor sobre data
       vr_dtmvtolt DATE := to_date('05022024', 'ddmmyyyy');
       vr_ind_arq  utl_file.file_type;
       vr_nmdir    VARCHAR2(4000) := CECRED.gene0001.fn_param_sistema('CRED', 3, 'ROOT_MICROS') || 'cpd/bacas';
@@ -20,7 +14,6 @@ DECLARE
     
       vr_idprglog tbgen_prglog.idprglog%TYPE := 0;
     
-      -- Loop sobre as cooperativas ativas
       CURSOR cr_crapcop IS
         SELECT cdcooper
               ,cdbcoctl
@@ -37,7 +30,6 @@ DECLARE
           FROM crapcop
          WHERE cdcooper = 1;
     
-      -- Busca os boletos pendentes
       CURSOR cr_crapcob(pr_cdcooper crapcop.cdcooper%TYPE) IS
         SELECT cob.ROWID
               ,cob.cdbandoc
@@ -74,13 +66,10 @@ DECLARE
          WHERE hns.DHHISTORICO >= to_date('05022024', 'ddmmyyyy')
            AND hns.DHHISTORICO < to_date('06022024', 'ddmmyyyy')
            AND CASE
-               --se boleto pago deve enviar o cancelamento da negativacao
                  WHEN cob.incobran = 5 AND hns.inserasa = 4 THEN
                   1
-               --se boleto baixado deve enviar o cancelamento da negativacao
                  WHEN cob.incobran = 3 AND hns.inserasa = 4 THEN
                   1
-               --se boleto aberto deve enviar todas as instrucões para o serasa
                  WHEN cob.incobran = 0 AND hns.inserasa = cob.inserasa THEN
                   1
                  ELSE
@@ -1042,30 +1031,19 @@ DECLARE
                                      ,99474104
                                      ,99800732);
     
-      -- Busca Dados do Credor
       CURSOR cr_crapjur(pr_cdcooper crapcop.cdcooper%TYPE
                        ,pr_nrdconta crapjur.nrdconta%TYPE) IS
         SELECT ass.nrcpfcgc
-              , --> Documento do Credor 
-               gene0007.fn_caract_acento(pr_texto => jur.nmextttl) nmextttl
-              , --> Razão Social do Credor   
-               gene0007.fn_caract_acento(pr_texto => jur.nmfansia) nmfansia
-              , --> Nome Fantasia do Credor
-               gene0007.fn_caract_acento(pr_texto => enc.dsendere) dsendere
-              , --> Endereço do Credor
-               gene0007.fn_caract_acento(pr_texto => enc.nmbairro) nmbairro
-              , --> Bairro do Credor
-               gene0007.fn_caract_acento(pr_texto => enc.nmcidade) nmcidade
-              , --> Município do Credor 
-               enc.cdufende
-              , --> Sigla Unidade Federativa do Credor    
-               enc.nrcepend
-              , --> Código de endereçamento postal
-               nvl(tfc.nrdddtfc, 0) nrdddtfc
-              , --> DDD do Telefone do Credor
-               nvl(tfc.nrtelefo, 0) nrtelefo
-              , --> Telefone do Credor
-               nvl(tfc.nrdramal, 0) nrdramal --> Número de ramal do telefone do Credor 
+              ,gene0007.fn_caract_acento(pr_texto => jur.nmextttl) nmextttl
+              ,gene0007.fn_caract_acento(pr_texto => jur.nmfansia) nmfansia
+              ,gene0007.fn_caract_acento(pr_texto => enc.dsendere) dsendere
+              ,gene0007.fn_caract_acento(pr_texto => enc.nmbairro) nmbairro
+              ,gene0007.fn_caract_acento(pr_texto => enc.nmcidade) nmcidade
+              ,enc.cdufende
+              ,enc.nrcepend
+              ,nvl(tfc.nrdddtfc, 0) nrdddtfc
+              ,nvl(tfc.nrtelefo, 0) nrtelefo
+              ,nvl(tfc.nrdramal, 0) nrdramal
           FROM crapass ass
               ,crapenc enc
               ,craptfc tfc
@@ -1081,84 +1059,66 @@ DECLARE
            AND tfc.idseqttl(+) = 1;
       rw_crapjur cr_crapjur%ROWTYPE;
     
-      -- Busca Dados do Devedor
       CURSOR cr_crapsab(pr_cdcooper crapsab.cdcooper%TYPE
                        ,pr_nrdconta crapsab.nrdconta%TYPE
                        ,pr_nrinssac crapsab.nrinssac%TYPE) IS
         SELECT cdtpinsc
-              , --> Tipo de pessoa do Devedor (F - Fisica / J - Juridica)
-               nrinssac
-              , --> Documento do Devedor (CPF ou CNPJ)
-               NVL(gene0007.fn_caract_acento(pr_texto => nmdsacad), ' ') nmdsacad
-              , --> Nome do Devedor
-               NVL(gene0007.fn_caract_acento(pr_texto => dsendsac), ' ') dsendsac
-              , --> Endereço do Devedor
-               NVL(gene0007.fn_caract_acento(pr_texto => complend), ' ') complend
-              , --> Complemento do Endereço do Devedor
-               NVL(gene0007.fn_caract_acento(pr_texto => nmbaisac), ' ') nmbaisac
-              , --> Bairro do Devedor
-               NVL(gene0007.fn_caract_acento(pr_texto => nmcidsac), ' ') nmcidsac
-              , --> Município do Devedor
-               NVL(cdufsaca, ' ') cdufsaca
-              , --> Sigla Unidade Federativa do Devedor
-               NVL(nrcepsac, 0) nrcepsac --> CEP do Devedor
+              ,nrinssac
+              ,NVL(gene0007.fn_caract_acento(pr_texto => nmdsacad), ' ') nmdsacad
+              ,NVL(gene0007.fn_caract_acento(pr_texto => dsendsac), ' ') dsendsac
+              ,NVL(gene0007.fn_caract_acento(pr_texto => complend), ' ') complend
+              ,NVL(gene0007.fn_caract_acento(pr_texto => nmbaisac), ' ') nmbaisac
+              ,NVL(gene0007.fn_caract_acento(pr_texto => nmcidsac), ' ') nmcidsac
+              ,NVL(cdufsaca, ' ') cdufsaca
+              ,NVL(nrcepsac, 0) nrcepsac
           FROM crapsab
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND nrinssac = pr_nrinssac;
       rw_crapsab cr_crapsab%ROWTYPE;
     
-      -- Busca os dias de vencimento
       CURSOR cr_param(pr_cdcooper crapcop.cdcooper%TYPE) IS
         SELECT qtdias_vencimento
           FROM tbcobran_param_negativacao
          WHERE cdcooper = pr_cdcooper;
       rw_param cr_param%ROWTYPE;
     
-      -- Estrutura para erro
       TYPE typ_reg_remessa_erro IS RECORD(
          nmrescop crapcop.nmrescop%TYPE
         ,nrdconta craprem.nrdconta%TYPE
         ,nrdocmto craprem.nrdocmto%TYPE
         ,nrcnvcob craprem.nrcnvcob%TYPE
         ,dscritic VARCHAR2(4000));
-      -- Estruturas para controle de erro
       TYPE typ_tab_tarifas_erro IS TABLE OF typ_reg_remessa_erro INDEX BY PLS_INTEGER;
       TYPE typ_tab_coopera_erro IS TABLE OF typ_reg_remessa_erro INDEX BY PLS_INTEGER;
     
-      -- Variaveis Locais da pc_crps330
       vr_dsserasa VARCHAR2(10);
       vr_dstpinsc VARCHAR2(10);
       vr_nrtpinsc VARCHAR2(10);
-      vr_nrseqblt NUMBER := 1; -- Numero Sequencial do Boleto
-      vr_dsdespec VARCHAR2(10); -- Especia do Titulo
+      vr_nrseqblt NUMBER := 1;
+      vr_dsdespec VARCHAR2(10);
       vr_tab_cob  cecred.cobr0005.typ_tab_cob;
       vr_dstxtpgt VARCHAR2(70) := 'PAGAVEL PREFERENCIALMENTE NAS COOPERATIVAS DO SISTEMA AILOS.';
-      vr_dtvencto DATE; -- Data de vencimento calculada
-      vr_cdbarras VARCHAR2(100); -- Codigo de barras
-      vr_lindigit VARCHAR2(100); -- Linha digitavel do codigo de barras
-      vr_vlfatura crapcob.vltitulo%TYPE; -- Valor da fatura para o calculo do valor com multa
-      vr_vlrmulta crapcob.vltitulo%TYPE; -- Valor da multa
-      vr_vlrjuros crapcob.vltitulo%TYPE; -- Valor dos juros
-      vr_nrdigage NUMBER(05); -- Digito da agencia
-      vr_nrseqarq PLS_INTEGER; -- NUmero sequencial do arquivo
+      vr_dtvencto DATE;
+      vr_cdbarras VARCHAR2(100);
+      vr_lindigit VARCHAR2(100);
+      vr_vlfatura crapcob.vltitulo%TYPE;
+      vr_vlrmulta crapcob.vltitulo%TYPE;
+      vr_vlrjuros crapcob.vltitulo%TYPE;
+      vr_nrdigage NUMBER(05);
+      vr_nrseqarq PLS_INTEGER;
     
-      -- Job de envio de negativação
       vr_nomdojob VARCHAR2(40) := 'JBCOBRAN_ENVIO_SERASA';
     
-      --Variaveis de controle do programa
       vr_cdcritic NUMBER := 0;
       vr_dscritic VARCHAR2(4000);
       vr_des_erro VARCHAR2(10);
     
-      --Variaveis de Excecao
       vr_exc_saida EXCEPTION;
     
-      -- Variaveis de e-mail
       vr_dsendere VARCHAR2(500);
       vr_dsconteu VARCHAR2(5000);
     
-      -- Controle de erros      
       vr_tab_tarifas_erro typ_tab_tarifas_erro;
       vr_tab_coopera_erro typ_tab_coopera_erro;
     
@@ -1166,24 +1126,19 @@ DECLARE
     
     BEGIN
     
-      -- Loop sobre as cooperativas
       FOR rw_crapcop IN cr_crapcop
       LOOP
       
-        -- Busca a quantidade de dias de vencimento
         OPEN cr_param(rw_crapcop.cdcooper);
         FETCH cr_param
           INTO rw_param;
         CLOSE cr_param;
       
-        -- Calcula o digito da agencia
         vr_nrdigage := rw_crapcop.cdagectl * 10;
         vr_nrdigage := vr_nrdigage - (rw_crapcop.cdagectl * 10);
       
-        -- Obtem o sequencial do arquivo
         vr_nrseqarq := 1999;
       
-        -- Inicializa variavel de sequencial do arquivo
         vr_nrseqblt := 1;
       
         gene0001.pc_OScommand_Shell(pr_des_comando => 'rm ' || vr_nmdir || '/' || vr_nmarq);
@@ -1199,35 +1154,30 @@ DECLARE
           raise_application_error(-20004, vr_dscritic);
         END IF;
       
-        -- Criar HEADER do arquivo
-        vr_dslinha_arquivo := '0' || --> Código do registro = '0' (zero)
-                              lPad(rw_crapcop.nrdocnpj, 9, '0') || --> Número do CNPJ
-                              to_char(vr_dtmvtolt, 'yyyymmdd') || --> Data do movimento (AAAAMMDD)
-                              lPad(rw_crapcop.nrdddtel, 4, '0') || --> Número de DDD do telefone
-                              lPad(rw_crapcop.nrtelvoz, 8, '0') || --> Número do telefone
-                              RPad(' ', 4, ' ') || --> Número de ramal 
-                              RPad('Ailos Cobrancas', 70, ' ') || --> Nome do contato da Instituição Conveniada   
-                              RPad('SERASA-CONVEM07', 15, ' ') || --> Identificação do arquivo fixo 'SERASA-CONVEM07'
-                              LPAD(vr_nrseqarq, 6, '0') || --> Número da remessa do arquivo seqüencial
-                              'E' || --> Código de envio de arquivo  = 'E' (ENTRADA) e 'R' (RETORNO)
-                              RPad(' ', 4, ' ') || --> Diferencial de remessa
-                              RPad(' ', 40, ' ') || --> Deixar em branco 
-                              '002' || --> Versão do Layout – Constante '002'
-                              RPad(' ', 660, ' ') || --> Deixar em branco 
-                              RPad(' ', 60, ' ') || --> Código de erros  
-                              LPAD(vr_nrseqblt, 7, '0'); --> Seqüência do registro no arquivo igual a 0000001
+        vr_dslinha_arquivo := '0' ||
+                              lPad(rw_crapcop.nrdocnpj, 9, '0') ||
+                              to_char(vr_dtmvtolt, 'yyyymmdd') || 
+                              lPad(rw_crapcop.nrdddtel, 4, '0') ||
+                              lPad(rw_crapcop.nrtelvoz, 8, '0') ||
+                              RPad(' ', 4, ' ') ||
+                              RPad('Ailos Cobrancas', 70, ' ') ||
+                              RPad('SERASA-CONVEM07', 15, ' ') ||
+                              LPAD(vr_nrseqarq, 6, '0') ||
+                              'E' ||
+                              RPad(' ', 4, ' ') ||
+                              RPad(' ', 40, ' ') ||
+                              '002' ||
+                              RPad(' ', 660, ' ') ||
+                              RPad(' ', 60, ' ') ||
+                              LPAD(vr_nrseqblt, 7, '0');
         CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq, vr_dslinha_arquivo);
-        -- Atualiza Sequencia do registro no arquivo                                             
         vr_nrseqblt := (vr_nrseqblt + 1);
       
-        -- Limpa a variavel
         vr_dsserasa := NULL;
       
-        -- Loop sobre os boletos pendentes
         FOR rw_crapcob IN cr_crapcob(rw_crapcop.cdcooper)
         LOOP
         
-          -- Consulta campos da Linha Digitavel
           cobr0005.pc_buscar_titulo_cobranca(pr_cdcooper => rw_crapcob.cdcooper
                                             ,pr_nrdconta => rw_crapcob.nrdconta
                                             ,pr_nrcnvcob => rw_crapcob.nrcnvcob
@@ -1242,40 +1192,33 @@ DECLARE
           IF vr_dscritic IS NOT NULL THEN
             raise_application_error(-20001, vr_dscritic);
           END IF;
-          -- Fim - Consulta campos da Linha Digitavel
         
-          -- Conforme conversado com Victor, para a instrucao de vencimento, deve-se colocar a impressao da 2a. via
           vr_tab_cob(1).dsdinst2 := 'Apos o vencimento ou 2a. via, acesse ' || rw_crapcop.dsendweb;
         
-          -- Abre o Cursor Dados do Credor
           OPEN cr_crapjur(rw_crapcob.cdcooper, rw_crapcob.nrdconta);
           FETCH cr_crapjur
             INTO rw_crapjur;
           CLOSE cr_crapjur;
         
-          -- Identifica tipo de acao
           IF (rw_crapcob.inserasa = 2) THEN
             vr_dsserasa := 'I';
           ELSE
             vr_dsserasa := 'E';
           END IF;
         
-          -- Abre o Cursor Dados do Devedor
           OPEN cr_crapsab(rw_crapcob.cdcooper, rw_crapcob.nrdconta, rw_crapcob.nrinssac);
           FETCH cr_crapsab
             INTO rw_crapsab;
           CLOSE cr_crapsab;
         
-          -- Tipo de pessoa do Devedor
           IF (rw_crapsab.cdtpinsc = 1) THEN
-            vr_dstpinsc := 'F'; -- Fisica
-            vr_nrtpinsc := '2'; -- CPF
+            vr_dstpinsc := 'F';
+            vr_nrtpinsc := '2';
           ELSE
-            vr_dstpinsc := 'J'; -- Juridica
-            vr_nrtpinsc := '1'; -- CNPJ
+            vr_dstpinsc := 'J';
+            vr_nrtpinsc := '1';
           END IF;
         
-          -- Especie do Titulo
           CASE rw_crapcob.cddespec
             WHEN 1 THEN
               vr_dsdespec := 'DM';
@@ -1293,208 +1236,187 @@ DECLARE
               vr_dsdespec := 'DM';
           END CASE;
         
-          -- Calcula a data de vencimento 
           vr_dtvencto := gene0005.fn_valida_dia_util(pr_cdcooper => rw_crapcop.cdcooper
                                                     ,pr_dtmvtolt => vr_dtmvtolt + rw_param.qtdias_vencimento);
         
-          -- Busca valor de multa
           vr_vlfatura := rw_crapcob.vltitulo;
         
-          -- Abatimento deve ser calculado antes dos juros/multa 
           IF rw_crapcob.vlabatim > 0 THEN
             vr_vlfatura := vr_vlfatura - rw_crapcob.vlabatim;
           END IF;
         
-          /* MULTA PARA ATRASO */
           vr_vlrmulta := 0;
           IF rw_crapcob.tpdmulta = 1 THEN
-            /* Valor */
             vr_vlrmulta := rw_crapcob.vlrmulta;
           ELSIF rw_crapcob.tpdmulta = 2 THEN
-            /* % de multa */
             vr_vlrmulta := (rw_crapcob.vlrmulta * vr_vlfatura) / 100;
           END IF;
         
-          /* MORA PARA ATRASO */
           vr_vlrjuros := 0;
           IF rw_crapcob.tpjurmor = 1 THEN
-            /* dias */
             vr_vlrjuros := rw_crapcob.vljurdia * (vr_dtvencto - rw_crapcob.dtvencto);
           ELSIF rw_crapcob.tpjurmor = 2 THEN
-            /* mes */
             vr_vlrjuros := (vr_vlfatura * ((rw_crapcob.vljurdia / 100) / 30) * (vr_dtvencto - rw_crapcob.dtvencto));
           END IF;
         
-          -- Busca o codigo de barras
-          -- Obs.: calcular codigo de barras com o valor atualizado
           cobr0005.pc_calc_codigo_barras(pr_dtvencto => vr_dtvencto
                                         ,pr_cdbandoc => rw_crapcob.cdbandoc
                                         ,pr_vltitulo => rw_crapcob.vltitulo + vr_vlrjuros + vr_vlrmulta
                                         ,pr_nrcnvcob => rw_crapcob.nrcnvcob
                                         ,pr_nrcnvceb => 0
-                                        , -- Utilizado somente para convenios do BB
-                                         pr_nrdconta => to_number(SUBSTR(rw_crapcob.nrnosnum, 1, 8))
+                                        ,pr_nrdconta => to_number(SUBSTR(rw_crapcob.nrnosnum, 1, 8))
                                         ,pr_nrdocmto => to_number(SUBSTR(rw_crapcob.nrnosnum, 9, 9))
                                         ,pr_cdcartei => rw_crapcob.cdcartei
                                         ,pr_cdbarras => vr_cdbarras);
         
-          -- Busca a linha digitavel
           cobr0005.pc_calc_linha_digitavel(pr_cdbarras => vr_cdbarras, pr_lindigit => vr_lindigit);
         
-          -- Cria texto do arquivo
-          -- Dados da Anotação - Registro "1"
-          vr_dslinha_arquivo := '1' || --> Código do registro = '1'
-                                vr_dsserasa || --> Código da operação
-                                RPad(rw_crapcop.nrdigito, 6, ' ') || --> Filial e Dígito da Instituição Informante     
-                                LPad(rw_crapcop.nrdocnpj_completo, 15, '0') || --> CNPJ da Instituição Conveniada (Base + Filial + Digito)
-                                'J' || --> Tipo de Pessoa do Credor
-                                '1' || --> Tipo do primeiro documento do Credor
-                                LPad(rw_crapjur.nrcpfcgc, 15, '0') || --> Documento do Credor 
-                                RPad(rw_crapjur.nmextttl, 70, ' ') || --> Razão Social do Credor    
-                                RPad(SUBSTR(NVL(rw_crapjur.nmfansia, ' '), 1, 25), 25, ' ') || --> Nome Fantasia do Credor     
-                                RPad(rw_crapjur.dsendere, 45, ' ') || --> Endereço do Credor
-                                RPad(rw_crapjur.nmbairro, 20, ' ') || --> Bairro do Credor
-                                RPad(rw_crapjur.nmcidade, 25, ' ') || --> Município do Credor 
-                                RPad(rw_crapjur.cdufende, 2, ' ') || --> Sigla Unidade Federativa do Credor      
-                                LPad(rw_crapjur.nrcepend, 8, '0') || --> Código de endereçamento postal
-                                LPad(rw_crapjur.nrdddtfc, 4, '0') || --> DDD do Telefone do Credor
-                                LPad(rw_crapjur.nrtelefo, 9, '0') || --> Telefone do Credor
-                                RPad(rw_crapjur.nrdramal, 4, ' ') || --> Número de ramal do telefone do Credor 
-                                vr_dstpinsc || --> Tipo de pessoa do Devedor (F - Fisica / J - Juridica)
-                                vr_nrtpinsc || --> Tipo do primeiro documento do Devedor ( 1 – CNPJ ou 2 - CNPJ) 
-                                LPad(rw_crapsab.nrinssac, 15, '0') || --> Documento do Devedor (CPF ou CNPJ)
-                                RPad(' ', 1, ' ') || --> Tipo do segundo documento do Devedor
-                                RPad(' ', 15, ' ') || --> Segundo Documento do Devedor
-                                RPad(' ', 2, ' ') || --> UF do Segundo Documento do Devedor
-                                RPad(rw_crapsab.nmdsacad, 70, ' ') || --> Nome do Devedor
-                                RPad(rw_crapsab.dsendsac, 45, ' ') || --> Endereço do Devedor
-                                RPad(rw_crapsab.complend, 25, ' ') || --> Complemento do Endereço do Devedor
-                                RPad(rw_crapsab.nmbaisac, 20, ' ') || --> Bairro do Devedor
-                                RPad(rw_crapsab.nmcidsac, 25, ' ') || --> Município do Devedor
-                                RPad(rw_crapsab.cdufsaca, 2, ' ') || --> Sigla Unidade Federativa do Devedor
-                                LPad(rw_crapsab.nrcepsac, 8, '0') || --> CEP do Devedor
-                                RPad(' ', 4, ' ') || --> DDD do Telefone do Devedor
-                                RPad(' ', 9, ' ') || --> Telefone do Devedor
-                                RPad(' ', 70, ' ') || --> Nome do Pai do Devedor
-                                RPad(' ', 70, ' ') || --> Nome da Mãe do Devedor
-                                RPad(' ', 8, ' ') || --> Data de Nascimento do Devedor
-                                RPad(nvl(rw_crapcob.nrnosnum, ' '), 15, ' ') || --> Nosso número – da Instituição Conveniada
-                                RPad(vr_dsdespec, 3, ' ') || --> Espécie do Titulo
-                                RPad(rw_crapjur.nmcidade, 40, ' ') || -- Cidade que Originou a Anotação
-                                RPad(rw_crapjur.cdufende, 2, ' ') || --> UF que Originou a Anotação
+          vr_dslinha_arquivo := '1' ||
+                                vr_dsserasa ||
+                                RPad(rw_crapcop.nrdigito, 6, ' ') ||
+                                LPad(rw_crapcop.nrdocnpj_completo, 15, '0') ||
+                                'J' ||
+                                '1' ||
+                                LPad(rw_crapjur.nrcpfcgc, 15, '0') ||
+                                RPad(rw_crapjur.nmextttl, 70, ' ') ||
+                                RPad(SUBSTR(NVL(rw_crapjur.nmfansia, ' '), 1, 25), 25, ' ') ||
+                                RPad(rw_crapjur.dsendere, 45, ' ') ||
+                                RPad(rw_crapjur.nmbairro, 20, ' ') ||
+                                RPad(rw_crapjur.nmcidade, 25, ' ') ||
+                                RPad(rw_crapjur.cdufende, 2, ' ') || 
+                                LPad(rw_crapjur.nrcepend, 8, '0') || 
+                                LPad(rw_crapjur.nrdddtfc, 4, '0') || 
+                                LPad(rw_crapjur.nrtelefo, 9, '0') || 
+                                RPad(rw_crapjur.nrdramal, 4, ' ') || 
+                                vr_dstpinsc ||
+                                vr_nrtpinsc ||
+                                LPad(rw_crapsab.nrinssac, 15, '0') ||
+                                RPad(' ', 1, ' ') ||
+                                RPad(' ', 15, ' ') ||
+                                RPad(' ', 2, ' ') ||
+                                RPad(rw_crapsab.nmdsacad, 70, ' ') || 
+                                RPad(rw_crapsab.dsendsac, 45, ' ') || 
+                                RPad(rw_crapsab.complend, 25, ' ') || 
+                                RPad(rw_crapsab.nmbaisac, 20, ' ') || 
+                                RPad(rw_crapsab.nmcidsac, 25, ' ') || 
+                                RPad(rw_crapsab.cdufsaca, 2, ' ') || 
+                                LPad(rw_crapsab.nrcepsac, 8, '0') || 
+                                RPad(' ', 4, ' ') ||
+                                RPad(' ', 9, ' ') ||
+                                RPad(' ', 70, ' ') ||
+                                RPad(' ', 70, ' ') ||
+                                RPad(' ', 8, ' ') ||
+                                RPad(nvl(rw_crapcob.nrnosnum, ' '), 15, ' ') ||
+                                RPad(vr_dsdespec, 3, ' ') || 
+                                RPad(rw_crapjur.nmcidade, 40, ' ') ||
+                                RPad(rw_crapjur.cdufende, 2, ' ') || 
                                
-                                RPad(nvl(to_char(rw_crapcob.nrdocmto), ' '), 16, ' ') || --> Número do titulo ou contrato
-                                RPad(rw_crapcob.dtdocmto, 8, ' ') || --> Data da Emissão do Título 
-                                to_char(rw_crapcob.dtvencto, 'YYYYMMDD') || --> Data de Vencimento do Título
-                                '001' || --> Tipo de Moeda ( 001 – Real )
-                                LPad(rw_crapcob.vltitulo * 100, 15, '0') || --> Valor do Titulo -  2 decimais
-                                RPad(' ', 15, ' ') || --> Saldo do Contrato 
-                                RPad(' ', 1, ' ') || --> Tipo de Endosso do Titulo
-                                RPad(' ', 1, ' ') || --> Informação sobre Aceite 
-                                '1' || --> Número de Controle(s) do(s) Devedor(es)
-                                RPad(' ', 1, ' ') || --> Tipo de Anotação 
-                                RPad(rw_crapcob.nrcnvcob, 10, ' ') || --> Uso Reservado da Instituição Conveniada (na inclusão)
-                                RPad(nvl(to_char(rw_crapcob.nrdconta), ' '), 10, ' ') || --> Uso Reservado da Instituição Conveniada (na inclusão)
-                                RPad(' ', 2, ' ') || --> Motivo de Baixa
-                                'B' || --> Indicativo do Tipo de Comunicado ao Devedor
-                                RPad(' ', 1, ' ') || --> Indicador de Melhor Endereço
-                                RPad(' ', 1, ' ') || --> Indicador de SMS
-                                RPad(' ', 4, ' ') || --> Deixar em branco
-                                vr_dstpinsc || --> Tipo de pessoa do Principal da Dívida
-                                vr_nrtpinsc || --> Tipo do documento do Principal da Dívida
-                                LPad(rw_crapsab.nrinssac, 15, '0') || --> Documento do Principal da Dívida
-                                RPad(' ', 15, ' ') || --> Deixar em branco
-                                RPad(' ', 60, ' ') || --> Códigos de erros
-                                LPAD(vr_nrseqblt, 7, '0'); --> Seqüência do registro no arquivo ;
+                                RPad(nvl(to_char(rw_crapcob.nrdocmto), ' '), 16, ' ') || 
+                                RPad(rw_crapcob.dtdocmto, 8, ' ') || 
+                                to_char(rw_crapcob.dtvencto, 'YYYYMMDD') || 
+                                '001' || 
+                                LPad(rw_crapcob.vltitulo * 100, 15, '0') || 
+                                RPad(' ', 15, ' ') || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(' ', 1, ' ') || 
+                                '1' || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(rw_crapcob.nrcnvcob, 10, ' ') || 
+                                RPad(nvl(to_char(rw_crapcob.nrdconta), ' '), 10, ' ') || 
+                                RPad(' ', 2, ' ') || 
+                                'B' || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(' ', 4, ' ') || 
+                                vr_dstpinsc || 
+                                vr_nrtpinsc || 
+                                LPad(rw_crapsab.nrinssac, 15, '0') || 
+                                RPad(' ', 15, ' ') || 
+                                RPad(' ', 60, ' ') || 
+                                LPAD(vr_nrseqblt, 7, '0'); 
         
           CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq, vr_dslinha_arquivo);
-          -- Atualiza Sequencia do registro no arquivo                                             
           vr_nrseqblt := (vr_nrseqblt + 1);
         
-          -- Cria texto do arquivo
-          -- Boleto Bancário – Registro "2"
-          vr_dslinha_arquivo := '2' || --> Código do registro = '2'
-                                lpad(rw_crapcop.cdbcoctl, 3, '0') || --> Código do Banco
-                                '1' || --> Digito do Banco
-                                RPad(rw_crapcop.nmrescop, 15, ' ') || --> Nome do Banco
-                                substr(vr_lindigit, 1, 5) || --> Primeiro campo da Linha Digitavel
-                                substr(vr_lindigit, 7, 5) || --> Segundo campo da Linha Digitavel
-                                substr(vr_lindigit, 13, 5) || --> Terceiro campo da Linha Digitavel
-                                substr(vr_lindigit, 19, 6) || --> Quarto campo da Linha Digitavel
-                                substr(vr_lindigit, 26, 5) || --> Quinto campo da Linha Digitavel
-                                substr(vr_lindigit, 32, 6) || --> Sexto campo da Linha Digitavel
-                                substr(vr_lindigit, 39, 1) || --> Sétimo campo da Linha Digitavel
-                                substr(vr_lindigit, 41, 14) || --> Oitavo campo da Linha Digitavel
-                                RPad(vr_dstxtpgt, 70, ' ') || --> Texto do Local de Pagamento
-                                RPad(' ', 70, ' ') || --> Deixar em Branco
-                                to_char(vr_dtvencto, 'YYYYMMDD') || --> Data do vencimento do boleto – AAAAMMDD  ou Branco(caso queira a expressão 'CONTRA APRESENTACAO'                
-                                'J' || --> Tipo de pessoa do cedente; Física (F) ou Jurídica( J )
-                                '1' || --> Tipo do primeiro docto. do cedente: 1-CNPJ ou 2-CPF
-                                LPad(rw_crapjur.nrcpfcgc, 15, '0') || --> Documento do cedente 
-                                RPad(rw_crapjur.nmextttl, 40, ' ') || --> Nome do cedente do título.
+          vr_dslinha_arquivo := '2' || 
+                                lpad(rw_crapcop.cdbcoctl, 3, '0') || 
+                                '1' || 
+                                RPad(rw_crapcop.nmrescop, 15, ' ') || 
+                                substr(vr_lindigit, 1, 5) || 
+                                substr(vr_lindigit, 7, 5) || 
+                                substr(vr_lindigit, 13, 5) ||
+                                substr(vr_lindigit, 19, 6) ||
+                                substr(vr_lindigit, 26, 5) ||
+                                substr(vr_lindigit, 32, 6) ||
+                                substr(vr_lindigit, 39, 1) ||
+                                substr(vr_lindigit, 41, 14) ||
+                                RPad(vr_dstxtpgt, 70, ' ') || 
+                                RPad(' ', 70, ' ') || 
+                                to_char(vr_dtvencto, 'YYYYMMDD') || 
+                                'J' || 
+                                '1' || 
+                                LPad(rw_crapjur.nrcpfcgc, 15, '0') || 
+                                RPad(rw_crapjur.nmextttl, 40, ' ') || 
                                 rpad(lpad(rw_crapcop.cdagectl, 4, '0') || '-' || vr_nrdigage || ' ' ||
                                      gene0002.fn_mask_conta(rw_crapcob.nrdconta)
                                     ,25
-                                    ,' ') || --> Código e Digito da Agência + Código e Digito do cedente
-                                RPad(rw_crapcob.dtdocmto, 8, ' ') || --> Data do documento – AAAAMMDD
-                                RPad(rw_crapcob.dsdoccop, 25, ' ') || --> Número do documento
-                                RPad(' ', 5, ' ') || --> Sigla da espécie do documento – exemplo: NF, DP, etc.
-                                RPad(' ', 3, ' ') || --> Código do aceite do título N ou S
-                                RPad(' ', 17, ' ') || --> Para uso do banco 
-                                RPad(' ', 3, ' ') || --> Deixar em branco
-                                to_char(vr_dtmvtolt, 'yyyymmdd') || --> Data do Processamento – AAAAMMDD
-                                RPad(nvl(rw_crapcob.nrnosnum, ' '), 25, ' ') || --> Nosso número
-                                RPad('01', 5, ' ') || --> Número da Carteira
-                                RPad('R$', 3, ' ') || --> Espécie de Moeda (R$) 
-                                RPad(' ', 9, ' ') || --> Quantidade de Moeda 
-                                RPad(' ', 1, ' ') || --> Qtde de decimais do Valor da Moeda
-                                RPad(' ', 9, ' ') || --> Valor da Moeda 
-                                LPad(rw_crapcob.vltitulo * 100, 15, '0') || --> Valor do boleto (valor a ser pago pelo devedor ) com 2 decimais, sem ponto e virgula                                            
-                                RPad(' ', 15, ' ') || --> Valor do desconto, caso houver, com 2 decimais, sem ponto e virgula                                                                                 
-                                RPad(' ', 15, ' ') || --> Valor de outras deduções, caso houver, com 2 decimais, sem ponto e virgula                                           
-                                LPad((vr_vlrjuros + vr_vlrmulta) * 100, 15, '0') || --> Valor da mora ou multa, caso houver, com 2 decimais, sem ponto e virgula                                           
-                                RPad(' ', 15, ' ') || --> Valor de outros acréscimos, caso houver, com 2 decimais, sem ponto e virgula                                           
-                                LPad((rw_crapcob.vltitulo + vr_vlrjuros + vr_vlrmulta) * 100, 15, '0') || --> Valor total a ser cobrado, com 2 decimais, sem ponto e virgula.                                                              
-                                RPad(' ', 1, ' ') || --> Tipo de pessoa do sacador; Física (F) ou Jurídica (J )    
-                                RPad(' ', 1, ' ') || --> Tipo do primeiro docto. do sacador: 1-CNPJ ou 2-CPF   
-                                RPad(' ', 15, ' ') || --> Documento do sacador: 
-                                RPad(' ', 50, ' ') || --> Nome do Sacador / Avalista
-                                RPad(' ', 318, ' ') || --> Deixar em branco 
-                                LPAD(vr_nrseqblt, 7, '0'); --> Seqüência do registro no arquivo
+                                    ,' ') || 
+                                RPad(rw_crapcob.dtdocmto, 8, ' ') || 
+                                RPad(rw_crapcob.dsdoccop, 25, ' ') ||
+                                RPad(' ', 5, ' ') || 
+                                RPad(' ', 3, ' ') || 
+                                RPad(' ', 17, ' ') ||
+                                RPad(' ', 3, ' ') || 
+                                to_char(vr_dtmvtolt, 'yyyymmdd') || 
+                                RPad(nvl(rw_crapcob.nrnosnum, ' '), 25, ' ') || 
+                                RPad('01', 5, ' ') || 
+                                RPad('R$', 3, ' ') || 
+                                RPad(' ', 9, ' ') || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(' ', 9, ' ') || 
+                                LPad(rw_crapcob.vltitulo * 100, 15, '0') || 
+                                RPad(' ', 15, ' ') || 
+                                RPad(' ', 15, ' ') || 
+                                LPad((vr_vlrjuros + vr_vlrmulta) * 100, 15, '0') || 
+                                RPad(' ', 15, ' ') || 
+                                LPad((rw_crapcob.vltitulo + vr_vlrjuros + vr_vlrmulta) * 100, 15, '0') || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(' ', 1, ' ') || 
+                                RPad(' ', 15, ' ') || 
+                                RPad(' ', 50, ' ') || 
+                                RPad(' ', 318, ' ') ||
+                                LPAD(vr_nrseqblt, 7, '0'); 
         
           CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq, vr_dslinha_arquivo);
-          -- Atualiza Sequencia do registro no arquivo
+
           vr_nrseqblt := (vr_nrseqblt + 1);
         
-          -- Cria texto do arquivo
-          -- Boleto Bancário – Registro "3"
-          vr_dslinha_arquivo := '3' || --> Código do registro = '3'
-                                RPad(nvl(vr_tab_cob(1).dsdinstr, ' '), 70, ' ') || --> Linha de Instrução – 1
-                                RPad(nvl(vr_tab_cob(1).dsdinst1, ' '), 70, ' ') || --> Linha de Instrução – 2
-                                RPad(nvl(vr_tab_cob(1).dsdinst2, ' '), 70, ' ') || --> Linha de Instrução – 3
-                                RPad(nvl(vr_tab_cob(1).dsinfor1, ' '), 70, ' ') || --> Linha de Instrução – 4
-                                RPad(nvl(vr_tab_cob(1).dsinfor2, ' '), 70, ' ') || --> Linha de Instrução – 5
-                                RPad(nvl(vr_tab_cob(1).dsinfor3, ' '), 70, ' ') || --> Linha de Instrução – 6
-                                RPad(nvl(vr_tab_cob(1).dsinfor4, ' '), 70, ' ') || --> Linha de Instrução – 7
-                                RPad(nvl(vr_tab_cob(1).dsinfor5, ' '), 70, ' ') || --> Linha de Instrução – 8
-                                RPad(' ', 332, ' ') || --> Deixar em branco 
-                                LPAD(vr_nrseqblt, 7, '0'); --> Seqüência do registro no arquivo
+
+          vr_dslinha_arquivo := '3' || 
+                                RPad(nvl(vr_tab_cob(1).dsdinstr, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsdinst1, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsdinst2, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsinfor1, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsinfor2, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsinfor3, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsinfor4, ' '), 70, ' ') || 
+                                RPad(nvl(vr_tab_cob(1).dsinfor5, ' '), 70, ' ') || 
+                                RPad(' ', 332, ' ') || 
+                                LPAD(vr_nrseqblt, 7, '0');
         
           CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq, vr_dslinha_arquivo);
-          -- Atualiza Sequencia do registro no arquivo
+
           vr_nrseqblt := (vr_nrseqblt + 1);
         
         END LOOP;
       
-        -- Cria TRAIL do arquivo
-        vr_dslinha_arquivo := '9' || --> Código do registro = '9'
-                              RPad(' ', 892, ' ') || --> Deixar em branco 
-                              LPAD(vr_nrseqblt, 7, '0'); --> Seqüência do registro no arquivo
+        vr_dslinha_arquivo := '9' || 
+                              RPad(' ', 892, ' ') || 
+                              LPAD(vr_nrseqblt, 7, '0'); 
         CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq, vr_dslinha_arquivo);
       
         CECRED.GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arq);
       
-        -- Converte o arquivo para o formato ANSI
         gene0001.pc_OScommand_Shell(pr_des_comando => 'iconv -f utf-8 -t ISO8859-1 ' || vr_nmdir || '/' || vr_nmarq || ' > ' ||
                                                       vr_nmdir || '/INC0313588_ansi.txt');
       
