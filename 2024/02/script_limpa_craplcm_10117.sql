@@ -6,5 +6,10 @@ delete cecred.craplcm
 
 delete cecred.crapsol where nrsolici = 78;
 
+update cecred.crapdev
+   set insitdev = 0, cddevolu = 0
+ where insitdev = 1
+   and cdcooper = 1;
+
 commit;
 end;
