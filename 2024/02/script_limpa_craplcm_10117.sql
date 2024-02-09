@@ -4,7 +4,8 @@ delete cecred.craplcm
    and dtmvtolt = to_date('17/10/2023','dd/mm/yyyy')
    and nrdolote = 10117;
 
-delete cecred.crapsol where nrsolici = 78;
+delete cecred.crapsol 
+       where nrsolici = 78;
 
 update cecred.crapdev
    set insitdev = 0, cddevolu = 0
