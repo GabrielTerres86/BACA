@@ -36,23 +36,13 @@ BEGIN
 	  
 	  FOR v_loop_cdacesso IN 1..v_arr_cdacesso.count LOOP		  
 	  
-		   INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
+		   INSERT INTO CECRED.crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
 		        VALUES ('CRED'
-			            ,v_arr_cdcooper(v_loop_cdcooper) -- Código da cooperativa
-			            ,v_arr_cdacesso(v_loop_cdacesso) -- Código do acesso
-			            ,v_arr_dstexprm(v_loop_cdacesso) -- Descrição da ação do consumo da api
+			            ,v_arr_cdcooper(v_loop_cdcooper)
+			            ,v_arr_cdacesso(v_loop_cdacesso)
+			            ,v_arr_dstexprm(v_loop_cdacesso)
 			            ,v_arr_dsvlrprm(v_loop_cdacesso)
-			           ); -- URI do GRAVAME			  
-  
-		   -- :::::::::::::  TESTE ::::::::::::::
-		   -- v_teste := 'INSERT INTO crapprm(nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)'||
-		   --		      'VALUES (''CRED'','||
-		   --			           v_arr_cdcooper(v_loop_cdcooper)||','||         -- Código da cooperativa
-		   --			           ''''||v_arr_cdacesso(v_loop_cdacesso)||''','|| -- Código do acesso
-		   --			           ''''||v_arr_dstexprm(v_loop_cdacesso)||''','|| -- Descrição da ação do consumo da api
-		   --			           ''''||v_arr_dsvlrprm(v_loop_cdacesso)||''')';  -- URI do GRAVAME'
-		   --	             
-           -- dbms_output.put_line(v_teste);
+			           ); 
 
       END LOOP;
      
