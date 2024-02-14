@@ -3,7 +3,7 @@ DECLARE
   vr_existeprm	NUMBER;
   
   TYPE varray_cdcooper IS VARRAY(13) OF INTEGER;  
-  v_arr_cdcooper varray_cdcooper := varray_cdcooper(1,2,5,6,7,8,9,10,11,12,13,14,16); -- 1-Viacredi, 2-Acredicoop, 5-Acentra, 6-Únilos, 7-Credcrea, 8-Credelesc ...
+  v_arr_cdcooper varray_cdcooper := varray_cdcooper(1,2,5,6,7,8,9,10,11,12,13,14,16);
  
   TYPE varray_cdacesso IS VARRAY(6) OF VARCHAR2(500);  
   v_arr_cdacesso varray_cdacesso := varray_cdacesso('URI_ALIENA_GRAVAME'  , 'URI_CANCELA_GRAVAME', 
