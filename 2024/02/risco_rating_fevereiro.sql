@@ -28,8 +28,8 @@ DECLARE
   
 BEGIN
   
-  vr_nmdireto := cecred.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/RISCO/INC0312299';
-  vr_nmarqrbk := 'ROLLBACK_INC0312299_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
+  vr_nmdireto := cecred.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/RISCO/RATING';
+  vr_nmarqrbk := 'ROLLBACK_INC0312675_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
     
   vr_dados_rollback := NULL;
 
