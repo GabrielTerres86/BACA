@@ -10,7 +10,8 @@ delete from crapsld where cdcooper = 16 and nrdconta = 99677270;
 delete 
   from tbgen_batch_paralelo p
 where p.cdcooper = 16
-   AND p.dtmvtolt > '14/02/2024';
+   AND p.dtmvtolt > to_date('14/02/2024','dd/mm/yyyy');
+   
 
   COMMIT;
 END;
