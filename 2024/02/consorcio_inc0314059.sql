@@ -12,7 +12,7 @@ BEGIN
                                          INSITUAC,
                                          CDOPEADE,
                                          CDOPECAN)
-  VALUES (1, 17839050, SYSDATE,  TRUNC(SYSDATE), 1, NULL, NULL);
+  VALUES (1, 17839050, SYSDATE,  TO_DATE('18/09/2018','DD/MM/RRRR'), 1, NULL, NULL);
   COMMIT;
 END;
 /
