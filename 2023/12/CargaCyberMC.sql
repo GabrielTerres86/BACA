@@ -13,7 +13,7 @@ BEGIN
             FROM crapdat b
            WHERE b.cdcooper = a.cdcooper)
    WHERE a.cdcooper = 14
-     AND a.dtatufin = to_date('03/11/2023', 'dd/mm/rrrr')
+     AND a.dtatufin = to_date('14/11/2023', 'dd/mm/rrrr')
      AND a.dtdbaixa IS NULL;
   COMMIT;
 EXCEPTION
