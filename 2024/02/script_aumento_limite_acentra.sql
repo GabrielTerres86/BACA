@@ -1,6 +1,5 @@
 DECLARE
-  
-  vr_aux_ambiente INTEGER       := 2;                
+  vr_aux_ambiente INTEGER       := 3;                
   vr_aux_diretor  VARCHAR2(100) := 'RITM0366929';    
   vr_aux_arquivo  VARCHAR2(100) := 'contas_aumento'; 
   vr_aux_cdcooper NUMBER        := 5;                
