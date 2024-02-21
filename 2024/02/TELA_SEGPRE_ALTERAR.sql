@@ -1,0 +1,8 @@
+BEGIN 
+
+UPDATE CECRED.crapaca a
+   SET a.lstparam = a.lstparam || ', PR_TPPRSTPJATIVO, PR_DTLIBERACAOPRSTPJ'
+ WHERE a.nmdeacao = 'SEGPRE_ALTERAR';
+ 
+COMMIT;
+END;
