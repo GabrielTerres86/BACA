@@ -1,6 +1,6 @@
 DECLARE
 
-  vr_dtreferencia DATE := to_date('17102024', 'ddmmyyyy');
+  vr_dtreferencia DATE := to_date('17102023', 'ddmmyyyy');
 
   vr_nmprograma VARCHAR2(50) := 'INC0314160';
 
