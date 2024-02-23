@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapprm
+  INSERT INTO cecred.crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
   VALUES
     ('CRED',
