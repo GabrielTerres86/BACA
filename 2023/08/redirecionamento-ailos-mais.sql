@@ -19,7 +19,7 @@ BEGIN
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'URL_BASE_AILOSR_HOMOL','URL base do Front Ailos+ HML','https://frontailosmais-hml.ailos.coop.br');
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'URL_BASE_AILOSR_PROD','URL base do Front Ailos+ PRD','https://frontailosmais.ailos.coop.br');
 
-    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'DIR_RISCO_CRED_AILOSR','Diretorio de risco no Front Ailos+ DEV/HML/PRD','/home/application/riscocredito/');
+    insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'DIR_RISCO_CRED_AILOSR','Diretorio de risco no Front Ailos+ DEV/HML/PRD','/application/riscocredito/');
 
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'ATENDA_OCR_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela Ocorrencias Riscos','risco' );
     insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM ,DSVLRPRM ) values ('CRED',0,'CADRIS_AILOSR','Redirecionamento do Aimaro para o Ailos+ da tela CadRis','risco' );
