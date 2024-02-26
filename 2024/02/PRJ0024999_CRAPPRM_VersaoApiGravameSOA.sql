@@ -21,7 +21,6 @@ DECLARE
   
 BEGIN
 
-  /*CRIA PARAMETRO CADPAR*/
   OPEN cr_crapbat('VERAPIGRVMB3');
   FETCH cr_crapbat INTO rw_crapbat;
   CLOSE cr_crapbat;
@@ -56,7 +55,6 @@ BEGIN
     VALUES (aux_cdpartar_add, rw_crapdat.cdcooper,  '1');
   END LOOP;
   
-  /*CRIA PARAMETROS CRAPPRM - URIs servicos V2*/
   aux_cdacesso := 'URI_ALIENA_GRAVAME_V2';
 
   SELECT COUNT(1)
