@@ -20,7 +20,7 @@ DECLARE
   CURSOR cr_crapprg(pr_cdcooper crapcop.cdcooper%TYPE) IS
     SELECT *
       FROM cecred.crapprg p
-     WHERE p.CDPROGRA IN ('CRPS576', 'CRPS577', 'CRPS634', 'CRPS627', 'CRPS641', 'CRPS516', 'CRPS280', 'CRPS660', 'CRPS573')
+     WHERE p.CDPROGRA IN ('CRPS576', 'CRPS577', 'CRPS634', 'CRPS627', 'CRPS641', 'CRPS516', 'CRPS280', 'CRPS660', 'CRPS573', 'CRPS299')
        AND cdcooper = pr_cdcooper
     ORDER BY NRSOLICI, NRORDPRG;
 BEGIN
