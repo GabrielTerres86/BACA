@@ -97,7 +97,7 @@ BEGIN
   gene0002.pc_escreve_xml(vr_dados_rollback
                          ,vr_texto_rollback
                          ,'UPDATE cecred.craptel SET FLGTELBL = 1 WHERE nmdatela = ''FORMGE'';'                 || chr(13) || 
-                          'UPDATE cecred.crapprm SET dsvlrprm = 1 WHERE cdacesso = ''EXECUTAR_CARGA_CENTRAL'';' || chr(13) ||
+                          'UPDATE cecred.crapprm SET dsvlrprm = 2 WHERE cdacesso = ''EXECUTAR_CARGA_CENTRAL'';' || chr(13) ||
                           'UPDATE cecred.crapprg a SET a.nrsolici = 76, a.inlibprg = 1 WHERE a.nmsistem = ''CRED'' AND a.cdprogra = ''CRPS656'' AND a.cdcooper = 3;' || chr(13) ||
                            chr(13), FALSE);  
   
