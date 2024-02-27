@@ -12,18 +12,18 @@ DECLARE
       SELECT g.nrdconta
             ,g.idgrupo
             ,a.nrcpfcgc
-        FROM cecred.tbcc_grupo_economico g
+        FROM cecred.tbcc_grupo_economico_old g
             ,cecred.crapass a
        WHERE g.cdcooper = pr_cdcooper
          AND a.cdcooper = g.cdcooper
          AND a.nrdconta = g.nrdconta
-         AND EXISTS (SELECT 1 FROM cecred.tbcc_grupo_economico_integ i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
+         AND EXISTS (SELECT 1 FROM cecred.tbcc_grupo_economico_integ_old i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
     rw_grupo cr_grupo%ROWTYPE;
     
-    CURSOR cr_integ(pr_idgrupo IN cecred.tbcc_grupo_economico.idgrupo%TYPE) IS
+    CURSOR cr_integ(pr_idgrupo IN cecred.tbcc_grupo_economico_old.idgrupo%TYPE) IS
       SELECT i.nrcpfcgc
             ,i.nrdconta
-        FROM cecred.tbcc_grupo_economico_integ i
+        FROM cecred.tbcc_grupo_economico_integ_old i
        WHERE i.idgrupo = pr_idgrupo
          AND i.dtexclusao IS NULL;
     rw_integ cr_integ%ROWTYPE;
