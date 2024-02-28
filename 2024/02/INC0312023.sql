@@ -56,7 +56,7 @@ DECLARE
           ,a.dtasitct as dtasitct_new
           ,t.cdmotdem as cdmotdem_old
           ,a.cdmotdem as cdmotdem_new
-		  
+
       FROM CECRED.CRAPASS t
          ,(select 1  as cdcooper, decode(vr_globalname, vc_bdprod,12221732 ,87778203) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
 		   union
@@ -107,10 +107,6 @@ DECLARE
 		 select 11  as cdcooper,decode(vr_globalname, vc_bdprod,112780     ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union         
          select 11 as cdcooper,decode(vr_globalname, vc_bdprod, 519430    ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-         union
-		 select 11 as cdcooper,decode(vr_globalname, vc_bdprod, 537233    ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-         union
-		 select 11 as cdcooper,decode(vr_globalname, vc_bdprod, 601861    ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
 		 select 14 as cdcooper,decode(vr_globalname, vc_bdprod, 41688     ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
@@ -166,8 +162,6 @@ DECLARE
          union
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 10494103  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
-		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 10651764  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-         union
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 10662758  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 10855670  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
@@ -180,8 +174,6 @@ DECLARE
          union
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 11838663  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
-		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 12021857  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-         union
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 12259349  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 13051008  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
@@ -190,23 +182,28 @@ DECLARE
          union
 		 select 16 as cdcooper,decode(vr_globalname, vc_bdprod, 231240    ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
 		 union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 14112523   ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 14112523   ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 13974602   ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 13974602   ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12271306  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12271306  ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12251330  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12251330  ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12924148  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12924148  ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 11002670  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 11002670  ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 union
 		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 6551173   ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12477249  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12477249  ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 union
-		 select 11 as cdcooper,decode(vr_globalname, vc_bdprod,308030    ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 select 11 as cdcooper,decode(vr_globalname, vc_bdprod,308030    ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 union
+		 select 11 as cdcooper,decode(vr_globalname, vc_bdprod,922153    ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 union
+		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 12117633    ,000000) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
+		 
 		 ) a                                                                                    
      WHERE 1=1
        AND t.cdcooper = a.cdcooper
