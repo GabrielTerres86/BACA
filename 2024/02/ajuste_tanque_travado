@@ -1,6 +1,6 @@
 begin
 UPDATE
-tbcc_lancamentos_pendentes t
+pix.tbcc_lancamentos_pendentes t
 SET
 t.IDSITUACAO = 'M'
 where
