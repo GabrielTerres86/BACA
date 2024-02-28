@@ -1,0 +1,20 @@
+begin
+UPDATE
+tbcc_lancamentos_pendentes t
+SET
+t.IDSITUACAO = 'M'
+where
+t.IDSEQ_LANCAMENTO in
+(
+394412808,
+394412578,
+394412434,
+394412829,
+394412801,
+394412799,
+394412739,
+394412576
+
+) and t.IDSITUACAO = 'A';
+commit;
+end;
