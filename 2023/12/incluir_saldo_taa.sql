@@ -7,10 +7,10 @@ BEGIN
 	  ,VLDSDFIN
 	  ,CDCOOPER)
 	VALUES
-	  (to_date('27-02-2024', 'dd-mm-yyyy')
-	  ,120
-	  ,1000.00
-	  ,1000.00
+	  (to_date('28-02-2024', 'dd-mm-yyyy')
+	  ,125
+	  ,0.00
+	  ,0.00
 	  ,9);
 
 	COMMIT; 
