@@ -57,7 +57,9 @@ DECLARE
   END carregarNovoGrupo;
 
 BEGIN
-
+  
+  EXECUTE IMMEDIATE 'TRUNCATE TABLE gestaoderisco.tbrisco_grupo_economico_integrante';
+   
   FOR rw_crapcop IN cr_crapcop LOOP
     carregarNovoGrupo(pr_cdcooper => rw_crapcop.cdcooper);
     COMMIT;
