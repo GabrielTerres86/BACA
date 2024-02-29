@@ -3,7 +3,7 @@ BEGIN
                      (dtreferencia
                      ,tpmarco
                      ,dsobservacao)
-              VALUES (to_date('09/02/2024','dd/mm/yyyy')
+              VALUES (to_date('29/02/2024','dd/mm/yyyy')
                      ,1
                      ,'Implantacao MLC');
   COMMIT;
