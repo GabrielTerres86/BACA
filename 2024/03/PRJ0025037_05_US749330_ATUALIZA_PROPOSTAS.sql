@@ -115,8 +115,7 @@ DECLARE
              UPDATE cecred.tbseg_nrproposta
                 SET dhseguro = SYSDATE
               WHERE nrproposta = vnumproposta;  
-        END LOOP;        
-     
+        END LOOP;      
       COMMIT;
 
       CECRED.GENE0001.pc_escr_linha_arquivo(vr_ind_arq,' COMMIT;');
