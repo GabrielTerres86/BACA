@@ -22,9 +22,7 @@ begin
 	   AND l.cdlcremp NOT IN (100,300,301,800,900,2600,2610,2700,6901,6902,6903,6904,6905,26014,76014)
 	   AND l.flgsegpr = 0;
 	  
-	  update cecred.crapprm p set p.DSVLRPRM = 'S' where p.CDCOOPER = 7 and p.cdacesso = 'PROPOSTA_API_ICATU';    
-	 
-		
+	  update cecred.crapprm p set p.DSVLRPRM = 'S' where p.CDCOOPER = 7 and p.cdacesso = 'PROPOSTA_API_ICATU';    		
 	
   commit;
 exception
