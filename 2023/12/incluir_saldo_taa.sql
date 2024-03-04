@@ -7,7 +7,7 @@ BEGIN
 	  ,VLDSDFIN
 	  ,CDCOOPER)
 	VALUES
-	  (to_date('01-03-2024', 'dd-mm-yyyy')
+	  (to_date('04-03-2024', 'dd-mm-yyyy')
 	  ,120
 	  ,1000.00
 	  ,1000.00
