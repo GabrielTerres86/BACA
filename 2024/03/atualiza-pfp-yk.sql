@@ -1,5 +1,5 @@
 BEGIN
-  UPDATE crappfp
+  UPDATE CECRED.crappfp
      SET cdocorrencia = 'YK'
    WHERE cdcooper = 9
      AND cdempres = 283
