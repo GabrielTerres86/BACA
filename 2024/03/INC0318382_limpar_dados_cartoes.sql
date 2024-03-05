@@ -26,11 +26,11 @@ BEGIN
   DELETE FROM tbcrd_risco x
    WHERE x.idarquivo IN (SELECT t.idarquivo
                            FROM tbcrd_arq_risco t
-                          WHERE t.dtrefere = '29/02/2024'
+                          WHERE t.dtrefere = to_date('29/02/2024','dd/mm/RRRR')
                             AND t.idbandeira = 5);
 
   DELETE FROM tbcrd_arq_risco t
-   WHERE t.DTREFERE ='29/02/2024'
+   WHERE t.DTREFERE = to_date('29/02/2024','dd/mm/RRRR')
      AND t.IDBANDEIRA = 5
      ;
 
