@@ -26,12 +26,14 @@ BEGIN
   DELETE FROM tbcrd_risco x
    WHERE x.idarquivo IN (SELECT t.idarquivo
                            FROM tbcrd_arq_risco t
-                          WHERE t.dtrefere = to_date('29/02/2024','dd/mm/RRRR')
-                            AND t.idbandeira = 5);
+                          WHERE t.dtrefere   = to_date('29/02/2024','dd/mm/RRRR')
+                            AND t.idbandeira = 5
+                            AND t.cdcooper   = 1);
 
   DELETE FROM tbcrd_arq_risco t
    WHERE t.DTREFERE = to_date('29/02/2024','dd/mm/RRRR')
      AND t.IDBANDEIRA = 5
+     AND t.cdcooper   = 1
      ;
 
   UPDATE crapprm t
