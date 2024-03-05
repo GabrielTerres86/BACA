@@ -12,6 +12,7 @@ DECLARE
       SELECT g.nrdconta
             ,g.idgrupo
             ,a.nrcpfcgc
+            ,g.dtinclusao
         FROM cecred.tbcc_grupo_economico_old g
             ,cecred.crapass a
        WHERE g.cdcooper = pr_cdcooper
@@ -23,6 +24,7 @@ DECLARE
     CURSOR cr_integ(pr_idgrupo IN cecred.tbcc_grupo_economico_old.idgrupo%TYPE) IS
       SELECT i.nrcpfcgc
             ,i.nrdconta
+            ,i.dtinclusao
         FROM cecred.tbcc_grupo_economico_integ_old i
        WHERE i.idgrupo = pr_idgrupo
          AND i.dtexclusao IS NULL;
@@ -32,8 +34,8 @@ DECLARE
     dbms_output.enable(NULL);
     FOR rw_grupo IN cr_grupo(pr_cdcooper => pr_cdcooper) LOOP
       BEGIN
-        INSERT INTO gestaoderisco.tbrisco_grupo_economico_integrante(cdgrupo_economico, cdcooper, nrdconta, nrcpfcnpj, dhregistro)
-        VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_grupo.nrdconta, rw_grupo.nrcpfcgc, SYSDATE);
+        INSERT INTO gestaoderisco.tbrisco_grupo_economico_integrante(cdgrupo_economico, cdcooper, nrdconta, nrcpfcnpj, dhregistro, dtinclusao)
+        VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_grupo.nrdconta, rw_grupo.nrcpfcgc, SYSDATE, rw_grupo.dtinclusao);
       EXCEPTION
         WHEN OTHERS THEN
           ROLLBACK;
@@ -41,8 +43,8 @@ DECLARE
       END;
       FOR rw_integ IN cr_integ(pr_idgrupo => rw_grupo.idgrupo) LOOP
         BEGIN
-          INSERT INTO gestaoderisco.tbrisco_grupo_economico_integrante(cdgrupo_economico, cdcooper, nrdconta, nrcpfcnpj, dhregistro)
-          VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_integ.nrdconta, rw_integ.nrcpfcgc, SYSDATE);
+          INSERT INTO gestaoderisco.tbrisco_grupo_economico_integrante(cdgrupo_economico, cdcooper, nrdconta, nrcpfcnpj, dhregistro, dtinclusao)
+          VALUES (rw_grupo.idgrupo, pr_cdcooper, rw_integ.nrdconta, rw_integ.nrcpfcgc, SYSDATE, rw_integ.dtinclusao);
         EXCEPTION
           WHEN OTHERS THEN
             ROLLBACK;
