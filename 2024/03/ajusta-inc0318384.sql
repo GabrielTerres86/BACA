@@ -1,0 +1,17 @@
+BEGIN
+    DELETE cecred.tbspb_msg_xml where NRSEQ_MENSAGEM_XML = 24030075433550;  
+    DELETE cecred.tbspb_msg_xml where NRSEQ_MENSAGEM_XML = 24030075444217;  
+    DELETE cecred.tbspb_msg_xml where NRSEQ_MENSAGEM_XML = 24030075444646;  
+    DELETE cecred.tbspb_msg_xml where NRSEQ_MENSAGEM_XML = 24030075444910;  
+    DELETE cecred.tbspb_msg_xml where NRSEQ_MENSAGEM_XML = 24030075445592;  
+    DELETE cecred.tbspb_msg_xml where NRSEQ_MENSAGEM_XML = 24030075454138;  
+
+    DELETE cecred.tbspb_msg_recebida_fase where NRSEQ_MENSAGEM = 240338201404 AND NRSEQ_MENSAGEM_FASE = 240313176720;
+    DELETE cecred.tbspb_msg_recebida_fase where NRSEQ_MENSAGEM = 240338206704 AND NRSEQ_MENSAGEM_FASE = 240313192742;
+    DELETE cecred.tbspb_msg_recebida_fase where NRSEQ_MENSAGEM = 240338206843 AND NRSEQ_MENSAGEM_FASE = 240313193163;
+    DELETE cecred.tbspb_msg_recebida_fase where NRSEQ_MENSAGEM = 240338206939 AND NRSEQ_MENSAGEM_FASE = 240313193454;
+    DELETE cecred.tbspb_msg_recebida_fase where NRSEQ_MENSAGEM = 240338207295 AND NRSEQ_MENSAGEM_FASE = 240313194527;
+    DELETE cecred.tbspb_msg_recebida_fase where NRSEQ_MENSAGEM = 240338212094 AND NRSEQ_MENSAGEM_FASE = 240313208981;
+    
+    COMMIT;
+END;
