@@ -19,7 +19,7 @@ DECLARE
            w.dtinivig,
            w.dtfimvig,
            'S' as id_atualizar_tbseg
-      from crawseg w, crapepr r
+      from cecred.crawseg w, cecred.crapepr r
      where w.cdcooper = r.cdcooper
        and w.nrdconta = r.nrdconta
        and w.nrctrato = r.nrctremp
@@ -29,7 +29,7 @@ DECLARE
        and w.TPCUSTEI = 1
        and w.NRPROPOSTA not like '2024%'
        and not exists (select 0
-              from tbseg_prestamista p
+              from cecred.tbseg_prestamista p
              where p.cdcooper = w.cdcooper
                and p.nrdconta = w.nrdconta
                and p.nrctrseg = w.nrctrseg
@@ -44,7 +44,7 @@ DECLARE
            w.dtinivig,
            w.dtfimvig,
            'S' as idefetivado
-      from crawseg w, crawepr r
+      from cecred.crawseg w, cecred.crawepr r
      where w.cdcooper = r.cdcooper
        and w.nrdconta = r.nrdconta
        and w.nrctrato = r.nrctremp
@@ -53,14 +53,14 @@ DECLARE
        and w.NRPROPOSTA not like '2024%'
        and w.cdcooper in (1, 16)
        and exists (select 0
-              from tbseg_prestamista p
+              from cecred.tbseg_prestamista p
              where p.cdcooper = w.cdcooper
                and p.nrdconta = w.nrdconta
                and p.nrctrseg = w.nrctrseg
                and p.nrctremp = w.nrctrato
                and p.nrapolice = '000000077001166')
        and not exists (select 1
-              from crapepr p
+              from cecred.crapepr p
              where p.cdcooper = r.cdcooper
                and p.nrdconta = r.nrdconta
                and p.NRCTREMP = r.NRCTREMP)
@@ -74,7 +74,7 @@ DECLARE
            w.dtinivig,
            w.dtfimvig,
            'S' as id_atualizar_tbseg
-      from tbseg_prestamista p, crawseg w
+      from cecred.tbseg_prestamista p, cecred.crawseg w
      where p.cdcooper = w.cdcooper
        and p.nrdconta = w.nrdconta
        and p.nrctrseg = w.nrctrseg
@@ -93,7 +93,7 @@ DECLARE
            w.dtinivig,
            w.dtfimvig,
            'N' as id_atualizar_tbseg
-      from crawseg w, crawepr r
+      from cecred.crawseg w, cecred.crawepr r
      where w.cdcooper = r.cdcooper
        and w.nrdconta = r.nrdconta
        and w.nrctrato = r.nrctremp
@@ -102,13 +102,13 @@ DECLARE
        and w.NRPROPOSTA not like '2024%'
        and w.cdcooper in (1, 16)
        and not exists (select 0
-              from tbseg_prestamista p
+              from cecred.tbseg_prestamista p
              where p.cdcooper = w.cdcooper
                and p.nrdconta = w.nrdconta
                and p.nrctrseg = w.nrctrseg
                and p.nrctremp = w.nrctrato)
        and not exists (select 1
-              from crapepr p
+              from cecred.crapepr p
              where p.cdcooper = r.cdcooper
                and p.nrdconta = r.nrdconta
                and p.NRCTREMP = r.NRCTREMP);
