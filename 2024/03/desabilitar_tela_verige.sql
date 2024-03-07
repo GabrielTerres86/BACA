@@ -1,6 +1,5 @@
 BEGIN
-  DELETE FROM craptel WHERE nmdatela = 'VERIGE';
-  DELETE FROM crapace WHERE nmdatela = 'VERIGE';
-  DELETE FROM crapprg WHERE cdprogra = 'VERIGE';
+  UPDATE craptel SET flgtelbl = 0 WHERE nmdatela = 'VERIGE';
+  UPDATE crapprg SET inlibprg = 0 WHERE cdprogra = 'VERIGE';
   COMMIT;
 END;
