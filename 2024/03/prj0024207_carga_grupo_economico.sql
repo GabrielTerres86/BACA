@@ -11,13 +11,13 @@ DECLARE
     CURSOR cr_grupo(pr_cdcooper IN cecred.crapcop.cdcooper%TYPE) IS
        SELECT g.flgcumulatividade,
               g.idgrupo
-        FROM cecred.tbcc_grupo_economico g
+        FROM cecred.tbcc_grupo_economico_old g
             ,cecred.crapass a
        WHERE g.cdcooper = pr_cdcooper
          AND a.cdcooper = g.cdcooper
          AND a.nrdconta = g.nrdconta
          AND g.flgcumulatividade = 1
-         AND EXISTS (SELECT 1 FROM cecred.tbcc_grupo_economico_integ i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
+         AND EXISTS (SELECT 1 FROM cecred.tbcc_grupo_economico_integ_old i WHERE i.idgrupo = g.idgrupo AND i.dtexclusao IS NULL);
     rw_grupo cr_grupo%ROWTYPE;
         
   BEGIN
