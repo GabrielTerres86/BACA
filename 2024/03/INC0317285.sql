@@ -76,8 +76,6 @@ DECLARE
 		   union
 		   select 11  as cdcooper,decode(vr_globalname, vc_bdprod,520462    ,99479478) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1  as cdcooper,decode(vr_globalname, vc_bdprod,12629464   ,87370476) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-           union
 		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,11002670    ,88997260) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
 		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,12251330    ,87748606) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
