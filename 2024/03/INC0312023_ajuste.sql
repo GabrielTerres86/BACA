@@ -29,9 +29,9 @@ DECLARE
   vc_cdhistDepVistaPJ             CONSTANT NUMBER := 2080;
   vc_cdhistCotasPF                CONSTANT NUMBER := 2079;
   vc_cdhistCotasPJ                CONSTANT NUMBER := 2080;  
-  vc_dstransaStatusCC             CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0312023a';
-  vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Alteração de Cotas e devolução - INC0312023a';
-  vc_dstransaDevDepVista          CONSTANT VARCHAR2(4000) := 'Alteracao da devolução do Depósito a Vista - INC0312023a';
+  vc_dstransaStatusCC             CONSTANT VARCHAR2(4000) := 'Reversão do preenchimento do campo "data demissão" via script - INC0312023';
+  vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Reversão do preenchimento do campo "data demissão" via script - INC0312023';
+  vc_dstransaDevDepVista          CONSTANT VARCHAR2(4000) := 'Reversão do preenchimento do campo "data demissão" via script - INC0312023';
   vc_inpessoaPF                   CONSTANT NUMBER := 1;
   vc_inpessoaPJ                   CONSTANT NUMBER := 2; 
   vc_nrdolote_lanc                CONSTANT NUMBER := 37000;
@@ -159,8 +159,6 @@ DECLARE
 		 select 1  as cdcooper,decode(vr_globalname, vc_bdprod, 13123297  ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
          union
 		 select 16 as cdcooper,decode(vr_globalname, vc_bdprod, 231240    ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-		 union
-		 select 1 as cdcooper,decode(vr_globalname, vc_bdprod, 6551173   ,000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct,  null as  cdmotdem from dual
 		 ) a                                                                                    
      WHERE 1=1
        AND t.cdcooper = a.cdcooper
@@ -232,11 +230,11 @@ BEGIN
                                        pr_dsdadatu => rg_crapass.dtdemiss_new);
     END IF;
                               
-    IF (rg_crapass.cdmotdem_new IS NOT NULL) THEN    
+    IF (rg_crapass.dtelimin_new IS NOT NULL) THEN    
       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                        pr_nmdcampo => 'crapass.dtelimin',
                                        pr_dsdadant => rg_crapass.dtelimin_old,
-                                       pr_dsdadatu => rg_crapass.dtelimin_new);  
+                                       pr_dsdadatu => rg_crapass.dtelimin_new);
     END IF;
                                                             
     IF (rg_crapass.cdmotdem_new IS NOT NULL) THEN    
