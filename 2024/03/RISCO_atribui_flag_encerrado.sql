@@ -56,7 +56,7 @@ declare
                               ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
                               ,pr_dtbase   CREDITO.tbepr_imob_imp_arq_risco.dtbase%TYPE                                 
                               ) IS
-      SELECT /*+ INDEX(erp CRAPEPR##CRAPEPR2) */
+      SELECT 
              epr.cdcooper       cdcooper
             ,epr.nrdconta       nrdconta
             ,epr.nrctremp       nrctrato
@@ -79,7 +79,7 @@ declare
       UNION ALL
       
       
-      SELECT /*+ INDEX(erp CRAPEPR##CRAPEPR2) */
+      SELECT 
              epr.cdcooper       cdcooper
             ,epr.nrdconta       nrdconta
             ,epr.nrctremp       nrctrato
@@ -111,7 +111,7 @@ declare
                         )
       UNION ALL
 
-      SELECT /*+ INDEX(lim CRAPLIM##CRAPLIM1) */
+      SELECT 
              lim.cdcooper       cdcooper
             ,lim.nrdconta       nrdconta
             ,lim.nrctrlim       nrctrato
@@ -180,7 +180,7 @@ declare
          AND opr.flencerrado = 0
       UNION ALL
       
-      SELECT /*+ INDEX(imo PK_TBEPR_CONTRATO_IMOBILIARIO) */
+      SELECT 
              imo.cdcooper       cdcooper
             ,imo.nrdconta       nrdconta
             ,imo.nrctremp       nrctrato
