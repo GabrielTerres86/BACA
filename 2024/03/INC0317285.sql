@@ -160,7 +160,7 @@ BEGIN
                                        pr_dsdadatu => rg_crapass.dtdemiss_new);
     END IF;
                               
-    IF (rg_crapass.cdmotdem_new IS NOT NULL) THEN    
+    IF (rg_crapass.dtelimin_new IS NOT NULL) THEN    
       CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                        pr_nmdcampo => 'crapass.dtelimin',
                                        pr_dsdadant => rg_crapass.dtelimin_old,
