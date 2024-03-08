@@ -41,7 +41,7 @@ DECLARE
            a.dtmvtolt,
            a.rowid,
            (CASE WHEN a.nrdconta = 97933740 THEN 98 ELSE 93 END) taxafixa
-      FROM craprda a
+      FROM cecred.craprda a
      WHERE a.cdcooper = 1
        AND ((a.nrdconta = 97933740 AND nraplica =  167087) OR
             (a.nrdconta = 97976750 AND nraplica in (244856, 163391, 148888,188035)));
@@ -51,8 +51,8 @@ DECLARE
                    ,pr_nrdconta IN craplap.nrdconta%TYPE
                    ,pr_nraplica IN craplap.nraplica%TYPE) IS 
     SELECT SUM(decode(his.indebcre, 'D', -1, 1) * lac.vllanmto) vllanmto
-             FROM craphis his
-                 ,craplap lac
+             FROM cecred.craphis his
+                 ,cecred.craplap lac
              WHERE his.cdhistor = lac.cdhistor
                AND his.cdcooper = lac.cdcooper
                AND lac.dtmvtolt <= to_date(SYSDATE)
@@ -122,7 +122,7 @@ BEGIN
           apli0004.pc_calcula_qt_dias_uteis(rw_craprda.cdcooper, datainicial, vr_qtdiaute, vr_dtfimper, vr_cdcritic, vr_dscritic);
         
           SELECT txofidia INTO pr_txprodia
-            FROM craptrd   
+            FROM cecred.craptrd   
            WHERE dtiniper = datainicial
              AND cdcooper = 1
              AND vlfaixas = 50000
@@ -152,7 +152,7 @@ BEGIN
                                            pr_excultdia => pr_excultdia);
       
       SELECT nvl(SUM(vllanmto),0) INTO pr_vllanmto
-        FROM craplap 
+        FROM cecred.craplap 
        WHERE cdcooper = 1
          AND nrdconta = rw_craprda.nrdconta
          AND nraplica = rw_craprda.nraplica
@@ -172,7 +172,7 @@ BEGIN
                                  ||10106);
       
       BEGIN
-        INSERT INTO craplap(cdcooper
+        INSERT INTO cecred.craplap(cdcooper
                            ,dtmvtolt
                            ,cdagenci
                            ,cdbccxlt
@@ -220,7 +220,7 @@ BEGIN
                                  ||10106);
       
       BEGIN
-        INSERT INTO craplap(cdcooper
+        INSERT INTO cecred.craplap(cdcooper
                            ,dtmvtolt
                            ,cdagenci
                            ,cdbccxlt
@@ -263,7 +263,7 @@ BEGIN
       END;
       
       BEGIN
-        UPDATE craprda
+        UPDATE cecred.craprda
            SET dtsdrdan = rw_craprda.dtcalcul
               ,vlsdrdan = rw_craprda.vlsdrdca
               ,dtiniext = to_date(datainicial) -1
@@ -311,7 +311,7 @@ BEGIN
       IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
-      UPDATE craprda
+      UPDATE cecred.craprda
          SET vlsdrdca = 0
             ,insaqtot = 1
             ,dtsaqtot = rw_craprda.dtrefatu
