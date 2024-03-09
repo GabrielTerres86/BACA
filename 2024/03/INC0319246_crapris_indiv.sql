@@ -18,6 +18,15 @@ BEGIN
     dbms_output.put_line('Coop:'||rw_crapcop.cdcooper||' qtd Reg:'||sql%rowcount);
     
     COMMIT;
+
+    DELETE crapris ris
+     WHERE ris.cdcooper = rw_crapcop.cdcooper
+       AND ris.Inddocto = 2
+       AND ris.dtrefere = to_date('29/02/2024', 'DD/MM/RRRR');
+       
+    dbms_output.put_line('Coop:'||rw_crapcop.cdcooper||' Del Saidas qtd Reg:'||sql%rowcount);   
+    
+    COMMIT;
     
     
   END LOOP;
