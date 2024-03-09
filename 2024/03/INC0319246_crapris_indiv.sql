@@ -12,6 +12,7 @@ BEGIN
     UPDATE crapris ris
        SET ris.flgindiv = 0
      WHERE ris.cdcooper = rw_crapcop.cdcooper
+       AND ris.FLGINDIV = 1
        AND ris.dtrefere = to_date('29/02/2024', 'DD/MM/RRRR');
        
     dbms_output.put_line('Coop:'||rw_crapcop.cdcooper||' qtd Reg:'||sql%rowcount);
