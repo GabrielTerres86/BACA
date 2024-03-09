@@ -13,8 +13,11 @@ BEGIN
        SET ris.flgindiv = 0
      WHERE ris.cdcooper = rw_crapcop.cdcooper
        AND ris.dtrefere = to_date('29/02/2024', 'DD/MM/RRRR');
-
+       
+    dbms_output.put_line('Coop:'||rw_crapcop.cdcooper||' qtd Reg:'||sql%rowcount);
+    
     COMMIT;
+    
     
   END LOOP;
   
