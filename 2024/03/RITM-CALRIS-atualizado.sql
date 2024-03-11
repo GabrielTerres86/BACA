@@ -28,6 +28,7 @@ DECLARE
   vr_valorpendencia tbcalris_colaboradores.vlpendencia%TYPE;
   vr_valorendividamento tbcalris_colaboradores.vlendividamento%TYPE;
   vr_exc_saida EXCEPTION;
+  
 BEGIN
   dbms_output.put_line(vr_nmdireto);
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto,
@@ -72,6 +73,7 @@ BEGIN
             (CDCOOPER, NRCPFCGC, NMPESSOA, CDIDENTIFICADOR_VAGA, TPCOLABORADOR, VLSALARIO, VLSALARIO_VAGA, TPRELACIONAMENTO, DSRELACIONAMENTO, 
              DSCIDADE, DSUF, VLPENDENCIA, VLENDIVIDAMENTO, DHRECEBIMENTO, INSITUACAO) 
      VALUES (vr_cdcooper, vr_cpf, vr_nome, vr_cdvaga, vr_tpcolaborador, vr_valor, vr_valorvaga, vr_relac, vr_dsrelac, vr_cidade, vr_UF, vr_valorpendencia, vr_valorendividamento, vr_data, 'A');
+	 
    EXCEPTION               
    WHEN OTHERS THEN
       vr_dscritic := 'Erro ao INCLUIR CALCULADORA COL: '||SQLERRM;
