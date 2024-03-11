@@ -2,7 +2,7 @@ DECLARE
   vr_nmdireto   VARCHAR2(4000) := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                            ,pr_cdcooper => 0
                                                            ,pr_cdacesso => 'ROOT_DIRCOOP')||'cecred/arq/';
-  vr_nmarqimp  VARCHAR2(100) := 'RITM0334430-exemplo.csv';
+  vr_nmarqimp  VARCHAR2(100) := 'inserir-registros.csv';
   vr_ind_arquiv  utl_file.file_type;
 
   vr_linha       VARCHAR2(5000);
