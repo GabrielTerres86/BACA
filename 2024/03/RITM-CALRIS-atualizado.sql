@@ -73,6 +73,7 @@ BEGIN
             (CDCOOPER, NRCPFCGC, NMPESSOA, CDIDENTIFICADOR_VAGA, TPCOLABORADOR, VLSALARIO, VLSALARIO_VAGA, TPRELACIONAMENTO, DSRELACIONAMENTO, 
              DSCIDADE, DSUF, VLPENDENCIA, VLENDIVIDAMENTO, DHRECEBIMENTO, INSITUACAO) 
      VALUES (vr_cdcooper, vr_cpf, vr_nome, vr_cdvaga, vr_tpcolaborador, vr_valor, vr_valorvaga, vr_relac, vr_dsrelac, vr_cidade, vr_UF, vr_valorpendencia, vr_valorendividamento, vr_data, 'A');
+	 
    EXCEPTION               
    WHEN OTHERS THEN
       vr_dscritic := 'Erro ao INCLUIR CALCULADORA COL: '||SQLERRM;
