@@ -3,6 +3,6 @@ BEGIN
   set dsvlrprm = '/usr/coop/'
   where cdacesso = 'ROOT_DIRCOOP'
   and nmsistem = 'CRED'
-  and pcdcooper = 0;
+  and cdcooper = 0;
    COMMIT;
 END;
