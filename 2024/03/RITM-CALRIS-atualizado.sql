@@ -28,6 +28,7 @@ DECLARE
   vr_valorpendencia tbcalris_colaboradores.vlpendencia%TYPE;
   vr_valorendividamento tbcalris_colaboradores.vlendividamento%TYPE;
   vr_exc_saida EXCEPTION;
+  
 BEGIN
   dbms_output.put_line(vr_nmdireto);
   gene0001.pc_abre_arquivo(pr_nmdireto => vr_nmdireto,
