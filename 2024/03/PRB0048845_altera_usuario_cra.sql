@@ -8,4 +8,9 @@ BEGIN
 
   COMMIT;
 
+EXCEPTION
+  WHEN OTHERS THEN
+    SISTEMA.excecaoInterna(pr_compleme => 'PRB0048845');
+    ROLLBACK;
+  
 END;
