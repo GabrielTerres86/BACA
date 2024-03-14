@@ -3,32 +3,33 @@ BEGIN
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('13-03-2024', 'dd-mm-yyyy'),111,1000.00,1000.00,9);
+	  (to_date('14-03-2024', 'dd-mm-yyyy'),111,1000.00,1000.00,9);
 
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('13-03-2024', 'dd-mm-yyyy'),120,1000.00,1000.00,9);
+	  (to_date('14-03-2024', 'dd-mm-yyyy'),120,1000.00,1000.00,9);
 
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('13-03-2024', 'dd-mm-yyyy'),124,1000.00,1000.00,9);
+	  (to_date('14-03-2024', 'dd-mm-yyyy'),124,1000.00,1000.00,9);
 
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('13-03-2024', 'dd-mm-yyyy'),127,1000.00,1000.00,9);
+	  (to_date('14-03-2024', 'dd-mm-yyyy'),127,1000.00,1000.00,9);
 
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('13-03-2024', 'dd-mm-yyyy'),132,1000.00,1000.00,9);
+	  (to_date('14-03-2024', 'dd-mm-yyyy'),132,1000.00,1000.00,9);
 
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('13-03-2024', 'dd-mm-yyyy'),134,1000.00,1000.00,9);
+	  (to_date('14-03-2024', 'dd-mm-yyyy'),134,1000.00,1000.00,9);
 
 	COMMIT; 
+	
 END;
