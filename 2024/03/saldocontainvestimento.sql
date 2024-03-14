@@ -6,7 +6,7 @@ vr_vllanmto     NUMBER(25,2) := 150.74;
 vr_exc_saida    EXCEPTION;
 vr_idprglog     NUMBER;
 vr_dscritic     VARCHAR(4000);
-pr_nrdconta     NUMBER := 84620340;--15379590;
+pr_nrdconta     NUMBER := 84620340;
 
 CURSOR cr_crapsli(pr_cdcooper IN crapsli.cdcooper%TYPE
                  ,pr_nrdconta IN crapsli.nrdconta%TYPE
