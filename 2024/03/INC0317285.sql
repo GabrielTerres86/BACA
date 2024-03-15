@@ -30,8 +30,8 @@ DECLARE
   vc_cdhistCotasPF                CONSTANT NUMBER := 2079;
   vc_cdhistCotasPJ                CONSTANT NUMBER := 2080;  
   vc_dstransaStatusCC             CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0317285';
-  vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Alteração de Cotas e devolução - INC0317285';
-  vc_dstransaDevDepVista          CONSTANT VARCHAR2(4000) := 'Alteracao da devolução do Depósito a Vista - INC0317285';
+  vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0317285';
+  vc_dstransaDevDepVista          CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0317285';
   vc_inpessoaPF                   CONSTANT NUMBER := 1;
   vc_inpessoaPJ                   CONSTANT NUMBER := 2; 
   vc_nrdolote_lanc                CONSTANT NUMBER := 37000;
@@ -53,11 +53,10 @@ DECLARE
           ,t.dtelimin as dtelimin_old
           ,a.dtelimin as dtelimin_new
           ,t.dtasitct as dtasitct_old
-          ,a.dtasitct as dtasitct_new 
+          ,a.dtasitct as dtasitct_new
           ,t.cdmotdem as cdmotdem_old
           ,a.cdmotdem as cdmotdem_new
-		  
-		FROM CECRED.CRAPASS t
+      FROM CECRED.CRAPASS t
          ,(select 1  as cdcooper, decode(vr_globalname, vc_bdprod,2354217   ,97645729) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
 		   union
 		   select 1  as cdcooper, decode(vr_globalname, vc_bdprod,8153906   ,91846030) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
@@ -74,23 +73,33 @@ DECLARE
 		   union
 		   select 1 as cdcooper, decode(vr_globalname, vc_bdprod,13569066   ,86430874) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
 		   union
-		   select 11  as cdcooper,decode(vr_globalname, vc_bdprod,520462    ,99479478) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+		   select 1  as cdcooper, decode(vr_globalname, vc_bdprod,3686930 , 96313005 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,11002670    ,88997260) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           select 1  as cdcooper, decode(vr_globalname, vc_bdprod,3754618 , 96245328 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,12251330    ,87748606) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           select 1  as cdcooper, decode(vr_globalname, vc_bdprod,6551173 , 93448767 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,12271306    ,87728630) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           select 1  as cdcooper, decode(vr_globalname, vc_bdprod,12237736, 87762200 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,12477249    ,87522691) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           select 11 as cdcooper, decode(vr_globalname, vc_bdprod,3344    , 99996596 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,12924148    ,87075792) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           select 11 as cdcooper, decode(vr_globalname, vc_bdprod,528161  , 99471779 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
            union
-		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,13974602    ,86025333) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-           union         
-           select 1 as cdcooper,decode(vr_globalname, vc_bdprod,14112523    ,85887412) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
-		  ) a                                                                                    
-     WHERE 1=1
+           select 11 as cdcooper, decode(vr_globalname, vc_bdprod,883239  , 99116707 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           union
+           select 13 as cdcooper, decode(vr_globalname, vc_bdprod,682837  , 99317109 ) as nrdconta, vc_cdsitdctEncerrada as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+		   union	   
+		   select 11  as cdcooper,decode(vr_globalname, vc_bdprod,601861    ,0000000) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           union
+		   select 11 as cdcooper,decode(vr_globalname, vc_bdprod,537233    ,99462702) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           union
+		   select 11 as cdcooper,decode(vr_globalname, vc_bdprod,520462    ,99479478) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           union
+		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,12021857    ,87978083) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+           union
+		   select 1 as cdcooper,decode(vr_globalname, vc_bdprod,10651764    ,89348176) as nrdconta, vc_cdsitdctProcesDemis as cdsitdct, null as dtdemiss, null as dtelimin, null as dtasitct, null as  cdmotdem from dual
+          ) a
+	 WHERE 1=1
        AND t.cdcooper = a.cdcooper
        AND t.nrdconta = a.nrdconta
      order by a.cdsitdct desc;
@@ -180,10 +189,11 @@ BEGIN
                                        pr_dsdadant => rg_crapass.dtasitct_old,
                                        pr_dsdadatu => rg_crapass.dtasitct_new);                                
     END IF;
+
     if rg_crapass.cdsitdct_new = 4 then
        update cecred.crapass a set a.cdsitdct = nvl(rg_crapass.cdsitdct_new, a.cdsitdct)
-                                  ,a.dtdemiss = nvl(vr_dtmvtolt, a.dtdemiss)
-                                  ,a.dtelimin = nvl(vr_dtmvtolt, a.dtelimin)
+                                  ,a.dtdemiss = nvl(a.dtdemiss,vr_dtmvtolt)
+                                  ,a.dtelimin = nvl(a.dtelimin,vr_dtmvtolt)
                                   ,a.cdmotdem = nvl(11, a.cdmotdem)
                                   ,a.dtasitct = nvl(vr_dtmvtolt, a.dtasitct)
        where a.cdcooper = rg_crapass.cdcooper
@@ -194,7 +204,127 @@ BEGIN
        where a.cdcooper = rg_crapass.cdcooper
          and a.nrdconta = rg_crapass.nrdconta;
 	end if;
-
+    
+    
+    vr_vldcotas_crapcot := 0;
+    
+    BEGIN
+      SELECT nvl(vldcotas,0)
+        INTO vr_vldcotas_crapcot
+        FROM CECRED.crapcot
+       WHERE nrdconta = rg_crapass.nrdconta
+         AND cdcooper = rg_crapass.cdcooper;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+      
+        dbms_output.put_line(chr(10) ||
+                             'Não encontrado registro em crapcot para conta ' ||
+                             rg_crapass.nrdconta);
+        vr_vldcotas_crapcot := 0;
+      
+    END;
+    
+    IF vr_vldcotas_crapcot > 0 THEN
+      
+      
+      vr_busca := TRIM(to_char(rg_crapass.cdcooper)) || ';' ||
+                          TRIM(to_char(vr_dtmvtolt,'DD/MM/RRRR')) || ';' ||
+                          TRIM(to_char(rg_crapass.cdagenci)) || ';' ||
+                          '100;' || 
+                          vc_nrdolote_cota;
+                          
+      vr_nrdocmto := cecred.fn_sequence('CRAPLCT','NRDOCMTO', vr_busca);
+                                 
+      vr_nrseqdig := cecred.fn_sequence('CRAPLOT','NRSEQDIG',''||rg_crapass.cdcooper||';'||
+                                                                  TRIM(to_char(vr_dtmvtolt, 'DD/MM/RRRR'))||';'||
+                                                                  rg_crapass.cdagenci||
+                                                                  ';100;'|| 
+                                                                  vc_nrdolote_cota);
+    
+      case rg_crapass.inpessoa
+        when vc_inpessoaPF then
+          vr_cdhistor := vc_cdhistCotasPF;
+        when vc_inpessoaPJ then
+          vr_cdhistor := vc_cdhistCotasPJ;
+        else
+          raise vr_inpessoa_invalido;
+      end case;
+      
+      INSERT INTO CECRED.craplct
+        (cdcooper,
+         cdagenci,
+         cdbccxlt,
+         nrdolote,
+         dtmvtolt,
+         cdhistor,
+         nrctrpla,
+         nrdconta,
+         nrdocmto,
+         nrseqdig,
+         vllanmto,
+         CDOPEORI,
+         DTINSORI)
+      VALUES
+        (rg_crapass.cdcooper,
+         rg_crapass.cdagenci,
+         100,
+         vc_nrdolote_cota,
+         vr_dtmvtolt,
+         vr_cdhistor,
+         0,
+         rg_crapass.nrdconta,
+         vr_nrdocmto,
+         vr_nrseqdig,
+         vr_vldcotas_crapcot,
+         1,
+         sysdate);
+      
+      vr_nrdrowid := null;
+      
+      CECRED.GENE0001.pc_gera_log(pr_cdcooper => rg_crapass.cdcooper,
+                                  pr_cdoperad => vr_cdoperad,
+                                  pr_dscritic => vr_dscritic,
+                                  pr_dsorigem => 'AIMARO',
+                                  pr_dstransa => vc_dstransaDevCotas,
+                                  pr_dttransa => vr_dttransa,
+                                  pr_flgtrans => 1,
+                                  pr_hrtransa => vr_hrtransa,
+                                  pr_idseqttl => 0,
+                                  pr_nmdatela => NULL,
+                                  pr_nrdconta => rg_crapass.nrdconta,
+                                  pr_nrdrowid => vr_nrdrowid);
+    
+      CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                       pr_nmdcampo => 'craplct.dtmvtolt',
+                                       pr_dsdadant => null,
+                                       pr_dsdadatu => vr_dtmvtolt);
+    
+      CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                       pr_nmdcampo => 'craplct.vllanmto',
+                                       pr_dsdadant => null,
+                                       pr_dsdadatu => vr_vldcotas_crapcot);
+    
+      UPDATE CECRED.crapcot
+         SET vldcotas = 0
+       WHERE cdcooper = rg_crapass.cdcooper
+         AND nrdconta = rg_crapass.nrdconta;
+    
+      CECRED.GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                       pr_nmdcampo => 'crapcot.vldcotas',
+                                       pr_dsdadant => vr_vldcotas_crapcot,
+                                       pr_dsdadatu => 0);
+                                
+       MERGE INTO CECRED.TBCOTAS_DEVOLUCAO a
+       USING (SELECT rg_crapass.cdcooper as cdcooper, rg_crapass.nrdconta as nrdconta, vc_tpdevCotas as tpdevolucao 
+                FROM DUAL) b
+         ON (a.cdcooper = b.cdcooper AND a.nrdconta = b.nrdconta AND a.tpdevolucao = b.tpdevolucao)
+       WHEN MATCHED THEN UPDATE SET a.vlcapital =(a.vlcapital + vr_vldcotas_crapcot)
+       WHEN NOT MATCHED THEN INSERT (a.cdcooper, a.nrdconta, a.tpdevolucao, a.vlcapital)
+                             VALUES (b.cdcooper, b.nrdconta, b.tpdevolucao, vr_vldcotas_crapcot);
+    
+    END IF;
+    
+    
   END LOOP;
   
   COMMIT;
