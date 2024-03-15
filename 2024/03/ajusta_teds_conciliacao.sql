@@ -16,7 +16,6 @@ BEGIN
            AND TED.INDEVTED_MOTIVO = 0
            AND ted.cdhistor IN (2622, 2917, 3005)
            AND ted.dtconciliacao IS NULL
-              --     and ted.nrcnpj_debitada = 53818377049
            AND banco.cdbccxlt = 237
            AND agencia.cdageban = 1272
            AND ted.dsconta_debitada = 19186)
