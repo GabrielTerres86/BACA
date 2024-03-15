@@ -29,9 +29,9 @@ DECLARE
   vc_cdhistDepVistaPJ             CONSTANT NUMBER := 2080;
   vc_cdhistCotasPF                CONSTANT NUMBER := 2079;
   vc_cdhistCotasPJ                CONSTANT NUMBER := 2080;  
-  vc_dstransaStatusCC             CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0312023';
-  vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Alteração de Cotas e devolução - INC0312023';
-  vc_dstransaDevDepVista          CONSTANT VARCHAR2(4000) := 'Alteracao da devolução do Depósito a Vista - INC0312023';
+  vc_dstransaStatusCC             CONSTANT VARCHAR2(4000) := 'Alteracao da situacao de conta por script - INC0312023b';
+  vc_dstransaDevCotas             CONSTANT VARCHAR2(4000) := 'Alteração de Cotas e devolução - INC0312023b';
+  vc_dstransaDevDepVista          CONSTANT VARCHAR2(4000) := 'Alteracao da devolução do Depósito a Vista - INC0312023b';
   vc_inpessoaPF                   CONSTANT NUMBER := 1;
   vc_inpessoaPJ                   CONSTANT NUMBER := 2; 
   vc_nrdolote_lanc                CONSTANT NUMBER := 37000;
