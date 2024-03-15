@@ -18,7 +18,7 @@ BEGIN
            AND ted.dtconciliacao IS NULL
            AND banco.cdbccxlt = 237
            AND agencia.cdageban = 1272
-           AND ted.dsconta_debitada = 19186)
+           AND ted.dsconta_debitada = 19186);
     
   COMMIT;
 
