@@ -1,9 +1,7 @@
 begin
-	UPDATE cecred.crappep
-	   SET inliquid = 1
-	 WHERE cdcooper = 13 
-	   AND nrdconta = 99874954
-	   and nrctremp = 240184
-	   and nrparepr in (12, 13,14, 15,16, 17);
+	DELETE
+	  from crapsda a 
+	  where a.cdcooper = 13
+	  and a.dtmvtolt >= to_date('08/03/2024','dd/mm/yyyy');
 	commit;
 end;
