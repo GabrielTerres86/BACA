@@ -1,5 +1,6 @@
 DECLARE
-  
+   
+
   CURSOR cr_crapcop IS 
     SELECT cdcooper 
       FROM cecred.crapcop
@@ -64,9 +65,12 @@ BEGIN
    
   FOR rw_crapcop IN cr_crapcop LOOP
     carregarNovoGrupo(pr_cdcooper => rw_crapcop.cdcooper);
+
     COMMIT;
+    
   END LOOP;
   
+
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
