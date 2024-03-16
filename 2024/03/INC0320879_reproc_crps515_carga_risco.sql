@@ -7,16 +7,16 @@ DECLARE
 
 
   PROCEDURE PC_CRPS515 ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa conectada
-                        ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utilizaÁ„o de restart
-                        ,pr_stprogra OUT PLS_INTEGER            --> SaÌda de termino da execuÁ„o
-                        ,pr_infimsol OUT PLS_INTEGER            --> SaÌda de termino da solicitaÁ„o
+                        ,pr_flgresta  IN PLS_INTEGER            --> Indicador para utiliza√ß√£o de restart
+                        ,pr_stprogra OUT PLS_INTEGER            --> Sa√≠da de termino da execu√ß√£o
+                        ,pr_infimsol OUT PLS_INTEGER            --> Sa√≠da de termino da solicita√ß√£o
                         ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                         ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   BEGIN
    
  
     DECLARE
-      -- CÛdigo do programa
+      -- C√≥digo do programa
       vr_cdprogra crapprg.cdprogra%TYPE;
       vr_idlog    tbgen_prglog.idprglog%TYPE;
       -- Tratamento de erros
@@ -27,7 +27,7 @@ DECLARE
       vr_nmjob VARCHAR2(30);
       vr_dsplsql VARCHAR2(4000);
 
-      ---------------- Cursores genÈricos ----------------
+      ---------------- Cursores gen√©ricos ----------------
 
       -- Busca dos dados da cooperativa
       CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -41,18 +41,18 @@ DECLARE
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
 
-      -- Vari·vel genÈrica de calend·rio com base no cursor da btch0001
+      -- Vari√°vel gen√©rica de calend√°rio com base no cursor da btch0001
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-      -- Vari·vel para retorno de busca na craptab
+      -- Vari√°vel para retorno de busca na craptab
       vr_dstextab craptab.dstextab%TYPE;
 
-      -- Vari·veis para controle de restart
-      vr_nrctares crapass.nrdconta%TYPE;--> N˙mero da conta de restart
-      vr_dsrestar VARCHAR2(4000);       --> String genÈrica com informaÁıes para restart
+      -- Vari√°veis para controle de restart
+      vr_nrctares crapass.nrdconta%TYPE;--> N√∫mero da conta de restart
+      vr_dsrestar VARCHAR2(4000);       --> String gen√©rica com informa√ß√µes para restart
       vr_inrestar INTEGER;              --> Indicador de Restart
 
-      -- Valor de arrastro cfme par‚metros
+      -- Valor de arrastro cfme par√¢metros
       vr_vlr_arrasto NUMBER;
 
     vr_qtdjobs     NUMBER;
@@ -84,7 +84,7 @@ DECLARE
                 cecred.pc_internal_exception;
             END;
             dbms_scheduler.create_job(job_name   => pr_nmjob
-                                     ,job_type   => 'PLSQL_BLOCK' --> Indica que È um bloco PLSQL
+                                     ,job_type   => 'PLSQL_BLOCK' --> Indica que √© um bloco PLSQL
                                      ,job_action => pr_dsplsql    --> Bloco PLSQL
                                      ,start_date => SYSDATE       --> Data/hora para executar
                                      ,auto_drop  => TRUE
@@ -94,7 +94,7 @@ DECLARE
             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                                        pr_ind_tipo_log => 1, -- mensagem
                                        pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || 
-                                                          ' - crps515 --> PROGRAMA COM ERRO: O job ' || pr_nmjob || 'ainda est· em execuÁ„o.',
+                                                          ' - crps515 --> PROGRAMA COM ERRO: O job ' || pr_nmjob || 'ainda est√° em execu√ß√£o.',
                                        pr_dstiplog     => 'O',
                                        pr_cdprograma   => 'CRPS515.P',
                                        pr_tpexecucao   => 2); -- job
@@ -103,9 +103,9 @@ DECLARE
     end pc_create_job;
 
     BEGIN
-      -- CÛdigo do programa
+      -- C√≥digo do programa
       vr_cdprogra := 'CRPS515';
-      -- Incluir nome do mÛdulo logado
+      -- Incluir nome do m√≥dulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS515'
                                 ,pr_action => null);
                                       
@@ -114,9 +114,9 @@ DECLARE
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop
        INTO rw_crapcop;
-      -- Se n„o encontrar
+      -- Se n√£o encontrar
       IF cr_crapcop%NOTFOUND THEN
-        -- Fechar o cursor pois haver· raise
+        -- Fechar o cursor pois haver√° raise
         CLOSE cr_crapcop;
         -- Montar mensagem de critica
         pr_cdcritic := 651;
@@ -126,11 +126,11 @@ DECLARE
         -- Apenas fechar o cursor
         CLOSE cr_crapcop;
       END IF;
-      -- Leitura do calend·rio da cooperativa
+      -- Leitura do calend√°rio da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
-      -- Se n„o encontrar
+      -- Se n√£o encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
         CLOSE btch0001.cr_crapdat;
@@ -155,14 +155,14 @@ DECLARE
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
                            pr_ind_tipo_log => 1, -- mensagem
                            pr_des_log      => to_char(SYSDATE,'hh24:mi:ss') || 
-                                              ' - crps515 --> InÌcio nova central',
+                                              ' - crps515 --> In√≠cio nova central',
                            pr_dstiplog     => 'O',
                            pr_cdprograma   => 'CRPS515.P',
                            pr_tpexecucao   => 2); -- job
 
       IF trunc(rw_crapdat.dtmvtolt,'mm') = trunc(rw_crapdat.dtmvtopr,'mm')  THEN
         IF vr_flcentral IN (1,2) THEN
-          -- Rodar somente a nova central, se rodar ambos(2), j· vai ter calculado tudo no 310
+          -- Rodar somente a nova central, se rodar ambos(2), j√° vai ter calculado tudo no 310
           IF vr_flcentral = 1 THEN
             --> Calcula juros+60 das contas em ADP
             GESTAODERISCO.calcularJurosADP(pr_cdcooper => pr_cdcooper
@@ -278,12 +278,13 @@ DECLARE
                            pr_dstiplog     => 'O',
                            pr_cdprograma   => 'CRPS515.P',
                            pr_tpexecucao   => 2); -- job
+      commit;
                            
     EXCEPTION
       WHEN vr_exc_erro THEN
-        -- Se foi retornado apenas cÛdigo
+        -- Se foi retornado apenas c√≥digo
         IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
-          -- Buscar a descriÁ„o
+          -- Buscar a descri√ß√£o
           pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
         END IF;
         
@@ -299,7 +300,7 @@ DECLARE
         ROLLBACK;
       WHEN OTHERS THEN
         cecred.pc_internal_exception;
-        -- Efetuar retorno do erro n„o tratado
+        -- Efetuar retorno do erro n√£o tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
 
