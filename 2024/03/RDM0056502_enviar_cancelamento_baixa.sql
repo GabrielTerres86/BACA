@@ -36,9 +36,9 @@ DECLARE
        AND tbo_b.dtmvtolt < pr_dtreferencia_final + 1
        AND tbo_b.dtmvtolt < trunc(SYSDATE)
        AND tbo_b.tpoperac_jd = 'BO'
-       AND cob.incobran + 0 = 5 --boleto em aberto, essas condicoes indicam que o boleto foi baixado mas nao veio o pagamento para a Ailos
-       AND tbo_c.nrdident IS NULL --nao pode existir cancelamento para a baixa a partir de rr2
-       AND tbpret.idbaixa_pcr_retorno IS NULL --nao pode existir cancelamento para a baixa a partir da Ailos
+       AND cob.incobran + 0 = 5
+       AND tbo_c.nrdident IS NULL
+       AND tbpret.idbaixa_pcr_retorno IS NULL
        AND tol.idocorrencia_liquidacao IN
            (HEXTORAW('E26425116D8F441BA9D6B135001D8C84')
            ,HEXTORAW('74870C03B48445BFB242B135001DB65C')

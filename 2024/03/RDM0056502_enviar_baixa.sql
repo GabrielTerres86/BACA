@@ -36,7 +36,6 @@ DECLARE
     
       vr_nrprogress_recid_craptit := reg_tituloBO_array(reg_tituloBO_array.first).nrprogress_craptit;
     
-      --para que a baixa seja gerada a craptit nao pode estar vinculada a nenhuma baixa ja encaminhada
       BEGIN
         UPDATE cecred.craptit tit
            SET tit.cdctrbxo = ' '
@@ -48,7 +47,6 @@ DECLARE
           RAISE;
       END;
     
-      --para que a baixa seja gerada nao pode existir nenhuma remessa de baixa gerada para o progress recid
       BEGIN
         UPDATE pagamento.tb_baixa_pcr_remessa tbprem
            SET tbprem.nrprogress_craptit = NULL
