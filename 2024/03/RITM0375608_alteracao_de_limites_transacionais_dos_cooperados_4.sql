@@ -5,9 +5,9 @@ DECLARE
   vr_vllimweb  VARCHAR2(30);
 
   vr_limwebrowid ROWID;
-  vr_nrdrowid ROWID;
-  vr_dsdadant  craplgi.dsdadant%TYPE;
-  vr_idprglog  tbgen_prglog.idprglog%TYPE := 0;
+  vr_nrdrowid    ROWID;
+  vr_dsdadant    craplgi.dsdadant%TYPE;
+  vr_idprglog    tbgen_prglog.idprglog%TYPE := 0;
   vr_nmprograma  tbgen_prglog.cdprograma%TYPE := 'Alterar Limite Web - RITM0375608';
   
   vr_utlfileh  UTL_FILE.file_type;
@@ -15,9 +15,9 @@ DECLARE
   vr_cdcritic  crapcri.cdcritic%TYPE;
   vr_dscritic  crapcri.dscritic%TYPE;
   vr_exc_arq   EXCEPTION;
-  vr_pos  PLS_INTEGER;
-  vr_idx  PLS_INTEGER;
-  vr_qtlinhas PLS_INTEGER := 0;
+  vr_pos       PLS_INTEGER;
+  vr_idx       PLS_INTEGER;
+  vr_qtlinhas  PLS_INTEGER := 0;
   vr_dsdireto  VARCHAR2(50) := '/micros/cpd/bacas/RITM0375608';
   vr_nmarquivo VARCHAR(200) := 'alteracao_limite_web.csv';
   
