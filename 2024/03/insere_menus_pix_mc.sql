@@ -5,7 +5,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     82,
     sysdate
   );
@@ -16,7 +16,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     83,
     sysdate
   );
@@ -26,7 +26,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     84,
     sysdate
   );
@@ -36,7 +36,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     87,
     sysdate
   );
@@ -46,7 +46,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     90,
     sysdate
   );
@@ -56,7 +56,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     137,
     sysdate
   );
@@ -66,7 +66,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     138,
     sysdate
   );
@@ -76,7 +76,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     139,
     sysdate
   );
@@ -86,7 +86,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     140,
     sysdate
   );
@@ -96,7 +96,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     141,
     sysdate
   );
@@ -107,7 +107,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     142,
     sysdate
   );
@@ -117,7 +117,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     143,
     sysdate
   );
@@ -127,7 +127,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     144,
     sysdate
   );
@@ -137,7 +137,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     145,
     sysdate
   );
@@ -147,7 +147,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     150,
     sysdate
   );
@@ -157,7 +157,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     151,
     sysdate
   );
@@ -167,7 +167,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     152,
     sysdate
   );
@@ -177,7 +177,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     153,
     sysdate
   );
@@ -187,7 +187,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     154,
     sysdate
   );
@@ -197,7 +197,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     155,
     sysdate
   );
@@ -207,7 +207,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     156,
     sysdate
   );
@@ -217,7 +217,7 @@ BEGIN
     CDITEM_MENU,
     DHCADASTRO
   ) VALUES (
-    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM tbib_itens_menu_multcontas),
+    (SELECT max(IDITEM_MENU_MULTCONTAS) + 1 FROM INTERNETBANKING.tbib_itens_menu_multcontas),
     158,
     sysdate
   );
