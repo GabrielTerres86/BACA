@@ -1,9 +1,9 @@
 BEGIN
   UPDATE cecred.tbcadast_cooperativa a 
-     SET a.vlsomatorio_leco = (SELECT SUM(l.vlendividamento) 
-                                 FROM credito.tbcred_somatorioleco l
-                                WHERE l.cdcooper = a.cdcooper
-                                  AND l.dtrefere = to_date('15/03/2024', 'DD/MM/RRRR'))
+     SET a.vlsomatorio_leco = NVL((SELECT SUM(NVL(l.vlendividamento,0)) 
+                                     FROM credito.tbcred_somatorioleco l
+                                    WHERE l.cdcooper = a.cdcooper
+                                      AND l.dtrefere = to_date('15/03/2024', 'DD/MM/RRRR')),0)
    WHERE a.cdcooper NOT IN (1);
   COMMIT;
 EXCEPTION
