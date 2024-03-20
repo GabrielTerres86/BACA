@@ -6,4 +6,8 @@ BEGIN
                                   AND l.dtrefere = to_date('15/03/2024', 'DD/MM/RRRR'))
    WHERE a.cdcooper NOT IN (1);
   COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    raise_application_error(-20000, SQLERRM);
 END;
