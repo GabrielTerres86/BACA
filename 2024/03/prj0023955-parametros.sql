@@ -1,5 +1,5 @@
 BEGIN
-    INSERT INTO crapprm
+    INSERT INTO cecred.crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
     VALUES
     ('CRED',
@@ -8,7 +8,7 @@ BEGIN
     'Indica se o serviço de validação com base na macica INSS está ativo, impedindo creditos de RL ou Titular com divergencia de CPFs.',
     'S');
 
-    INSERT INTO crapprm
+    INSERT INTO cecred.crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
     VALUES
     ('CRED',
@@ -17,7 +17,7 @@ BEGIN
     'Host para buscar dados no Sicredi para funcionalidades Representante Legal.',
     'https://conveniosapi.prod.app.ailos.coop.br');
 
-    INSERT INTO crapprm
+    INSERT INTO cecred.crapprm
     (nmsistem, cdcooper, cdacesso, dstexprm, dsvlrprm)
     VALUES
     ('CRED',
