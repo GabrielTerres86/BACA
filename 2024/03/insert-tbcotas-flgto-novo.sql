@@ -13,7 +13,7 @@ DECLARE
            pla.nrdconta,
            pla.nrctrpla,
            pla.vlpenden,
-           add_months(to_date(sysdate),1) dtdpagto
+           add_months(to_date(sysdate),1) dtultpag,
            pla.rowid
      from cecred.crappla pla
     where cdsitpla = 1
@@ -43,7 +43,7 @@ BEGIN
                        rw_crappla.nrdconta,
                        rw_crappla.nrctrpla,
                        rw_crappla.vlpenden,
-                       rw_crappla.dtdpagto);
+                       rw_crappla.dtultpag);
                        
      update cecred.crappla
          set dtdpagto = rw_crappla.dtultpag
