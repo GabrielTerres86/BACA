@@ -10,10 +10,10 @@ BEGIN
                                rda.vlsltxmx,
                                rda.vlsltxmm,
                                rda.progress_recid 
-                         FROM craprda rda
+                         FROM cecred.craprda rda
                         WHERE rda.progress_recid IN (SELECT rda.progress_recid
-                                                       FROM craprda rda,
-                                                            crapcop cop
+                                                       FROM cecred.craprda rda,
+                                                            cecred.crapcop cop
                                                       WHERE rda.cdcooper = cop.cdcooper
                                                         AND trunc(rda.vlsltxmx, 2) <= 0
                                                         AND rda.insaqtot = 0
@@ -21,7 +21,7 @@ BEGIN
                                                         AND cop.FLGATIVO = 1)) LOOP
    
       SELECT SUM(decode(his.indebcre, 'D', -1, 1) * lac.vllanmto) vllanmto into vr_vllanmto
-        FROM craplap lac,craphis his
+        FROM cecred.craplap lac,cecred.craphis his
        WHERE his.cdhistor = lac.cdhistor
          AND his.cdcooper = lac.cdcooper
          AND lac.cdcooper = rw_aplicacoes.cdcooper 
