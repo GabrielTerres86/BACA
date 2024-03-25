@@ -20,8 +20,7 @@ DELETE FROM cecred.tbgen_batch_paralelo bp
  WHERE bp.cdcooper = 10
    AND bp.dtmvtolt >= trunc(to_date('01/01/2024', 'dd/mm/yyyy'));
     
-  COMMIT;
-  
+  COMMIT;  
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
