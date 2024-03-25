@@ -12,4 +12,6 @@ BEGIN
          AND nrdconta = 99993473
          AND nrctremp = 322731;
 
+  COMMIT;
+
 END;
