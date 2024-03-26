@@ -16,7 +16,7 @@ DECLARE
            pla.vlpenden,
            add_months(pla.dtultpag,1) dtultpag,
            pla.rowid
-     from crappla pla
+     from cecred.crappla pla
     where cdsitpla = 1
       and vlpenden > 0
       and tpdplano = 1
@@ -34,7 +34,7 @@ BEGIN
     
     BEGIN
 
-      update crappla
+      update cecred.crappla
          set dtdpagto = rw_crappla.dtultpag,
              vlpenden = 0
        where rowid = rw_crappla.rowid;
