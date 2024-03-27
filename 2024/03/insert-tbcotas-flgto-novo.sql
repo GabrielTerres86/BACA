@@ -12,14 +12,15 @@ DECLARE
     select pla.cdcooper,
            pla.nrdconta,
            pla.nrctrpla,
+           pla.dtdpagto,
            pla.vlpenden,
-           add_months(to_date(sysdate),1) dtultpag,
+           add_months(pla.dtultpag,1) dtultpag,
            pla.rowid
      from cecred.crappla pla
     where cdsitpla = 1
       and vlpenden > 0
       and tpdplano = 1
-      and flgpagto = 0;
+      and flgpagto = 1;      
     
 BEGIN            
    CECRED.pc_log_programa(pr_dstiplog   => 'O',
@@ -27,29 +28,17 @@ BEGIN
                              pr_cdmensagem => 111,
                              pr_cdprograma => vr_cdprograma,
                              pr_cdcooper   => 3,
-                             pr_idprglog   => vr_idprglog);                                               
-
+                             pr_idprglog   => vr_idprglog);                                                
+             
   FOR rw_crappla IN cr_crappla LOOP           
     
     BEGIN
-     insert into INVESTIMENTO.TB_COTA_PENDENTE
-                      (cdcooper,
-                       nrdconta,
-                       nrctrpla,
-                       vlpenden,
-                       dteimosa)
-                    values
-                      (rw_crappla.cdcooper,
-                       rw_crappla.nrdconta,
-                       rw_crappla.nrctrpla,
-                       rw_crappla.vlpenden,
-                       rw_crappla.dtultpag);
-                       
-     update cecred.crappla
-         set dtdpagto = rw_crappla.dtultpag
+
+      update cecred.crappla
+         set dtdpagto = rw_crappla.dtultpag,
+             vlpenden = 0
        where rowid = rw_crappla.rowid;
        
-        
       EXCEPTION
       WHEN OTHERS THEN
       vr_dscritic := 'Erro ao iserir tbcotas. Detalhes: '||SQLERRM;
