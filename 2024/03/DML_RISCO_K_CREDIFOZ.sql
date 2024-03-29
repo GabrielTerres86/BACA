@@ -15,7 +15,7 @@ BEGIN
     raise_application_error(-20500,'ERRO: '||pr_dscritic);
     
   END IF;
-  
+  commit;  
   raise_application_error(-20500,'GERADO COM SUCESSO: '||pr_retfile);
     
   
