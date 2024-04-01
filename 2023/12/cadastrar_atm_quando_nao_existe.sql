@@ -57,10 +57,9 @@ BEGIN
     ,UPPER(pr_dsfabtfn)
     ,UPPER(pr_dsmodelo)
     ,pr_dsdserie
-    ,1 /* inicial desbloqueado */
+    ,1
     ,pr_flgntcem);
 
-  -- Inserir o saldo do terminal financeiro para o dia atual
   INSERT INTO crapstf
     (cdcooper
     ,nrterfin
@@ -70,7 +69,6 @@ BEGIN
     ,vr_nrterfin
     ,rw_crapdat.dtmvtolt);
 
-  -- Inserir o saldo do terminal financeiro para o dia anterior
   INSERT INTO crapstf
     (cdcooper
     ,nrterfin
