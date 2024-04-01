@@ -1,0 +1,1 @@
+alter sequence cecred.SEQ_SITE_COPCDC restart start with 80000;
