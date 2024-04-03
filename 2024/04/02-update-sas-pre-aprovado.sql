@@ -20,8 +20,7 @@ BEGIN
        SET t.flintegrar_sas = 0
           ,t.dhalteracao    = SYSDATE
           ,t.dhtransmissao  = NULL
-     WHERE ROWID IN(SELECT /*+ parallel */
-                           opr.rowid          row_id
+     WHERE ROWID IN(SELECT opr.rowid          row_id
                       FROM tbrisco_operacoes opr, crapass ass
                      WHERE opr.cdcooper = rw_crapcop.cdcooper
                        AND opr.tpctrato = 68
@@ -54,8 +53,7 @@ BEGIN
           ,t.flintegrar_sas = 0
           ,t.dhalteracao    = SYSDATE
           ,t.dhtransmissao  = NULL
-     WHERE ROWID IN(SELECT /*+ parallel INDEX(erp CRAPEPR##CRAPEPR2) */
-                           opr.rowid          row_id
+     WHERE ROWID IN(SELECT opr.rowid          row_id
                       FROM crapepr epr, tbrisco_operacoes opr
                      WHERE epr.cdcooper = opr.cdcooper
                        AND epr.nrdconta = opr.nrdconta

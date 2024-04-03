@@ -55,8 +55,7 @@ DECLARE
                               ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
                               ,pr_dtbase   CREDITO.tbepr_imob_imp_arq_risco.dtbase%TYPE
                               ) IS
-      SELECT /*+ parallel INDEX(erp CRAPEPR##CRAPEPR2) */
-             epr.cdcooper       cdcooper
+      SELECT epr.cdcooper       cdcooper
             ,epr.nrdconta       nrdconta
             ,epr.nrctremp       nrctrato
             ,opr.tpctrato       tpctrato
@@ -76,8 +75,7 @@ DECLARE
                epr.dtmvtolt < to_date(pr_dtrating, 'DD/MM/yyyy')) OR
              epr.cdfinemp <> 68)
       UNION ALL
-      SELECT /*+ parallel INDEX(lim CRAPLIM##CRAPLIM1) */
-             lim.cdcooper       cdcooper
+      SELECT lim.cdcooper       cdcooper
             ,lim.nrdconta       nrdconta
             ,lim.nrctrlim       nrctrato
             ,opr.tpctrato       tpctrato
@@ -97,8 +95,7 @@ DECLARE
               (opr.tpctrato = 1       AND lim.insitlim = 3)
              )
       UNION ALL
-      SELECT /*+ parallel */
-             opr.cdcooper       cdcooper
+      SELECT opr.cdcooper       cdcooper
             ,opr.nrdconta       nrdconta
             ,opr.nrctremp       nrctrato
             ,opr.tpctrato       tpctrato
@@ -111,8 +108,7 @@ DECLARE
          AND opr.tpctrato = 11
          AND opr.flencerrado = 0
       UNION ALL
-      SELECT /*+ INDEX(imo PK_TBEPR_CONTRATO_IMOBILIARIO) */
-             imo.cdcooper       cdcooper
+      SELECT imo.cdcooper       cdcooper
             ,imo.nrdconta       nrdconta
             ,imo.nrctremp       nrctrato
             ,opr.tpctrato       tpctrato
