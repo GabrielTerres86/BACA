@@ -263,7 +263,7 @@ BEGIN
   
     vr_linha      := 1;                        
     vr_arqremessa := to_clob(f_ret_header(to_char(vr_linha)
-                                        ,to_char(vr_seq_arquivo))); --4N 
+                                        ,to_char(vr_seq_arquivo)));
                                   
     vr_arqlog_erro    := to_clob(' ');                               
     vr_arqlog_geracao := vr_arqlog_geracao || to_clob('HEADER Linha: ' || f_ret_campo(vr_linha,7,'N') || ' Sequencial de Remessa:  ' || vr_seq_arquivo || chr(10));
