@@ -257,7 +257,7 @@ BEGIN
     IF rw_remessa.nrremessa > 0 THEN
       vr_seq_arquivo := rw_remessa.nrremessa + 1;    
     ELSE
-      vr_dscritic := 'Erro ao buscar sequencial de remessa. Tabela TBCRED_PRONAMPE_REMESSA n?o inicializada.';
+      vr_dscritic := 'Erro ao buscar sequencial de remessa. Tabela TBCRED_PRONAMPE_REMESSA não inicializada.';
     END IF; 
     CLOSE cr_remessa;
   
@@ -313,7 +313,7 @@ BEGIN
           FETCH cr_tco INTO rw_tco;
           IF cr_tco%NOTFOUND THEN
             
-            vr_arqlog_erro := vr_arqlog_erro || to_clob(chr(10) || 'Associado sem dados de Rating de Opera??o: Cooperativa ' || rw_epr_saldo.cdcooper || ' Conta ' || rw_epr_saldo.nrdconta || ' Contrato '||rw_epr_saldo.nrctremp);
+            vr_arqlog_erro := vr_arqlog_erro || to_clob(chr(10) || 'Associado sem dados de Rating de Operação: Cooperativa ' || rw_epr_saldo.cdcooper || ' Conta ' || rw_epr_saldo.nrdconta || ' Contrato '||rw_epr_saldo.nrctremp);
             CLOSE cr_tco;
             rw_tco.rating_operacao := 'A';
           ELSE
@@ -399,7 +399,7 @@ BEGIN
 
           vr_arqlog_geracao := vr_arqlog_geracao || to_clob('REG 05 Linha: ' || f_ret_campo(vr_linha,7,'N') || ' Id Unico Emprestimo:  ' || rw_epr_saldo.progress_recid
                                                 || '. Cooperativa: ' || rw_epr_saldo.cdcooper || ' Conta: '|| rw_epr_saldo.nrdconta || ' Contrato: '|| rw_epr_saldo.nrctremp
-                                                || '. Rating da Opera??o: ' || TO_CHAR(rw_tco.rating_operacao)
+                                                || '. Rating da Operação: ' || TO_CHAR(rw_tco.rating_operacao)
                                                 || '. Saldo Principal normal: ' || to_char(ROUND(nvl(vr_vlprincipal_normal,0),2))
                                                 || '. Saldo Principal atraso: ' || to_char(ROUND(nvl(vr_vlprincipal_atraso,0),2))
                                                 || '. Saldo Encargos normal: ' || to_char(ROUND(nvl(vr_vlencargos_normal,0),2))
@@ -459,7 +459,7 @@ BEGIN
         FETCH cr_tco INTO rw_tco;
         IF cr_tco%NOTFOUND THEN
         
-          vr_arqlog_erro := vr_arqlog_erro || to_clob(chr(10) || 'Associado sem dados de Rating de Opera??o: Cooperativa ' || rw_epr_saldo.cdcooper || ' Conta ' || rw_epr_saldo.nrdconta || ' Contrato '||rw_epr_saldo.nrctremp); 
+          vr_arqlog_erro := vr_arqlog_erro || to_clob(chr(10) || 'Associado sem dados de Rating de Operação: Cooperativa ' || rw_epr_saldo.cdcooper || ' Conta ' || rw_epr_saldo.nrdconta || ' Contrato '||rw_epr_saldo.nrctremp); 
           CLOSE cr_tco;
           rw_tco.rating_operacao := 'A';
         ELSE
@@ -507,7 +507,7 @@ BEGIN
                                     
         vr_arqlog_geracao := vr_arqlog_geracao || to_clob('REG 05 Linha: ' || f_ret_campo(vr_linha,7,'N') || ' Id Unico Emprestimo:  ' || rw_epr_saldo.progress_recid 
                                                 || '. Cooperativa: ' || rw_epr_saldo.cdcooper || ' Conta: '|| rw_epr_saldo.nrdconta || ' Contrato: '|| rw_epr_saldo.nrctremp 
-                                                || '. Rating da Opera??o: ' || TO_CHAR(rw_tco.rating_operacao) 
+                                                || '. Rating da Operação: ' || TO_CHAR(rw_tco.rating_operacao) 
                                                 || '. Saldo Principal normal: ' || to_char(ROUND(nvl(vr_vlprincipal_normal,0),2))
                                                 || '. Saldo Principal atraso: ' || to_char(ROUND(nvl(vr_vlprincipal_atraso,0),2)) 
                                                 || '. Saldo Encargos normal: ' || to_char(ROUND(nvl(vr_vlencargos_normal,0),2))   
@@ -575,7 +575,7 @@ BEGIN
 
     COMMIT;
 
-    geraLog(pr_dsexecut => 'Opera??o realizada com sucesso.');
+    geraLog(pr_dsexecut => 'Operação realizada com sucesso.');
 
 EXCEPTION
     WHEN vr_exc_erro THEN
