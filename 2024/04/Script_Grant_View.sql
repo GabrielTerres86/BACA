@@ -1,2 +1,6 @@
-GRANT ALL ON CECRED.VW_CARTAO TO ilakecadastropositivo;
+BEGIN
+
+  EXECUTE IMMEDIATE 'GRANT ALL ON CECRED.VW_CARTAO TO ilakecadastropositivo';
+
+END;
 /
