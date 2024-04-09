@@ -62,7 +62,7 @@ DECLARE
       LEFT JOIN FAIXA_CEP_ESTADO CE ON NVL(D.CDUFLOGR, 'X') = CE.SIGLA
                                        AND D.NRCEPLOG BETWEEN CE.INICIO AND CE.FIM
       WHERE CE.INICIO IS NULL 
-        AND D.Idoricad = 2 -- Cadastros manuais
+        AND D.Idoricad = 2
     ) , CRAPMUN_UNICS AS (
       SELECT MB.DSCIDADE
         , MIN(ROWID)     ROWID_CRAPMUN
