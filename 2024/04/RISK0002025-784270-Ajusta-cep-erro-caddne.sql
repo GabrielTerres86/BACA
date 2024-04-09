@@ -392,7 +392,7 @@ BEGIN
   vr_comments := 'Final do IF vt_dados.COUNT() > 0';
   
   vr_comments := 'Faz a busca novamente para identificar os casos que o script não resolveu e precisam ser ajustados individualmente.';
-  vt_dados := NULL;
+  vt_dados.delete();
   OPEN cr_dados;
   FETCH cr_dados BULK COLLECT INTO vt_dados;
   CLOSE cr_dados;
