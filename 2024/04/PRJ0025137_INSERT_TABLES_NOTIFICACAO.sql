@@ -68,7 +68,7 @@ BEGIN
   ,1
   ,0);
 
-  
+  COMMIT;
 
 EXCEPTION
   WHEN OTHERS THEN
