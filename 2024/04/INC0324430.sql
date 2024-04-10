@@ -11,6 +11,12 @@ BEGIN
    WHERE c.cdcooper = 1
      AND c.nrdconta = 8013764
      AND c.nrdocmto = 204332;
+
+  UPDATE cecred.crapcob c
+     SET c.incobran = 5
+   WHERE c.cdcooper = 1
+     AND c.nrdconta = 8013764
+     AND c.nrdocmto = 222287;
   
   COMMIT;
 	
