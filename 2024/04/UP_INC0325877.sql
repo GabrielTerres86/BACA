@@ -1,0 +1,13 @@
+begin
+
+UPDATE
+  CECRED.TBCC_LANCAMENTOS_PENDENTES PEND
+SET
+  pend.IDSITUACAO = 'M',
+  pend.DSCRITICA = 'Ajuste manual via RDM0057117'
+
+WHERE
+  IDSEQ_LANCAMENTO = 418117272;
+
+commit;
+end;
