@@ -27,7 +27,7 @@
        AND lap.nraplica = rda.nraplica
        AND rda.TPAPLICA IN (7, 8)
        AND rda.INSAQTOT = 0
-       AND hst.idtipo_arquivo = 1 -- Aplicação
+       AND hst.idtipo_arquivo = 1
        AND hst.tpaplicacao = dtc.tpaplrdc
        AND hst.cdhistorico = lap.cdhistor
        AND nvl(rda.idaplcus, 0) = 0
@@ -51,7 +51,7 @@
      WHERE rac.cdcooper = lac.cdcooper
        AND rac.nrdconta = lac.nrdconta
        AND rac.nraplica = lac.nraplica
-       AND hst.idtipo_arquivo = 1 -- Aplicação
+       AND hst.idtipo_arquivo = 1
        AND hst.tpaplicacao IN (3, 4)
        AND hst.cdprodut = rac.cdprodut
        AND hst.cdhistorico = lac.cdhistor
