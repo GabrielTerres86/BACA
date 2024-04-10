@@ -2,22 +2,8 @@ BEGIN
 
   UPDATE cecred.crapcob c
      SET c.incobran = 5
-   WHERE c.cdcooper = 1
-     AND c.nrdconta = 9297685
-     AND c.nrdocmto = 1645;
+   WHERE progress_recid in (131238846, 133954547, 139450642);
 
-  UPDATE cecred.crapcob c
-     SET c.incobran = 5
-   WHERE c.cdcooper = 1
-     AND c.nrdconta = 8013764
-     AND c.nrdocmto = 204332;
-
-  UPDATE cecred.crapcob c
-     SET c.incobran = 5
-   WHERE c.cdcooper = 1
-     AND c.nrdconta = 8013764
-     AND c.nrdocmto = 222287;
-  
   COMMIT;
 	
 EXCEPTION
