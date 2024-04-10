@@ -32,7 +32,7 @@
        AND hst.cdhistorico = lap.cdhistor
        AND nvl(rda.idaplcus, 0) = 0
        AND nvl(lap.idlctcus, 0) = 0
-       AND rda.dtmvtolt IN ('25/11/2022', '05/07/2023',  '14/09/2023',  '15/09/2023');
+       AND rda.dtmvtolt IN (to_date('25/11/2022', 'DD/MM/RRRR'), to_date('05/07/2023', 'DD/MM/RRRR'), to_date('14/09/2023', 'DD/MM/RRRR'), to_date('15/09/2023', 'DD/MM/RRRR'));
     
   CURSOR cr_lctos_rac IS
     SELECT rac.rowid rowid_apl,
@@ -59,7 +59,7 @@
        AND rac.IDSAQTOT = 0
        AND nvl(rac.idaplcus, 0) = 0
        AND nvl(lac.idlctcus, 0) = 0
-       AND rac.dtmvtolt IN ('25/11/2022', '05/07/2023',  '14/09/2023',  '15/09/2023');
+       AND rac.dtmvtolt IN (to_date('25/11/2022', 'DD/MM/RRRR'), to_date('05/07/2023', 'DD/MM/RRRR'), to_date('14/09/2023', 'DD/MM/RRRR'), to_date('15/09/2023', 'DD/MM/RRRR'));
    
   PROCEDURE pc_exibir_relatorio_execucao IS
   BEGIN
