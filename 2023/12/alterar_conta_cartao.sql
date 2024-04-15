@@ -1,6 +1,6 @@
 DECLARE
   vr_cooperativa INTEGER := 9;
-  vr_conta       INTEGER := 82665451;
+  vr_conta       INTEGER := 82780234;
   vr_cartao      NUMBER(25) := 5588190184171591;
   vr_nrctrcrd    INTEGER := 990999;
   vr_cpf_titular NUMBER(20);
@@ -34,7 +34,7 @@ BEGIN
         ,card.nrcpftit = vr_cpf_titular
         ,card.qtsenerr = 0
         ,card.inacetaa = 1
-        ,card.cdadmcrd = 15
+        ,card.cdadmcrd = 12
         ,card.NRCTRCRD = vr_nrctrcrd
    WHERE card.nrcrcard = vr_cartao;
 
@@ -43,7 +43,7 @@ BEGIN
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
         ,card.NRCTRCRD = vr_nrctrcrd
-        ,card.cdadmcrd = 15
+        ,card.cdadmcrd = 12
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
