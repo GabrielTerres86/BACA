@@ -1,5 +1,7 @@
 BEGIN
+
 	UPDATE CECRED.CRAPPRM SET DSVLRPRM = '' WHERE CDACESSO = 'EMAIL_TESTE' AND DSVLRPRM = 'emanuele.schatz@ailos.coop.br';
+
 COMMIT;
 END;
 /
