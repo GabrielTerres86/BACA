@@ -14,9 +14,9 @@ BEGIN
      'STR0004R2',
      to_date('14-02-2024 17:14:30', 'dd-mm-yyyy hh24:mi:ss'),
      'OK',
-     24020074920235,
+     24020074924883,
      to_date('14-02-2024 17:14:30', 'dd-mm-yyyy hh24:mi:ss'),
      1);
-     
+
   COMMIT;
 END;
