@@ -190,7 +190,6 @@ DECLARE
          AND t.nrnsuori = pr_nrnsuori;
     rg_crapdcb_2   cr_crapdcb_2%ROWTYPE;
     
-    --vr_cdprogra   CONSTANT VARCHAR2(10) := 'CRPS402';
     vr_lshistor   cecred.craptab.dstextab%TYPE;
     vr_vlmais24   NUMBER := 0;
     vr_vlmeno24   NUMBER := 0;
