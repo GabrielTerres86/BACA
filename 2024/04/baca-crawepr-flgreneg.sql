@@ -14,7 +14,12 @@ DECLARE
              WHERE trc.cdcooper = w.cdcooper
                AND trc.nrdconta = w.nrdconta
                AND ((trc.nrctrepr = w.nrctremp) OR
-                   (trc.nrctremp_novo = w.nrctremp)));
+                   (trc.nrctremp_novo = w.nrctremp)))
+       AND NOT EXISTS (SELECT 1
+              FROM cecred.tbepr_renegociacao_crapepr epr
+             WHERE epr.cdcooper = w.cdcooper
+               AND epr.nrdconta = w.nrdconta
+               AND epr.nrctremp = w.nrctremp);
 
 
 BEGIN
