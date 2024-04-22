@@ -1,1 +1,6 @@
-update autorizador.proposta set id_analista = 30576 where id = 7269404
+begin  
+  update autorizador.proposta  
+  set id_analista = 30576
+  where id = 7269404;
+  commit;  
+end;
