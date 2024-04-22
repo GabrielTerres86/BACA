@@ -1,15 +1,15 @@
-begin
+BEGIN
+  
 UPDATE
-tbcc_lancamentos_pendentes pend
-set 
-pend.IDSITUACAO = 'P'
-where
-pend.IDSITUACAO in ('A') and
-pend.CDPRODUTO = 53 and
-pend.idtransacao in
+CECRED.TBCC_LANCAMENTOS_PENDENTES P
+SET
+IDSITUACAO = 'M'
+WHERE
+P.IDSEQ_LANCAMENTO IN
 (
 423552494,
 423552495
 );
-commit;
-end;
+COMMIT;
+
+END;
