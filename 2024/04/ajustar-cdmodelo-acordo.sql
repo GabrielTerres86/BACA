@@ -99,13 +99,7 @@ DECLARE
               FROM cecred.tbrecup_acordo_parcela d
              WHERE d.nracordo = a.nracordo
                AND d.nrparcela = 0
-               AND d.vlpago > 0)
-     ORDER BY a.dhacordo
-             ,a.cdcooper
-             ,a.nrdconta
-             ,a.nracordo
-             ,b.cdorigem
-             ,b.nrctremp;
+               AND d.vlpago > 0);
 
   TYPE typ_tbrecup_acordo_contrato IS TABLE OF cr_tbrecup_acordo_contrato%ROWTYPE INDEX BY PLS_INTEGER;
 
