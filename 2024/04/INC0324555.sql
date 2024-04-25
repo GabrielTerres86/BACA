@@ -650,15 +650,15 @@ BEGIN
 
   
   pc_gera_extrato_cnab(pr_cdcooper => 2
-                      ,pr_nrdconta => 61689,   
+                      ,pr_nrdconta => 61689  
                       ,pr_dtrefere => to_date('22/01/2024','dd/mm/yyyy'));
 					  
  pc_gera_extrato_cnab(pr_cdcooper => 2
-                     ,pr_nrdconta => 61689,   
+                     ,pr_nrdconta => 61689   
                      ,pr_dtrefere => to_date('24/01/2024','dd/mm/yyyy'));
 					  
  pc_gera_extrato_cnab(pr_cdcooper => 2
-                     ,pr_nrdconta => 61689,   
+                     ,pr_nrdconta => 61689   
                      ,pr_dtrefere => to_date('01/02/2024','dd/mm/yyyy'));
 					 
   pc_gera_extrato_cnab(pr_cdcooper => 2
