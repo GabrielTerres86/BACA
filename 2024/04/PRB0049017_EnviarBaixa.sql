@@ -23,7 +23,7 @@ BEGIN
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
-    SISTEMA.excecaoInterna(pr_compleme => 'INC0?????? EDDA0076');
+    SISTEMA.excecaoInterna(pr_compleme => 'PRB0049017');
     ROLLBACK;
     RAISE;
 END;
