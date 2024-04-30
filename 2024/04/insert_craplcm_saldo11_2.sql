@@ -5,8 +5,8 @@ values (to_date('30/04/2024','dd/mm/yyyy'), 6, 100, 6902119, 99582821,345673, 1,
 DELETE CREDITO.TBEPR_TRANSF_ARQUIVO_IMOB imo
             WHERE imo.cdcooper = 0
               AND imo.nrdconta = 0
-              AND imo.idtipoarq = 2 -- Retorno
-              AND imo.idtiporem = 'P' -- Pagamento
+              AND imo.idtipoarq = 2 
+              AND imo.idtiporem = 'P' 
               AND imo.dtgeracao = to_date('30/04/2024','dd/mm/yyyy');
 			  
 COMMIT;
