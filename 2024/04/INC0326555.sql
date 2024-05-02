@@ -23,11 +23,11 @@ Declare
           ,contas.cdcooper     
           ,contas.valor
       from CECRED.crapsld a
-          ,(select 1 as cdcooper, 677892    as nrdconta, 	110   as valor from dual
+          ,(select 1 as cdcooper, 677892    as nrdconta, 	-110   as valor from dual
             union all
-            select 1 as cdcooper, 15460991    as nrdconta, 	-200   as valor from dual
+            select 1 as cdcooper, 15460991    as nrdconta, 	200   as valor from dual
 			union all
-			select 1 as cdcooper, 8742243    as nrdconta,  	60   as valor from dual) contas
+			select 1 as cdcooper, 8742243    as nrdconta,  	-60   as valor from dual) contas
 			
      WHERE a.nrdconta = contas.nrdconta
        AND a.cdcooper = contas.cdcooper;
