@@ -20,7 +20,7 @@ BEGIN
     (9
     ,1
     ,8
-    ,131
+    ,97
     ,6
     ,LOWER(TRIM(NULL))
     ,TRIM('0.0.0.0')
@@ -39,7 +39,7 @@ BEGIN
     ,dtmvtolt)
   VALUES
     (9
-    ,131
+    ,97
     ,to_date('03/05/2024', 'dd/mm/yyyy'));
 
   INSERT INTO crapstf
@@ -48,7 +48,7 @@ BEGIN
     ,dtmvtolt)
   VALUES
     (9
-    ,131
+    ,97
     ,to_date('02/05/2024', 'dd/mm/yyyy'));
   COMMIT;
 END;
