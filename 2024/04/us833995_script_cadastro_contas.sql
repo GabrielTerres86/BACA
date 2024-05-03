@@ -9,7 +9,7 @@ DECLARE
               WHEN cop.cdcooper = 11 THEN 932
               WHEN cop.cdcooper = 16 THEN 680 
               ELSE 0 END conta_param     
-    FROM crapcop cop
+    FROM cecred.crapcop cop
    WHERE cop.flgativo = 1
      AND cop.cdcooper IN(1,2,7,11,16)
    UNION
@@ -21,7 +21,7 @@ DECLARE
               WHEN cop.cdcooper = 11 THEN 949
               WHEN cop.cdcooper = 16 THEN 728 
               ELSE 0 END conta_param    
-    FROM crapcop cop
+    FROM cecred.crapcop cop
    WHERE cop.flgativo = 1
      AND cop.cdcooper IN(1,2,7,11,16)
 ORDER BY nome_param,cdcooper;
@@ -29,24 +29,24 @@ ORDER BY nome_param,cdcooper;
 BEGIN
   
   FOR rw_crapcop IN cr_crapcop LOOP
-      INSERT INTO crappat
+      INSERT INTO cecred.crappat
         (CDPARTAR
         ,NMPARTAR
         ,TPDEDADO
         ,CDPRODUT)
-      SELECT (SELECT MAX(cdpartar) + 1 FROM crappat)
+      SELECT (SELECT MAX(cdpartar) + 1 FROM cecred.crappat)
              ,rw_crapcop.nome_param
              ,2
              ,0
         FROM DUAL
-       WHERE NOT EXISTS(SELECT 1 FROM crappat b WHERE b.nmpartar = rw_crapcop.nome_param);
+       WHERE NOT EXISTS(SELECT 1 FROM cecred.crappat b WHERE b.nmpartar = rw_crapcop.nome_param);
        
-      INSERT INTO crappco
+      INSERT INTO cecred.crappco
          (CDPARTAR
          ,CDCOOPER
          ,DSCONTEU)
       VALUES
-         ((SELECT a.cdpartar FROM crappat a WHERE a.nmpartar = rw_crapcop.nome_param)
+         ((SELECT a.cdpartar FROM cecred.crappat a WHERE a.nmpartar = rw_crapcop.nome_param)
          ,rw_crapcop.cdcooper
          ,rw_crapcop.conta_param);
   
