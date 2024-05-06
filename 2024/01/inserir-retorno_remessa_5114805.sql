@@ -1,0 +1,64 @@
+BEGIN
+	
+    INSERT INTO credito.tbcred_pronampe_retremessa
+        (NRREMESSA
+        ,TPREGISTRO
+        ,CDRETORNO
+        ,DTPROCESSAMENTO
+        ,IDCONTRATO
+        ,VLFINANCIADO
+        ,DTRECUPERACAO
+        ,VLRECUPERADO
+        ,DTCANCELAMENTO
+        ,DTDEVOLUCAO
+        ,CDPENDENCIAOP
+        ,CDSITUACAOOP
+        ,DTULTSALDOOP
+        ,DTVENCIMENTOOP
+        ,DTINIPENDENCIAOP
+        ,CDENCERRAMENTOOP
+        ,DTENCERRAMENTOOP
+        ,CDIMPUGNACAOOP
+        ,DTIMPUGNACAOOP
+        ,CDMOVIMENTACAOFI
+        ,DTMOVIMENTACAOFI
+        ,DTFATOGERADORFI
+        ,VLNOMIFATOGERFI
+        ,VLATUALMONETARFI
+        ,VLISSQNFI
+        ,VLLIQUIDOMOVFI
+        ,NRCAUSADORMOVFI)
+    VALUES
+        (402
+        ,'03'
+        ,'1'
+        ,to_date('18-10-2023 08:00:27', 'dd-mm-yyyy hh24:mi:ss')
+        ,5114805
+        ,0.00
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL
+        ,NULL);
+
+	COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;

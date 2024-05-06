@@ -1,0 +1,78 @@
+BEGIN
+INSERT INTO craplcm
+  (DTMVTOLT
+  ,CDAGENCI
+  ,CDBCCXLT
+  ,NRDOLOTE
+  ,NRDCONTA
+  ,NRDOCMTO
+  ,CDHISTOR
+  ,NRSEQDIG
+  ,VLLANMTO
+  ,NRDCTABB
+  ,CDPESQBB
+  ,VLDOIPMF
+  ,NRAUTDOC
+  ,NRSEQUNI
+  ,CDBANCHQ
+  ,CDCMPCHQ
+  ,CDAGECHQ
+  ,NRCTACHQ
+  ,NRLOTCHQ
+  ,SQLOTCHQ
+  ,DTREFERE
+  ,HRTRANSA
+  ,CDOPERAD
+  ,DSIDENTI
+  ,CDCOOPER
+  ,NRDCTITG
+  ,DSCEDENT
+  ,CDCOPTFN
+  ,CDAGETFN
+  ,NRTERFIN
+  ,NRPAREPR
+  ,NRSEQAVA
+  ,NRAPLICA
+  ,CDORIGEM
+  ,IDLAUTOM)
+VALUES
+  (to_date('19/01/2023', 'dd/mm/yyyy')
+  ,6
+  ,100
+  ,320140
+  ,82665451
+  ,53676
+  ,316
+  ,2
+  ,10.00
+  ,82665451
+  ,'CASH DISPENSER 0140'
+  ,0.00
+  ,140361
+  ,140361
+  ,0
+  ,0
+  ,0
+  ,0
+  ,0
+  ,0
+  ,to_date('19/01/2023', 'dd/mm/yyyy')
+  ,53676
+  ,' '
+  ,' '
+  ,9
+  ,'82665451'
+  ,' '
+  ,9
+  ,6
+  ,140
+  ,0
+  ,0
+  ,0
+  ,0
+  ,0);
+
+
+  COMMIT;
+
+END;
