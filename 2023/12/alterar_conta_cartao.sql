@@ -200,9 +200,11 @@ BEGIN
                    FROM crawcrd a
                   WHERE a.cdcooper = vr_cooperativa
                     AND a.nrdconta = vr_conta
-                    AND a.insitcrd = 4) LOOP
+                    AND a.insitcrd = 4
+                    AND a.nrcrcard <> vr_cartao) LOOP
     vr_cpf_titular := cartao.nrcpftit;
   END LOOP;
+  
   IF vr_cpf_titular IS NULL THEN
     FOR titular IN (SELECT a.nrcpfcgc
                       FROM crapttl a
