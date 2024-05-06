@@ -3,7 +3,7 @@ DECLARE
   vr_conta       INTEGER := 81366078;
   vr_cartao      NUMBER(25) := 6393500065179583;
   vr_nrctrcrd    INTEGER := 9099999;
-  vr_cpf_titular NUMBER(20) := 0;
+  vr_cpf_titular NUMBER(20);
 
   vr_existe_craw BOOLEAN := FALSE;
   vr_existe_crap BOOLEAN := FALSE;
@@ -49,7 +49,7 @@ BEGIN
       (vr_cartao
       ,vr_conta
       ,'LAIS CARDOSO '
-      ,1809698030
+      ,0
       ,5
       ,1471.04
       ,0.00
@@ -159,7 +159,7 @@ BEGIN
     VALUES
       (vr_conta
       ,vr_cartao
-      ,1809698030
+      ,0
       ,'LAIS CARDOSO '
       ,32
       ,0
