@@ -1,7 +1,11 @@
-begin
-  update cecred.crapprm p 
-     set p.dsvlrprm = 12 
-   where p.cdacesso in ('COVID_QTDE_PARCELA_PAGAR')
-     and p.cdcooper = 9;
-commit;
-end;   
+BEGIN
+  UPDATE cecred.crapprm p
+     SET p.dsvlrprm = 12
+   WHERE p.cdacesso IN ('COVID_QTDE_PARCELA_PAGAR')
+     AND p.cdcooper = 9;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_application_error(-20500, SQLERRM);
+END;
