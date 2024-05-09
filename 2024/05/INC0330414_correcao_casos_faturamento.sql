@@ -68,4 +68,7 @@ begin
 
   commit;     
   
+  update cecred.crawseg p set p.nrproposta = '202400140288' where p.NRDCONTA = 14976234 and p.NRCTRSEG = 416535 and p.CDCOOPER = 16 and p.NRCTRATO = 500673;
+  update cecred.tbseg_prestamista p set p.nrproposta = '202400140288' where  p.NRDCONTA = 14976234 and p.NRCTRSEG = 416535 and p.CDCOOPER = 16 and p.NRCTREMP = 500673; 
+  commit;
 end;
