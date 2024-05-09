@@ -1,5 +1,5 @@
 begin
-  update tbseg_prestamista p set p.TPREGIST = 2 where p.CDCOOPER = 13 and p.NRDCONTA = 704504 and P.NRCTRSEG = 337467 and p.NRCTREMP = 200249;
+  update cecred.tbseg_prestamista p set p.TPREGIST = 2 where p.CDCOOPER = 13 and p.NRDCONTA = 704504 and P.NRCTRSEG = 337467 and p.NRCTREMP = 200249;
   commit;
 
   Update cecred.tbseg_prestamista p set p.VLPRODUT = 2.52  where p.NRCTREMP = 5743822 and p.nrproposta = '770656107456' and p.cdcooper = 1 and p.nrctrseg = 1181853 and p.nrdconta = 2628040;
