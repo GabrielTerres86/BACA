@@ -1,8 +1,10 @@
 BEGIN
-  UPDATE cecred.crapprm p
-     SET p.dsvlrprm = 12
-   WHERE p.cdacesso IN ('COVID_QTDE_PARCELA_PAGAR')
-     AND p.cdcooper = 9;
+
+    update cecred.crapcpa a
+    set a.dtbloqueio = NULL,
+        A.CDOPERAD_BLOQUE = NULL
+    where a.iddcarga = 21258;
+
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
