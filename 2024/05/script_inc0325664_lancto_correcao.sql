@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-4940
 DECLARE
   vr_mes_ano_lancto VARCHAR2(10) := '03/2024';
   vr_conta_um_mil cecred.GENE0002.typ_split;
@@ -4940,5 +4938,3 @@ EXCEPTION
     ROLLBACK;
     Raise_Application_Error(-20002, 'Erro Geral no Script. Erro: ' || sqlerrm);
 END;
-0
-0
