@@ -1,5 +1,5 @@
 DECLARE
-   vr_aux_ambiente    INTEGER       := 1;             
+   vr_aux_ambiente    INTEGER       := 3;             
    vr_aux_diretor     VARCHAR2(100) := 'RITM0387736';     
    vr_aux_arquivo     VARCHAR2(100) := 'registros';
    vr_aux_cdcooper    NUMBER := 9; 
@@ -188,7 +188,7 @@ DECLARE
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_erro;
     END IF;
- 
+
     BEGIN
       UPDATE CECRED.crawlim lim
          SET lim.insitlim = 3
