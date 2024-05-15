@@ -35,7 +35,7 @@ BEGIN
      
        vr_count := vr_count + 1;  
         
-        UPDATE crawseg w
+        UPDATE cecred.crawseg w
           SET w.nmsocial_segurado = rw_crapttl.nmsocial
         WHERE w.cdcooper = rw_crawseg.cdcooper
           AND w.nrdconta = rw_crawseg.nrdconta
