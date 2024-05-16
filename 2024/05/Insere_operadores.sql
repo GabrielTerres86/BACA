@@ -14,7 +14,7 @@ declare
   
   vr_operad   tp_rec;
   
-  TYPE TP_OPE IS VARRAY(40) OF tp_rec;
+  TYPE TP_OPE IS VARRAY(50) OF tp_rec;
   vr_operads  TP_OPE;
   
   vr_progress_id NUMBER;
@@ -210,6 +210,11 @@ begin
   vr_operad.nmoperad := 'Vanessa Salvador';
   vr_operads.EXTEND(1);
   vr_operads(37) := vr_operad;
+  
+  vr_operad.operador := 'f0034482';
+  vr_operad.nmoperad := 'vinicio schmidt ';
+  vr_operads.EXTEND(1);
+  vr_operads(38) := vr_operad;
   
   
   
