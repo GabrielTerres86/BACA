@@ -1,4 +1,3 @@
--- Created on 15/05/2024 by F0033201 
 declare 
   vr_cdcooper  VARCHAR2(30);
   vr_nrdconta  VARCHAR2(30);
@@ -33,13 +32,10 @@ begin
   
   OPEN btch0001.cr_crapdat(vr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
-    -- Se não encontrar
     IF btch0001.cr_crapdat%NOTFOUND THEN
-      -- Fechar o cursor pois efetuaremos raise
       CLOSE btch0001.cr_crapdat;
       RAISE vr_exc_saida;
     ELSE
-      -- Apenas fechar o cursor
       CLOSE btch0001.cr_crapdat;
     END IF;
   
