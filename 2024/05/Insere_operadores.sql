@@ -217,8 +217,7 @@ begin
   vr_operads(38) := vr_operad;
   
   
-  
-  vr_progress_id := 200000;
+  vr_progress_id := 2000000;
   
   FOR i IN vr_operads.FIRST..vr_operads.LAST LOOP
     
@@ -241,12 +240,12 @@ begin
           , CDDSENHA, DTALTSNH, NRDEDIAS
           , NMOPERAD, CDSITOPE, NVOPERAD, TPOPERAD, VLPAGCHQ
           , CDCOOPER, CDAGENCI, FLGDOPGD, FLGACRES, DSDLOGIN, FLGDONET, VLAPVCRE, CDCOMITE, VLESTOR1, DSIMPRES, VLESTOR2, CDPACTRA, FLGPERAC
-          , VLLIMTED, VLAPVCAP, CDDEPART, INSAQESP, DSDEMAIL, INUTLCRM, INSAQDES)
+          , VLLIMTED, VLAPVCAP, CDDEPART, INSAQESP, DSDEMAIL, INUTLCRM, INSAQDES, PROGRESS_RECID)
         VALUES (vr_operads(i).operador
           , vr_operads(i).operador, to_date(SYSDATE, 'dd-mm-yyyy'), 30
           , vr_operads(i).nmoperad, 1, 2, 1, 0.00
           , vr_cdcooper, 1, 0, 0, ' ', 1, 0.00, 0, 0.00, ' ', 0.00, 1, 0
-          , 0.00, 99999.00, 14, 0, ' ', 2, 1);
+          , 0.00, 99999.00, 14, 0, ' ', 2, 1, vr_progress_id);
           
         DBMS_OUTPUT.PUT_LINE('   - Cooper: ' || vr_cdcooper);
           
