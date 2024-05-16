@@ -1,0 +1,7 @@
+BEGIN
+
+UPDATE CECRED.tbgen_analise_fraude SET CDPARECER_ANALISE = 1 WHERE idanalise_fraude = 400546370;
+
+COMMIT;
+
+END;
