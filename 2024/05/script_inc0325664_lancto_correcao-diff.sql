@@ -4899,7 +4899,7 @@ vr_conta_cinco_mil := cecred.GENE0002.fn_quebra_string(pr_string  =>
       vr_nrborder := vr_reg_conta(2);
       vr_cdhistor := vr_reg_conta(3);
       vr_progress := vr_reg_conta(4);
-      vr_vllanmto := vr_reg_conta(5); 
+      vr_vllanmto := to_number(vr_reg_conta(5)); 
     
       OPEN cr_crapass(pr_cdcooper => vr_cdcooper
                      ,pr_nrborder => vr_nrborder
