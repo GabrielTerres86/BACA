@@ -38,5 +38,5 @@ begin
 exception
   when others then
     rollback;
-    sistema.excecaoInterna(pr_compleme => 'us732671-VAN');
+    sistema.excecaoInterna(pr_compleme => 'PRJ0025080-VAN');
 end;
