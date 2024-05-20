@@ -1,6 +1,6 @@
 BEGIN
 
-  UPDATE cecred.crapfin SET tpfinali = 4 WHERE cdfinemp = 110;
+  UPDATE cecred.crapfin SET tpfinali = 4 WHERE cdcooper = 9 and cdfinemp = 110;
 
   COMMIT;
 EXCEPTION
