@@ -1,11 +1,14 @@
 declare
   vr_nrseqrdr cecred.crapaca.nrseqrdr%type;
 begin
+  select max(cecred.craprdr.nrseqrdr) + 1
+    into vr_nrseqrdr 
+    from cecred.craprdr;
+
   insert into cecred.craprdr
-    (nmprogra, dtsolici)
+    (nrseqrdr, nmprogra, dtsolici)
   values
-    ('VAN', sysdate)
-  returning nrseqrdr into vr_nrseqrdr;
+    (vr_nrseqrdr, 'VAN', sysdate);
 
   insert into cecred.crapaca
     (nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
