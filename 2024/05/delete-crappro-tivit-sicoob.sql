@@ -69,9 +69,6 @@ DELETE cecred.crappro WHERE progress_recid = 722097344;
 DELETE cecred.crappro WHERE progress_recid = 722119101;
 DELETE cecred.crappro WHERE progress_recid = 722120283;
 DELETE cecred.crappro WHERE progress_recid = 722120682;
-
-------------
-
 DELETE cecred.crappro WHERE progress_recid = 617588037;
 DELETE cecred.crappro WHERE progress_recid = 624499851;
 DELETE cecred.crappro WHERE progress_recid = 625038371;
