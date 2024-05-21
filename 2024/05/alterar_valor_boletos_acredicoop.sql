@@ -2,7 +2,7 @@ BEGIN
  
     UPDATE cecred.crapcob c
      SET c.vltitulo = c.vltitulo - 10
-   WHERE progress_recid in (142071121, 142071122);
+   WHERE progress_recid in (142072326);
 
    COMMIT;
 EXCEPTION
