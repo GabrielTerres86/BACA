@@ -220,7 +220,8 @@ BEGIN
                                              ,pr_dtrefere    => rw_crapdat.dtmvtolt
                                              ,pr_vllanmto    => rw_craprac.vllanmto
                                              ,pr_cdhistor    => 3529 
-                                             ,pr_nraplica    => rw_craprac.nraplica                        
+                                             ,pr_nraplica    => rw_craprac.nraplica
+                                             ,pr_idlautom    => 0                        
                                              ,pr_tab_retorno => vr_tab_retorno
                                              ,pr_incrineg    => vr_incrineg
                                              ,pr_cdcritic    => vr_cdcritic
