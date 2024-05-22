@@ -1,0 +1,87 @@
+BEGIN
+  INSERT INTO crapceb
+    (CDCOOPER
+    ,NRDCONTA
+    ,NRCONVEN
+    ,NRCNVCEB
+    ,DTCADAST
+    ,CDOPERAD
+    ,INSITCEB
+    ,INARQCBR
+    ,CDDEMAIL
+    ,FLGCRUNI
+    ,FLGCEBHM
+    ,PROGRESS_RECID
+    ,CDHOMOLO
+    ,FLCOOEXP
+    ,FLCEEEXP
+    ,FLSERASA
+    ,CDOPEORI
+    ,CDAGEORI
+    ,DTINSORI
+    ,CDOPEEXC
+    ,CDAGEEXC
+    ,DTINSEXC
+    ,FLPROTES
+    ,QTDECPRZ
+    ,QTDFLOAT
+    ,IDRECIPR
+    ,DHANALIS
+    ,CDOPEANA
+    ,INENVCOB
+    ,FLGREGON
+    ,FLGPGDIV
+    ,QTLIMAXP
+    ,QTLIMMIP
+    ,INSRVPRT
+    ,FLGDIGIT
+    ,FLTERCAN
+    ,FLGAPIHM
+    ,CDHOMAPI
+    ,DHHOMAPI)
+  VALUES
+    (14
+    ,99149931
+    ,990113
+    ,0
+    ,SYSDATE
+    ,'1'
+    ,1
+    ,0
+    ,0
+    ,1
+    ,0
+    ,NULL
+    ,'0030215'
+    ,1
+    ,0
+    ,0
+    ,' '
+    ,0
+    ,NULL
+    ,' '
+    ,0
+    ,NULL
+    ,1
+    ,0
+    ,0
+    ,0
+    ,NULL
+    ,' '
+    ,1
+    ,1
+    ,0
+    ,15
+    ,5
+    ,0
+    ,0
+    ,0
+    ,1
+    ,' '
+    ,NULL);
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
