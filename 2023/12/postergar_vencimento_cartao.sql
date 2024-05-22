@@ -9,7 +9,7 @@ BEGIN
     ,dtinclusao)
   VALUES
     (3
-    ,to_date('30-04-2022', 'dd-mm-yyyy')
+    ,to_date('01-04-2024', 'dd-mm-yyyy')
     ,to_date('31-01-2026', 'dd-mm-yyyy')
     ,to_date('02-01-2021', 'dd-mm-yyyy')
     ,'1'
