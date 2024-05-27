@@ -1,5 +1,5 @@
 DECLARE
-  pr_cdcooper        crapcop.cdcooper%TYPE := 1;
+  pr_cdcooper        crapcop.cdcooper%TYPE := 1 ;
   vr_cdcritic        INTEGER:= 0;
   vr_dscritic        VARCHAR2(4000);
   pr_cdcritic        INTEGER:= 0;
