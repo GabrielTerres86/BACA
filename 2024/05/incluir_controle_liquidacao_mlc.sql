@@ -1,8 +1,10 @@
 BEGIN
-  INSERT INTO tbcobran_controle_diario_liquidacao(dtreferencia,tpmarco,dsobservacao)
-                       VALUES(to_date('13/05/2024','dd/mm/yyyy')
-                             ,1
-                             ,'TESTES MLC');
+  INSERT INTO tbcobran_controle_diario_liquidacao(dtreferencia,
+                                                  tpmarco,
+                                                  dsobservacao)
+                                          VALUES ('22/05/2024'
+                                                 ,1
+                                                 ,'TESTES MLC');
+                                                 
   COMMIT;
-  
 END;
