@@ -4,9 +4,9 @@ BEGIN
                       nrseqsol,
                       cdcooper)       
                VALUES(9
-                     ,to_date('13/05/2024','dd/mm/yyyy')
-                     ,3
-                     ,10);
+                     ,to_date('05/04/2024','dd/mm/yyyy')
+                     ,1
+                     ,1);
   
   COMMIT;
 END;
