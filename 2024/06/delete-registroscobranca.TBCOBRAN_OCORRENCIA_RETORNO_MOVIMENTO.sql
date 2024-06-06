@@ -1,4 +1,4 @@
 BEGIN
-  delete from cobranca.TBCOBRAN_OCORRENCIA_RETORNO_MOVIMENTO where trunc(dhregistro) >= '05/06/2024';
+  delete from cobranca.TBCOBRAN_OCORRENCIA_RETORNO_MOVIMENTO where idocorrencia_retorno_movimento = '1A1A448BCA4F04B8E0630ACC8206A982';
   COMMIT;
 END;
