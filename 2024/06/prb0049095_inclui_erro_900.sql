@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO tbcobran_erros_serasa
+  INSERT INTO cecred.tbcobran_erros_serasa
     (cderro_serasa
     ,dserro_serasa
     ,cdocorre
