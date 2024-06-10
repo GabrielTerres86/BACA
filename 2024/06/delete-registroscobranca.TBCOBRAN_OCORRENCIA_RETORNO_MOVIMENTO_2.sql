@@ -1,0 +1,4 @@
+BEGIN
+  delete from cobranca.TBCOBRAN_OCORRENCIA_RETORNO_MOVIMENTO where idocorrencia_retorno_movimento = '1A4D770685520876E0630ACC8206A2CF';
+  COMMIT;
+END;
