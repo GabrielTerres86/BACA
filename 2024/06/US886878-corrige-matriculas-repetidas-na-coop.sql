@@ -168,12 +168,15 @@ BEGIN
         FETCH cr_busca_mat_cooperado INTO vr_nrmatric_new;
         
         IF cr_busca_mat_cooperado%NOTFOUND THEN
+          CLOSE cr_busca_mat_cooperado;
           
           vr_nrmatric_new := CADASTRO.obterNovaMatricula(vr_cdcooper);
           
         END IF;
         
-        CLOSE cr_busca_mat_cooperado;
+        IF cr_busca_mat_cooperado%ISOPEN THEN
+          CLOSE cr_busca_mat_cooperado;
+        END IF;
         
       ELSIF vr_nrmatric > 0 THEN
         
@@ -185,6 +188,8 @@ BEGIN
         FETCH cr_valida_mat_duplicada INTO vr_valida_mat;
         
         IF cr_valida_mat_duplicada%FOUND THEN
+          
+          CLOSE cr_valida_mat_duplicada;
           vr_comments := '    1) Confirmado. NR Matrícula pertence a mais de um cooperado.';
           
           vr_comments := '    2) Buscando um número de matrícula do cooperado.';
@@ -192,13 +197,16 @@ BEGIN
           FETCH cr_busca_mat_cooperado INTO vr_nrmatric_new;
           
           IF cr_busca_mat_cooperado%NOTFOUND THEN
+            CLOSE cr_busca_mat_cooperado;
             
             vr_comments := '    2) Caso não existir, criar uma nova e aplicar na conta.';
             vr_nrmatric_new := CADASTRO.obterNovaMatricula(vr_cdcooper);
             
           END IF;
           
-          CLOSE cr_busca_mat_cooperado;
+          IF cr_busca_mat_cooperado%ISOPEN THEN
+            CLOSE cr_busca_mat_cooperado;
+          END IF;
           
         ELSE
           vr_comments := '    1) Gerar log para conferência pois a Matrícula pertence a um único cooperado.';
@@ -213,8 +221,9 @@ BEGIN
           
         END IF;
         
-        CLOSE cr_valida_mat_duplicada;
-        
+        IF cr_valida_mat_duplicada%ISOPEN THEN
+          CLOSE cr_valida_mat_duplicada;
+        END IF;
         
       END IF;
       
@@ -305,7 +314,7 @@ BEGIN
       
     END IF;
     
-    IF vr_count >= 500 THEN
+    IF vr_count >= 10 THEN
       
       COMMIT;
       
