@@ -327,7 +327,8 @@ BEGIN
                         FROM cecred.crapcob cob
                        WHERE (cob.cdcooper, cob.cdbandoc, cob.nrdctabb, cob.nrcnvcob, cob.nrdconta,
                               cob.nrdocmto) IN
-                             ((6, 85, 105001, 105001, 249114, 8))) LOOP
+                             ((6, 85, 105001, 105001, 249114, 8),
+                             (2, 85, 102002, 102002, 633470, 3280))) LOOP
     
       atualizarExclusaoBoleto(pr_rowid    => rw_boleto.idrowid_crapcob
                              ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
