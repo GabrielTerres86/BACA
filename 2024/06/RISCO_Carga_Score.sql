@@ -9,6 +9,7 @@ begin
 
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     dbms_output.put_line('ERRO: ' || vr_dscritic);
+    ROLLBACK;
   END IF;
 
   COMMIT;
