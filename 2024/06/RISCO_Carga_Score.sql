@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-14
 DECLARE
   vr_dscritic VARCHAR2(4000);
   
@@ -14,11 +12,3 @@ begin
   END IF;
 
 end;
-2
-pr_idscore
-0
--4
-pr_dscritic
-0
--5
-0
