@@ -28,6 +28,21 @@ BEGIN
      (SELECT NRSEQRDR
         FROM craprdr
        WHERE upper(NMPROGRA) = 'RATBND'));
+
+  INSERT INTO cecred.crapaca
+    (NMDEACAO,
+     NMPACKAG,
+     NMPROCED,
+     LSTPARAM,
+     NRSEQRDR)
+  VALUES
+    ('VALIDA_LINHA_BNDES',
+     'EMPR0026',
+     'pc_valida_linha_bndes_web',
+     'pr_cdcooper, pr_nrdconta, pr_nrctremp',
+     (SELECT NRSEQRDR
+        FROM craprdr
+       WHERE upper(NMPROGRA) = 'TELA_ATENDA_EMPRESTIMO'));
 	   
   COMMIT;
 EXCEPTION
