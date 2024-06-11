@@ -11,4 +11,5 @@ begin
     dbms_output.put_line('ERRO: ' || vr_dscritic);
   END IF;
 
+  COMMIT;
 end;
