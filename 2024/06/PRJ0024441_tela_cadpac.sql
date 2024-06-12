@@ -7,32 +7,21 @@ BEGIN
     ,tpregist
     ,dstextab
     ,cdcooper)
-    SELECT nmsistem
-          ,tptabela
-          ,cdempres
-          ,'HRTRBOLTIT'
-          ,tpregist
-          ,dstextab
-          ,cdcooper
-      FROM craptab tab
-     WHERE tab.nmsistem = 'CRED'
-       AND tab.cdacesso = 'HRTRTITULO'
-       AND tab.tptabela = 'GENERI'
-       AND tab.cdempres = 0
-       AND tab.cdcooper = 9
-       AND tab.tpregist = 90;
-       
+  VALUES
+    ('CRED'
+    ,'GENERI'
+    ,0
+    ,'HRTRBOLTIT'
+    ,90
+    ,'1 18000 14400 SIM'
+    ,9);
+  
   UPDATE crapaca aca
      SET aca.lstparam =
          (SELECT aca.lstparam
             FROM crapaca aca
            WHERE aca.nmdeacao = 'CADPAC_GRAVA') || ',pr_hhbotini,pr_hhbotfim'
    WHERE aca.nmdeacao = 'CADPAC_GRAVA';
+   
    COMMIT;
 END;
-
-
-
-
-
-
