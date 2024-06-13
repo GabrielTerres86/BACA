@@ -33,13 +33,11 @@ DECLARE
       AND A.CDCOOPER = pr_cdcooper
       AND A.CDSITDCT NOT IN (3,4)
       AND A.NRMATRIC > 0
-      -- C_CRAPASS_IDX12
       AND NOT EXISTS ( SELECT 1
                        FROM CADASTRO.TB_PESSOA_CRAPASS ASS
                        WHERE ASS.NRCPFCGC <> pr_nrcpfcgc
                          AND ASS.CDCOOPER = pr_cdcooper
                          AND ASS.NRMATRIC = A.NRMATRIC
-                         -- C_CRAPASS_IDX11
         )
     ORDER BY A.DTADMISS;
   
@@ -53,7 +51,6 @@ DECLARE
     WHERE A.CDCOOPER = pr_cdcooper
       AND A.NRMATRIC = pr_nrmatric
       AND A.NRCPFCGC <> pr_nrcpfcgc;
-      -- C_CRAPASS_IDX11
   
   vr_valida_mat         NUMBER(1);
   
