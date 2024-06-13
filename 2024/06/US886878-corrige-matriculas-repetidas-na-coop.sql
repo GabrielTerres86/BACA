@@ -28,16 +28,18 @@ DECLARE
   CURSOR cr_busca_mat_cooperado ( pr_nrcpfcgc IN CECRED.CRAPASS.NRCPFCGC%TYPE
                                 , pr_cdcooper IN CECRED.CRAPASS.CDCOOPER%TYPE ) IS
     SELECT A.NRMATRIC
-    FROM CECRED.CRAPASS A
+    FROM CADASTRO.TB_PESSOA_CRAPASS A
     WHERE A.NRCPFCGC = pr_nrcpfcgc
       AND A.CDCOOPER = pr_cdcooper
+      AND A.CDSITDCT NOT IN (3,4)
       AND A.NRMATRIC > 0
       AND NOT EXISTS ( SELECT 1
-                       FROM CECRED.CRAPASS ASS
+                       FROM CADASTRO.TB_PESSOA_CRAPASS ASS
                        WHERE ASS.NRCPFCGC <> pr_nrcpfcgc
                          AND ASS.CDCOOPER = pr_cdcooper
                          AND ASS.NRMATRIC = A.NRMATRIC
-        );
+        )
+    ORDER BY A.DTADMISS;
   
   vr_nrmatric_new       CECRED.CRAPASS.NRMATRIC%TYPE;
   
@@ -45,7 +47,7 @@ DECLARE
                                  , pr_cdcooper IN CECRED.CRAPASS.CDCOOPER%TYPE
                                  , pr_nrmatric IN CECRED.CRAPASS.NRMATRIC%TYPE) IS
     SELECT 1
-    FROM CECRED.CRAPASS A
+    FROM CADASTRO.TB_PESSOA_CRAPASS A
     WHERE A.CDCOOPER = pr_cdcooper
       AND A.NRMATRIC = pr_nrmatric
       AND A.NRCPFCGC <> pr_nrcpfcgc;
@@ -56,7 +58,7 @@ DECLARE
                      , pr_nrdconta IN CECRED.CRAPASS.NRDCONTA%TYPE
                      , pr_nrcpfcgc IN CECRED.CRAPASS.NRCPFCGC%TYPE) IS
     SELECT A.NRMATRIC
-    FROM CECRED.CRAPASS A
+    FROM CADASTRO.TB_PESSOA_CRAPASS A
     WHERE A.CDCOOPER = pr_cdcooper
       AND A.NRDCONTA = pr_nrdconta
       AND A.NRCPFCGC = pr_nrcpfcgc;
@@ -65,6 +67,26 @@ DECLARE
   
   vr_dscritic           VARCHAR2(2000);
   vr_exception          EXCEPTION;
+  
+  vr_dscritic_mat       VARCHAR2(4000);
+  
+  FUNCTION fn_gera_matricula_autonoma (pr_cooper  IN CECRED.crapass.CDCOOPER%TYPE) RETURN NUMBER IS
+    vr_matricula_gerada  NUMBER(10);
+  PRAGMA AUTONOMOUS_TRANSACTION;
+  BEGIN
+    vr_comments := ' ## Criada função autônoma para evitar Locks na base durante a execução do script.';
+    
+    vr_matricula_gerada := CADASTRO.obterNovaMatricula(pr_cooper);
+    
+    COMMIT;
+    
+    vr_dscritic_mat := NULL;
+    RETURN vr_matricula_gerada;
+    
+  EXCEPTION
+    WHEN OTHERS THEN
+      vr_dscritic_mat := 'ERRO ao gerar nova matricula: ' || SQLERRM;
+  END;
   
 BEGIN
   
@@ -170,7 +192,7 @@ BEGIN
         IF cr_busca_mat_cooperado%NOTFOUND THEN
           CLOSE cr_busca_mat_cooperado;
           
-          vr_nrmatric_new := CADASTRO.obterNovaMatricula(vr_cdcooper);
+          vr_nrmatric_new := fn_gera_matricula_autonoma(vr_cdcooper);
           
         END IF;
         
@@ -200,7 +222,7 @@ BEGIN
             CLOSE cr_busca_mat_cooperado;
             
             vr_comments := '    2) Caso não existir, criar uma nova e aplicar na conta.';
-            vr_nrmatric_new := CADASTRO.obterNovaMatricula(vr_cdcooper);
+            vr_nrmatric_new := fn_gera_matricula_autonoma(vr_cdcooper);
             
           END IF;
           
@@ -314,7 +336,7 @@ BEGIN
       
     END IF;
     
-    IF vr_count >= 10 THEN
+    IF vr_count >= 100 THEN
       
       COMMIT;
       
