@@ -6,13 +6,10 @@ BEGIN
                    AND (UPPER(plog.cdprograma) like UPPER('PRB0049095%'))
                    )
   LOOP
-    --
     DELETE tbgen_prglog_ocorrencia plogoco
      WHERE plogoco.idprglog = r_mae.idprglog;
-    --
     DELETE tbgen_prglog plog
      WHERE plog.idprglog = r_mae.idprglog;
-    --
   END LOOP;
 
 DELETE FROM crapcob cob
