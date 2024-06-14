@@ -775,8 +775,9 @@ DECLARE
         END IF;
       
       ELSE
-        dbms_output.put_line(substr(pr_dslinha, 894, 7) ||
-                             '---------------------------------------------------------------------------------------------');
+        gerarLogEvento(pr_idprocessamento => pr_idprocessamento
+                      ,pr_dsmensagem      => substr(pr_dslinha, 894, 7) ||
+                                             '---------------------------------------------------------------------------------------------');
       END IF;
     
     END IF;
