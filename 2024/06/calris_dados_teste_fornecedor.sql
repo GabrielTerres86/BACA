@@ -1,133 +1,133 @@
 begin
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (48372626000155, 'INSTITUTO LANTERNA LUMINOSA', 'S', to_date('12-09-2022', 'dd-mm-yyyy'), 9499500, 'N', 'Atividades associativas não especificadas anteriormente', 3, 'N', 0.00, 80730380, '16/06/2024', '16/06/2024');
+values (48372626000155, 'INSTITUTO LANTERNA LUMINOSA', 'S', to_date('12-09-2022', 'dd-mm-yyyy'), 9499500, 'N', 'Atividades associativas não especificadas anteriormente', 3, 'N', 0.00, 80730380, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (2492245000109, 'ANA HELENA RODRIGUES DA SILVA MARTINEZ LTDA', 'S', to_date('11-03-1998', 'dd-mm-yyyy'), 7111100, 'N', 'Serviços de arquitetura', 3, 'N', 0.00, 91330330, '16/06/2024', '16/06/2024');
+values (2492245000109, 'ANA HELENA RODRIGUES DA SILVA MARTINEZ LTDA', 'S', to_date('11-03-1998', 'dd-mm-yyyy'), 7111100, 'N', 'Serviços de arquitetura', 3, 'N', 0.00, 91330330, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (37039197000182, 'CAMILA RAQUEL ANTONOVICZ & CIA LTDA', 'S', to_date('30-04-2020', 'dd-mm-yyyy'), 8219999, 'N', 'Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente', 3, 'N', 297583.27, 89460072, '16/06/2024', '16/06/2024');
+values (37039197000182, 'CAMILA RAQUEL ANTONOVICZ & CIA LTDA', 'S', to_date('30-04-2020', 'dd-mm-yyyy'), 8219999, 'N', 'Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente', 3, 'N', 297583.27, 89460072, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (21912587000185, 'GIOVANI VITORIA COMUNICACAO', 'S', to_date('19-02-2015', 'dd-mm-yyyy'), 6391700, 'N', 'Agências de notícias', 3, 'N', 9000.00, 89010680, '16/06/2024', '16/06/2024');
+values (21912587000185, 'GIOVANI VITORIA COMUNICACAO', 'S', to_date('19-02-2015', 'dd-mm-yyyy'), 6391700, 'N', 'Agências de notícias', 3, 'N', 9000.00, 89010680, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (52203149000171, 'SAFE EDUCACAO FINANCEIRA LTDA', 'S', to_date('15-09-2023', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 85503320, '16/06/2024', '16/06/2024');
+values (52203149000171, 'SAFE EDUCACAO FINANCEIRA LTDA', 'S', to_date('15-09-2023', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 85503320, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (16599838000183, 'EMTREI TREINAMENTOS E CONSULTORIA LTDA', 'S', to_date('30-07-2012', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 88509620, '16/06/2024', '16/06/2024');
+values (16599838000183, 'EMTREI TREINAMENTOS E CONSULTORIA LTDA', 'S', to_date('30-07-2012', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 88509620, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (55258679000105, '55.258.679 PRISCILA SCHACHT CARDOZO', 'S', to_date('23-05-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 88818654, '16/06/2024', '16/06/2024');
+values (55258679000105, '55.258.679 PRISCILA SCHACHT CARDOZO', 'S', to_date('23-05-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 88818654, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (44769714000134, 'MARIA DANIELA MENDES 03998357920', 'S', to_date('06-01-2022', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 8007.48, 85602240, '16/06/2024', '16/06/2024');
+values (44769714000134, 'MARIA DANIELA MENDES 03998357920', 'S', to_date('06-01-2022', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 8007.48, 85602240, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (54640373000156, 'BIP TECHNOLOGY SERVICES LTDA', 'S', to_date('08-04-2024', 'dd-mm-yyyy'), 6204000, 'N', 'Consultoria em tecnologia da informação', 3, 'N', 0.00, 13025270, '16/06/2024', '16/06/2024');
+values (54640373000156, 'BIP TECHNOLOGY SERVICES LTDA', 'S', to_date('08-04-2024', 'dd-mm-yyyy'), 6204000, 'N', 'Consultoria em tecnologia da informação', 3, 'N', 0.00, 13025270, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (35287923000150, 'RGM ADMINISTRACAO DE VALORES LTDA', 'S', to_date('23-10-2019', 'dd-mm-yyyy'), 6010100, 'N', 'Atividades de rádio', 3, 'N', 0.00, 1311915, '16/06/2024', '16/06/2024');
+values (35287923000150, 'RGM ADMINISTRACAO DE VALORES LTDA', 'S', to_date('23-10-2019', 'dd-mm-yyyy'), 6010100, 'N', 'Atividades de rádio', 3, 'N', 0.00, 1311915, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (47385941000154, 'OLIVEIRA & ANTUNES ASSESSORIA DE COBRANCAS LTDA', 'S', to_date('02-08-2022', 'dd-mm-yyyy'), 8291100, 'N', 'Atividades de cobranças e informações cadastrais', 3, 'N', 0.00, 89010360, '16/06/2024', '16/06/2024');
+values (47385941000154, 'OLIVEIRA & ANTUNES ASSESSORIA DE COBRANCAS LTDA', 'S', to_date('02-08-2022', 'dd-mm-yyyy'), 8291100, 'N', 'Atividades de cobranças e informações cadastrais', 3, 'N', 0.00, 89010360, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (11318572000130, 'A FAVORITA IMOBILIARIA LTDA', 'S', to_date('17-11-2009', 'dd-mm-yyyy'), 6822600, 'N', 'Gestão e administração da propriedade imobiliária', 3, 'N', 0.00, 89150000, '16/06/2024', '16/06/2024');
+values (11318572000130, 'A FAVORITA IMOBILIARIA LTDA', 'S', to_date('17-11-2009', 'dd-mm-yyyy'), 6822600, 'N', 'Gestão e administração da propriedade imobiliária', 3, 'N', 0.00, 89150000, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (29911318000106, 'PORTAL ESCUDO SISTEMAS E TREINAMENTOS LTDA', 'S', to_date('12-03-2018', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 7725.30, 89012500, '16/06/2024', '16/06/2024');
+values (29911318000106, 'PORTAL ESCUDO SISTEMAS E TREINAMENTOS LTDA', 'S', to_date('12-03-2018', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 7725.30, 89012500, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (52096209000102, 'RUDA CONSULTORIA LTDA', 'S', to_date('06-09-2023', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 3982.00, 89050000, '16/06/2024', '16/06/2024');
+values (52096209000102, 'RUDA CONSULTORIA LTDA', 'S', to_date('06-09-2023', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 3982.00, 89050000, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (52427864000198, 'FRANCISCO O. R. FRAGOSO LTDA', 'S', to_date('04-10-2023', 'dd-mm-yyyy'), 8211300, 'N', 'Serviços combinados de escritório e apoio administrativo', 3, 'N', 0.00, 91760230, '16/06/2024', '16/06/2024');
+values (52427864000198, 'FRANCISCO O. R. FRAGOSO LTDA', 'S', to_date('04-10-2023', 'dd-mm-yyyy'), 8211300, 'N', 'Serviços combinados de escritório e apoio administrativo', 3, 'N', 0.00, 91760230, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (10710486000105, 'BERTAO INFORMATICA LTDA', 'S', to_date('19-03-2009', 'dd-mm-yyyy'), 6311900, 'N', 'Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet', 3, 'N', 4538.00, 91920130, '16/06/2024', '16/06/2024');
+values (10710486000105, 'BERTAO INFORMATICA LTDA', 'S', to_date('19-03-2009', 'dd-mm-yyyy'), 6311900, 'N', 'Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet', 3, 'N', 4538.00, 91920130, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (33418065000100, 'FERNANDA SILVEIRA DE AGUIAR 01044520051', 'S', to_date('22-04-2019', 'dd-mm-yyyy'), 8599605, 'N', 'Cursos preparatórios para concursos', 3, 'N', 0.00, 92412216, '16/06/2024', '16/06/2024');
+values (33418065000100, 'FERNANDA SILVEIRA DE AGUIAR 01044520051', 'S', to_date('22-04-2019', 'dd-mm-yyyy'), 8599605, 'N', 'Cursos preparatórios para concursos', 3, 'N', 0.00, 92412216, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (53026052000101, 'DOMINI SOLUCOES LTDA', 'S', to_date('28-11-2023', 'dd-mm-yyyy'), 4321500, 'N', 'Instalação e manutenção elétrica', 3, 'N', 0.00, 89030310, '16/06/2024', '16/06/2024');
+values (53026052000101, 'DOMINI SOLUCOES LTDA', 'S', to_date('28-11-2023', 'dd-mm-yyyy'), 4321500, 'N', 'Instalação e manutenção elétrica', 3, 'N', 0.00, 89030310, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (2358652000128, 'GALACHE ENGENHARIA LTDA', 'S', to_date('06-02-1998', 'dd-mm-yyyy'), 6821801, 'N', 'Corretagem na compra e venda e avaliação de imóveis', 3, 'N', 0.00, 9090521, '16/06/2024', '16/06/2024');
+values (2358652000128, 'GALACHE ENGENHARIA LTDA', 'S', to_date('06-02-1998', 'dd-mm-yyyy'), 6821801, 'N', 'Corretagem na compra e venda e avaliação de imóveis', 3, 'N', 0.00, 9090521, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (52589878000108, 'AGENCIA CARTI LTDA', 'S', to_date('19-10-2023', 'dd-mm-yyyy'), 6319400, 'S', 'Portais, provedores de conteúdo e outros serviços de informação na internet', 3, 'N', 0.00, 85660000, '16/06/2024', '16/06/2024');
+values (52589878000108, 'AGENCIA CARTI LTDA', 'S', to_date('19-10-2023', 'dd-mm-yyyy'), 6319400, 'S', 'Portais, provedores de conteúdo e outros serviços de informação na internet', 3, 'N', 0.00, 85660000, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (2166195000170, 'SPK SOLUCOES EM ENGENHARIA LTDA', 'S', to_date('06-10-1997', 'dd-mm-yyyy'), 4322303, 'N', 'Instalações de sistema de prevenção contra incêndio (Dispensada *)', 3, 'N', 0.00, 89036640, '16/06/2024', '16/06/2024');
+values (2166195000170, 'SPK SOLUCOES EM ENGENHARIA LTDA', 'S', to_date('06-10-1997', 'dd-mm-yyyy'), 4322303, 'N', 'Instalações de sistema de prevenção contra incêndio (Dispensada *)', 3, 'N', 0.00, 89036640, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (45906610000197, 'MARIA LETICIA FERNANDES 10526689927', 'S', to_date('05-04-2022', 'dd-mm-yyyy'), 8219999, 'N', 'Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente', 3, 'N', 14871.99, 89107000, '16/06/2024', '16/06/2024');
+values (45906610000197, 'MARIA LETICIA FERNANDES 10526689927', 'S', to_date('05-04-2022', 'dd-mm-yyyy'), 8219999, 'N', 'Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente', 3, 'N', 14871.99, 89107000, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (40055128000177, 'BRUNA JOSE FONTOURA 35147544895', 'S', to_date('08-12-2020', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 5231.94, 89012230, '16/06/2024', '16/06/2024');
+values (40055128000177, 'BRUNA JOSE FONTOURA 35147544895', 'S', to_date('08-12-2020', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 5231.94, 89012230, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (41945200000102, 'ZAHAV TEC LTDA', 'S', to_date('14-05-2021', 'dd-mm-yyyy'), 8219999, 'N', 'Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente', 3, 'N', 0.00, 1239030, '16/06/2024', '16/06/2024');
+values (41945200000102, 'ZAHAV TEC LTDA', 'S', to_date('14-05-2021', 'dd-mm-yyyy'), 8219999, 'N', 'Preparação de documentos e serviços especializados de apoio administrativo não especificados anteriormente', 3, 'N', 0.00, 1239030, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (31913907000175, 'SEBOLD ENGENHARIA LTDA', 'S', to_date('31-10-2018', 'dd-mm-yyyy'), 4110700, 'N', 'Incorporação de empreendimentos imobiliários', 3, 'N', 0.00, 88400000, '16/06/2024', '16/06/2024');
+values (31913907000175, 'SEBOLD ENGENHARIA LTDA', 'S', to_date('31-10-2018', 'dd-mm-yyyy'), 4110700, 'N', 'Incorporação de empreendimentos imobiliários', 3, 'N', 0.00, 88400000, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (55059268000190, 'OITO8 GESTAO E TECNOLOGIA LTDA', 'S', to_date('09-05-2024', 'dd-mm-yyyy'), 6201501, 'N', 'Desenvolvimento de programas de computador sob encomenda', 3, 'N', 0.00, 89206230, '16/06/2024', '16/06/2024');
+values (55059268000190, 'OITO8 GESTAO E TECNOLOGIA LTDA', 'S', to_date('09-05-2024', 'dd-mm-yyyy'), 6201501, 'N', 'Desenvolvimento de programas de computador sob encomenda', 3, 'N', 0.00, 89206230, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (48205301000188, 'ID SOLUTION LTDA', 'S', to_date('06-10-2022', 'dd-mm-yyyy'), 6311900, 'N', 'Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet', 3, 'N', 0.00, 1038100, '16/06/2024', '16/06/2024');
+values (48205301000188, 'ID SOLUTION LTDA', 'S', to_date('06-10-2022', 'dd-mm-yyyy'), 6311900, 'N', 'Tratamento de dados, provedores de serviços de aplicação e serviços de hospedagem na internet', 3, 'N', 0.00, 1038100, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (33372251012839, 'IBM BRASIL-INDUSTRIA MAQUINAS E SERVICOS LIMITADA', 'S', to_date('23-10-1979', 'dd-mm-yyyy'), 4651601, 'N', ' Comércio atacadista de equipamentos de informática', 3, 'N', 0.00, 20031170, '16/06/2024', '16/06/2024');
+values (33372251012839, 'IBM BRASIL-INDUSTRIA MAQUINAS E SERVICOS LIMITADA', 'S', to_date('23-10-1979', 'dd-mm-yyyy'), 4651601, 'N', ' Comércio atacadista de equipamentos de informática', 3, 'N', 0.00, 20031170, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (15549414000141, 'BLUESHIFT BRASIL LTDA', 'S', to_date('14-05-2012', 'dd-mm-yyyy'), 6201501, 'N', 'Desenvolvimento de programas de computador sob encomenda', 3, 'N', 0.00, 7700001, '16/06/2024', '16/06/2024');
+values (15549414000141, 'BLUESHIFT BRASIL LTDA', 'S', to_date('14-05-2012', 'dd-mm-yyyy'), 6201501, 'N', 'Desenvolvimento de programas de computador sob encomenda', 3, 'N', 0.00, 7700001, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (27149465000165, 'GUSTAVO LUIZ THOMAS', 'S', to_date('20-02-2017', 'dd-mm-yyyy'), 4322302, 'N', 'Instalação e manutenção de sistemas centrais de ar condicionado, de ventilação e refrigeração', 3, 'N', 0.00, 88804534, '16/06/2024', '16/06/2024');
+values (27149465000165, 'GUSTAVO LUIZ THOMAS', 'S', to_date('20-02-2017', 'dd-mm-yyyy'), 4322302, 'N', 'Instalação e manutenção de sistemas centrais de ar condicionado, de ventilação e refrigeração', 3, 'N', 0.00, 88804534, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (55352321000147, '55.352.321 GABRIEL RIBEIRO SAPORITO DA SILVA', 'S', to_date('01-06-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 88350360, '16/06/2024', '16/06/2024');
+values (55352321000147, '55.352.321 GABRIEL RIBEIRO SAPORITO DA SILVA', 'S', to_date('01-06-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 88350360, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (5579496000113, 'MS VISTORIAS E SERVICOS LTDA', 'S', to_date('01-04-2003', 'dd-mm-yyyy'), 8299799, 'N', 'Outras atividades de serviços prestados principalmente às empresas não especificadas anteriormente', 3, 'N', 1620.00, 89036003, '16/06/2024', '16/06/2024');
+values (5579496000113, 'MS VISTORIAS E SERVICOS LTDA', 'S', to_date('01-04-2003', 'dd-mm-yyyy'), 8299799, 'N', 'Outras atividades de serviços prestados principalmente às empresas não especificadas anteriormente', 3, 'N', 1620.00, 89036003, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (23515314000122, 'SAMUEL DE SOUZA', 'S', to_date('21-10-2015', 'dd-mm-yyyy'), 7319099, 'N', 'Outras atividades de publicidade não especificadas anteriormente', 3, 'N', 34652.69, 89060060, '16/06/2024', '16/06/2024');
+values (23515314000122, 'SAMUEL DE SOUZA', 'S', to_date('21-10-2015', 'dd-mm-yyyy'), 7319099, 'N', 'Outras atividades de publicidade não especificadas anteriormente', 3, 'N', 34652.69, 89060060, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (2236432000121, 'OSI CONNECT TELECOMUNICACOES E SERVICOS LTDA', 'S', to_date('19-11-1997', 'dd-mm-yyyy'), 6190601, 'N', 'Provedores de acesso às redes de comunicações', 3, 'N', 152.00, 88330484, '16/06/2024', '16/06/2024');
+values (2236432000121, 'OSI CONNECT TELECOMUNICACOES E SERVICOS LTDA', 'S', to_date('19-11-1997', 'dd-mm-yyyy'), 6190601, 'N', 'Provedores de acesso às redes de comunicações', 3, 'N', 152.00, 88330484, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (54146750000103, '54.146.750 MICHELE BELINK', 'S', to_date('01-03-2024', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 2298.70, 88355050, '16/06/2024', '16/06/2024');
+values (54146750000103, '54.146.750 MICHELE BELINK', 'S', to_date('01-03-2024', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 2298.70, 88355050, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (75501593000179, 'CARNEIRO IMOVEIS LTDA', 'S', to_date('05-05-1995', 'dd-mm-yyyy'), 6821801, 'N', 'Corretagem na compra e venda e avaliação de imóveis', 3, 'S', 0.00, 89160129, '16/06/2024', '16/06/2024');
+values (75501593000179, 'CARNEIRO IMOVEIS LTDA', 'S', to_date('05-05-1995', 'dd-mm-yyyy'), 6821801, 'N', 'Corretagem na compra e venda e avaliação de imóveis', 3, 'S', 0.00, 89160129, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (8202716000183, 'IMOBILIARIA VISALAR LTDA.', 'S', to_date('07-08-2006', 'dd-mm-yyyy'), 6821801, 'N', 'Corretagem na compra e venda e avaliação de imóveis', 3, 'S', 0.00, 88740000, '16/06/2024', '16/06/2024');
+values (8202716000183, 'IMOBILIARIA VISALAR LTDA.', 'S', to_date('07-08-2006', 'dd-mm-yyyy'), 6821801, 'N', 'Corretagem na compra e venda e avaliação de imóveis', 3, 'S', 0.00, 88740000, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (68622174000120, 'ICATU VANGUARDA GESTAO DE RECURSOS LTDA', 'S', to_date('22-09-1992', 'dd-mm-yyyy'), 6630400, 'N', 'Atividades de administração de fundos por contrato ou comissão', 3, 'N', 0.00, 20220297, '16/06/2024', '16/06/2024');
+values (68622174000120, 'ICATU VANGUARDA GESTAO DE RECURSOS LTDA', 'S', to_date('22-09-1992', 'dd-mm-yyyy'), 6630400, 'N', 'Atividades de administração de fundos por contrato ou comissão', 3, 'N', 0.00, 20220297, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (45758647000115, 'GESMANN CONSULTORIA E TREINAMENTO LTDA', 'S', to_date('23-03-2022', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 0.00, 97050241, '16/06/2024', '16/06/2024');
+values (45758647000115, 'GESMANN CONSULTORIA E TREINAMENTO LTDA', 'S', to_date('23-03-2022', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 0.00, 97050241, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (54493738000167, '54.493.738 ROSELI REICHERT PASSOLD', 'S', to_date('27-03-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 89015190, '16/06/2024', '16/06/2024');
+values (54493738000167, '54.493.738 ROSELI REICHERT PASSOLD', 'S', to_date('27-03-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 89015190, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (54493711000174, 'CLAUDIA REGINA ZAPPA', 'S', to_date('27-03-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 89041450, '16/06/2024', '16/06/2024');
+values (54493711000174, 'CLAUDIA REGINA ZAPPA', 'S', to_date('27-03-2024', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 89041450, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (51055324000168, '51.055.324 CRISTIANE VOLTOLINI', 'S', to_date('15-06-2023', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 14442.22, 88357185, '16/06/2024', '16/06/2024');
+values (51055324000168, '51.055.324 CRISTIANE VOLTOLINI', 'S', to_date('15-06-2023', 'dd-mm-yyyy'), 8599699, 'N', 'Outras atividades de ensino não especificadas anteriormente', 3, 'N', 14442.22, 88357185, SYSDATE - 1, SYSDATE - 1);
 
 insert into tbcalris_fornecedores (NRCPFCGC, NMPESSOA, INATIVIDADE_FIM, DTCONSTITUICAO, CDATIVIDADE, INFAT_SETOR_PUBLICO, DSPRODUTO_SERVICO, CDCLASRISCO_PROD, INOBRIGADA_LEI, VLLIMITE_CONTRATADO, NRCEPLOG, DHRECEBIMENTO, DHALTERACAO)
-values (51552611000183, 'TS TREINAMENTOS LTDA', 'S', to_date('25-07-2023', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 89037001, '16/06/2024', '16/06/2024');
+values (51552611000183, 'TS TREINAMENTOS LTDA', 'S', to_date('25-07-2023', 'dd-mm-yyyy'), 8599604, 'N', 'Treinamento em desenvolvimento profissional e gerencial', 3, 'N', 0.00, 89037001, SYSDATE - 1, SYSDATE - 1);
 
 commit;
 
