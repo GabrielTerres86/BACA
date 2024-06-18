@@ -759,7 +759,7 @@ DECLARE
             vr_ufexceca := 'N';
           END IF;
         
-          OPEN cr_crapcob(pr_cdcooper, vr_nrcnvcob, to_number(cecreddba.masking.numeroConta_char(vr_nrdconta)), vr_nrdocmto);
+          OPEN cr_crapcob(pr_cdcooper, vr_nrcnvcob, vr_nrdconta, vr_nrdocmto);
           FETCH cr_crapcob
             INTO rw_crapcob;
           IF cr_crapcob%NOTFOUND THEN
