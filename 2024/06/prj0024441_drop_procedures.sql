@@ -1,13 +1,12 @@
 BEGIN
-  drop procedure cecred.pc_crps538_carlos;
-  drop procedure cecred.pc_crps538_faba;
-  drop procedure cecred.pc_crps538_faba2;
-  drop procedure cecred.pc_crps538_faba3;
-  drop procedure cecred.pc_crps538_tiago;
-  drop procedure cecred.pc_crps538_versao;
+  EXECUTE IMMEDIATE 'DROP PROCEDURE cecred.pc_crps538_carlos';
+  EXECUTE IMMEDIATE 'DROP PROCEDURE cecred.pc_crps538_faba';
+  EXECUTE IMMEDIATE 'DROP PROCEDURE cecred.pc_crps538_faba2';
+  EXECUTE IMMEDIATE 'DROP PROCEDURE cecred.pc_crps538_faba3';
+  EXECUTE IMMEDIATE 'DROP PROCEDURE cecred.pc_crps538_tiago';
+  EXECUTE IMMEDIATE 'DROP PROCEDURE cecred.pc_crps538_versao';
   commit;
 EXCEPTION
   WHEN OTHERS THEN
     SISTEMA.EXCECAOINTERNA(pr_cdcooper => 3, pr_compleme => 'Drop procedures pc_crps538_*');
-    rollback;
 END;
