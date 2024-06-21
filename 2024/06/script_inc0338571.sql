@@ -660,7 +660,7 @@ BEGIN
   dbms_output.put_line('Script iniciado em ' || to_Char(SYSDATE, 'dd/mm/yyyy hh24:mi:ss'));
   dbms_output.put_line('  ');
 
-  vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '1;1321389;2738;1229,77;0;0|'
+  vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '16;1606169;2738;1229,77;0;0|'
                                               ,pr_delimit => '|');
                                                 
   IF vr_conta.COUNT > 0 THEN
