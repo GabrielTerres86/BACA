@@ -44,6 +44,15 @@ BEGIN
   
   gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv,
                                pr_des_text => vr_linha);
+                               
+  BEGIN        
+    DELETE FROM credito.tbcred_integracao_parametro;
+  EXCEPTION
+    WHEN OTHERS THEN
+      ROLLBACK;
+      vr_dscritic := 'Erro ao deletar tabela de parametro';         
+  END;  
+                                
   LOOP
       BEGIN
         gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv,pr_des_text => vr_linha);
