@@ -12,8 +12,11 @@ BEGIN
          (SELECT b.dtmvtoan
             FROM crapdat b
            WHERE b.cdcooper = a.cdcooper)
-   WHERE a.cdcooper = 14
-     AND a.dtatufin = to_date('14/11/2023', 'dd/mm/rrrr')
+        ,a.dtatufin =
+         (SELECT b.dtmvtoan
+            FROM crapdat b
+           WHERE b.cdcooper = a.cdcooper)
+   WHERE a.cdcooper = 12
      AND a.dtdbaixa IS NULL;
   COMMIT;
 EXCEPTION
