@@ -33,6 +33,11 @@ DECLARE
      WHERE epr.tpemprst = 1
        AND epr.tpdescto = 2
        AND TRUNC(pep.dtultpag) = TRUNC(TO_DATE('09/05/2024', 'dd/mm/yyyy'))
+       AND (epr.cdcooper, epr.nrdconta, epr.nrctremp) in
+           ((16, 99065533, 672757),
+            (16, 99005522, 632972),
+            (1, 96856050, 6839964),
+            (1, 92494668, 7873471))
        AND NOT EXISTS (SELECT 1
               FROM craplem lem
              WHERE lem.cdcooper = pep.cdcooper
@@ -63,6 +68,11 @@ DECLARE
        AND epr.inprejuz = 0
        AND epr.dtprejuz IS NULL
        AND epr.vlsdeved = 0.00
+       AND (epr.cdcooper, epr.nrdconta, epr.nrctremp) in
+           ((16, 99065533, 672757),
+            (16, 99005522, 632972),
+            (1, 96856050, 6839964),
+            (1, 92494668, 7873471))
        AND EXISTS
      (SELECT 1
               FROM crappep pep
@@ -98,6 +108,8 @@ DECLARE
   rw_crapass cr_crapass%ROWTYPE;
 
 BEGIN
+  vr_cdcooper :=0;
+  vr_nrdconta :=0;
   FOR rw_epr IN cr_epr LOOP
   
     IF vr_cdcooper <> rw_epr.cdcooper THEN
