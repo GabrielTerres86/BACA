@@ -21,15 +21,15 @@ Declare
           ,contas.cdcooper     
           ,contas.valor
       from CECRED.crapsld a
-          ,(select 1 as cdcooper,	87677636	as nrdconta, 100.00	as valor from dual 
+          ,(select 1 as cdcooper,	87677636	as nrdconta, 100.00	 as valor from dual 
             union
-            select 1 as cdcooper,	88480674	as nrdconta, 1630.00	as valor from dual 
+            select 1 as cdcooper,	88480674	as nrdconta, 1630.00 as valor from dual 
             union
-            select 1 as cdcooper,	97017671	as nrdconta, 2000.00	as valor from dual ) contas
+            select 1 as cdcooper,	97017671	as nrdconta, 2000.00 as valor from dual ) contas
      WHERE a.nrdconta = contas.nrdconta
        AND a.cdcooper = contas.cdcooper;
 	   
-	     
+	 
 	   
   PROCEDURE pr_atualiza_sld(pr_cdcooper IN NUMBER,
                             pr_nrdconta IN NUMBER,
