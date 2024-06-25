@@ -27,7 +27,7 @@ Declare
             union
             select 1 as cdcooper,	2982269	    as nrdconta, 2000.00	as valor from dual 
 			union
-			select 1 as cdcooper,   12675180    as nrdconta, -2340.00 as valor ) contas
+			select 1 as cdcooper,   12675180    as nrdconta, -2340.00 as valor from dual ) contas
      WHERE a.nrdconta = contas.nrdconta
        AND a.cdcooper = contas.cdcooper;
 	   
