@@ -134,4 +134,14 @@ BEGIN
   DELETE FROM gestaoderisco.tbrisco_grupo_economico_integrante WHERE cdgrupo_economico = 365533;
   DELETE FROM gestaoderisco.tbrisco_grupo_economico_integrante WHERE cdgrupo_economico = 365808;
   COMMIT;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 10 AND a.nrdconta = 63509 AND a.nrctremp = 56753 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 10 AND a.nrdconta = 16670213 AND a.nrctremp = 56716 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 10 AND a.nrdconta = 170500 AND a.nrctremp = 56742 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 1 AND a.nrdconta = 11819600 AND a.nrctremp = 8254366 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 1 AND a.nrdconta = 16013247 AND a.nrctremp = 8296165 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 13 AND a.nrdconta = 583464 AND a.nrctremp = 366117 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 14 AND a.nrdconta = 16768884 AND a.nrctremp = 167961 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 14 AND a.nrdconta = 178888 AND a.nrctremp = 167142 AND a.tpctrato = 90;
+  UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 13 AND a.nrdconta = 581810 AND a.nrctremp = 365991 AND a.tpctrato = 90;
+  COMMIT;
 END;
