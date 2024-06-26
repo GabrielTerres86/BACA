@@ -1,5 +1,6 @@
 BEGIN
   declare 
+  
     vr_literal  VARCHAR2(100);    
     vr_exc_erro EXCEPTION;      
 
