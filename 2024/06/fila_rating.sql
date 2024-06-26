@@ -1260,7 +1260,7 @@ UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND 
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11757710 AND nrctremp = 814825;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11758260 AND nrctremp = 6596490;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11758260 AND nrctremp = 7732885;
-UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11760389 AND nrctremp = 11760389;
+UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null, inrisco_rating = 3 WHERE cdcooper = 1 AND nrdconta = 11760389 AND nrctremp = 11760389;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11762497 AND nrctremp = 6502529;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11762497 AND nrctremp = 6554960;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11762497 AND nrctremp = 6696188;
@@ -2389,7 +2389,7 @@ UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND 
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17978998 AND nrctremp = 7712102;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17979200 AND nrctremp = 812174;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17979366 AND nrctremp = 7723271;
-UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17979366 AND nrctremp = 17979366;
+UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null, inrisco_rating = 8 WHERE cdcooper = 1 AND nrdconta = 17979366 AND nrctremp = 17979366;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17980410 AND nrctremp = 811234;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17980569 AND nrctremp = 811104;
 UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17982154 AND nrctremp = 813699;
