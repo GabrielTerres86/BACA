@@ -1,14 +1,9 @@
--- Created on 26/06/2024 by F0034564 
 BEGIN
   declare 
-    -- Local variables here
-    vr_literal  VARCHAR2(100);
-    
-    --Variaveis Excecao
+    vr_literal  VARCHAR2(100);    
     vr_exc_erro EXCEPTION;      
 
-  begin
-    -- Test statements here 
+  begin    
     vr_literal:= NULL;
     BEGIN
       UPDATE crapaut 
@@ -17,8 +12,7 @@ BEGIN
      
        COMMIT;
     EXCEPTION
-       WHEN Others THEN  
-       --Levantar Excecao
+       WHEN Others THEN
        RAISE vr_exc_erro;
 	  END;  
   end;
