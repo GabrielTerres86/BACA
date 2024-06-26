@@ -150,8 +150,6 @@ BEGIN
                                            pr_cdcritic => vr_cdcritic,
                                            pr_dscritic => vr_dscritic);
   
-    DBMS_OUTPUT.PUT_LINE('Codigo Erro: ' || vr_cdcritic || ', Descricao Erro: ' || vr_dscritic);
-  
   END LOOP;
 
   vr_cdcooper := 0;
