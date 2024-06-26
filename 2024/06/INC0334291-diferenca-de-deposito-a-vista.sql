@@ -34,20 +34,22 @@ DECLARE
        AND epr.tpdescto = 2
        AND TRUNC(pep.dtultpag) = TRUNC(TO_DATE('09/05/2024', 'dd/mm/yyyy'))
        AND (epr.cdcooper, epr.nrdconta, epr.nrctremp) in
-           ((16, 99065533, 672757),
-            (16, 99005522, 632972),
-            (1, 96856050, 6839964),
-            (1, 92494668, 7873471))
-       AND NOT EXISTS (SELECT 1
-              FROM cecred.craplem lem
-             WHERE lem.cdcooper = pep.cdcooper
-               AND lem.nrdconta = pep.nrdconta
-               AND lem.nrctremp = pep.nrctremp
-               AND lem.nrparepr = pep.nrparepr)
+           ((16, 934402, 672757),
+            (16, 994413, 632972),
+            (1, 3143880, 6839964),
+            (1, 7505272, 7873471));
+  AND NOT EXISTS(
+    SELECT 1
+      FROM cecred.craplem lem
+     WHERE lem.cdcooper = pep.cdcooper
+       AND lem.nrdconta = pep.nrdconta
+       AND lem.nrctremp = pep.nrctremp
+       AND lem.nrparepr = pep.nrparepr)
      ORDER BY epr.cdcooper
              ,epr.nrdconta
              ,epr.nrctremp
              ,pep.nrparepr;
+
 
   CURSOR cr_liquidado IS
     SELECT epr.cdcooper
@@ -69,24 +71,25 @@ DECLARE
        AND epr.dtprejuz IS NULL
        AND epr.vlsdeved = 0.00
        AND (epr.cdcooper, epr.nrdconta, epr.nrctremp) in
-           ((16, 99065533, 672757),
-            (16, 99005522, 632972),
-            (1, 96856050, 6839964),
-            (1, 92494668, 7873471))
-       AND EXISTS
-     (SELECT 1
-              FROM cecred.crappep pep
-             WHERE pep.cdcooper = epr.cdcooper
-               AND pep.nrdconta = epr.nrdconta
-               AND pep.nrctremp = epr.nrctremp
-               AND TRUNC(pep.dtultpag) = TRUNC(TO_DATE('09/05/2024', 'dd/mm/yyyy')))
+           ((16, 934402, 672757),
+            (16, 994413, 632972),
+            (1, 3143880, 6839964),
+            (1, 7505272, 7873471));
+  AND EXISTS(
+    SELECT 1
+      FROM cecred.crappep pep
+     WHERE pep.cdcooper = epr.cdcooper
+       AND pep.nrdconta = epr.nrdconta
+       AND pep.nrctremp = epr.nrctremp
+       AND TRUNC(pep.dtultpag) = TRUNC(TO_DATE('09/05/2024', 'dd/mm/yyyy')))
      ORDER BY epr.cdcooper
              ,epr.nrdconta
              ,epr.nrctremp;
 
+
   vr_cdhistor craplem.cdhistor%TYPE;
   vr_vllanmto cecred.craplem.vllanmto%TYPE := 0;
-  
+
   vr_cdcritic INTEGER;
   vr_dscritic VARCHAR2(32767);
 
@@ -106,8 +109,8 @@ DECLARE
   rw_crapass cr_crapass%ROWTYPE;
 
 BEGIN
-  vr_cdcooper :=0;
-  vr_nrdconta :=0;
+  vr_cdcooper := 0;
+  vr_nrdconta := 0;
   FOR rw_epr IN cr_epr LOOP
   
     IF vr_cdcooper <> rw_epr.cdcooper THEN
