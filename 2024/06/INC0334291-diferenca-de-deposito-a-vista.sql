@@ -13,18 +13,18 @@ DECLARE
           ,epr.cdorigem
           ,epr.inliquid
           ,epr.dtliquid
-      FROM crapepr epr
-     INNER JOIN crappep pep
+      FROM cecred.crapepr epr
+     INNER JOIN cecred.crappep pep
         ON pep.cdcooper = epr.cdcooper
        AND pep.nrdconta = epr.nrdconta
        AND pep.nrctremp = epr.nrctremp
-      LEFT JOIN tbepr_consig_parcelas_tmp cpt
+      LEFT JOIN cecred.tbepr_consig_parcelas_tmp cpt
         ON cpt.cdcooper = pep.cdcooper
        AND cpt.nrdconta = pep.nrdconta
        AND cpt.nrctremp = pep.nrctremp
        AND cpt.nrparcela = pep.nrparepr
        AND TRUNC(cpt.dtmovimento) = TRUNC(pep.dtultpag)
-      LEFT JOIN tbepr_consignado_pagamento cp
+      LEFT JOIN cecred.tbepr_consignado_pagamento cp
         ON cp.cdcooper = pep.cdcooper
        AND cp.nrdconta = pep.nrdconta
        AND cp.nrctremp = pep.nrctremp
@@ -39,7 +39,7 @@ DECLARE
             (1, 96856050, 6839964),
             (1, 92494668, 7873471))
        AND NOT EXISTS (SELECT 1
-              FROM craplem lem
+              FROM cecred.craplem lem
              WHERE lem.cdcooper = pep.cdcooper
                AND lem.nrdconta = pep.nrdconta
                AND lem.nrctremp = pep.nrctremp
@@ -60,7 +60,7 @@ DECLARE
           ,epr.cdorigem
           ,epr.inliquid
           ,epr.dtliquid
-      FROM crapepr epr
+      FROM cecred.crapepr epr
      WHERE epr.tpemprst = 1
        AND epr.tpdescto = 2
        AND epr.inliquid = 1
@@ -75,7 +75,7 @@ DECLARE
             (1, 92494668, 7873471))
        AND EXISTS
      (SELECT 1
-              FROM crappep pep
+              FROM cecred.crappep pep
              WHERE pep.cdcooper = epr.cdcooper
                AND pep.nrdconta = epr.nrdconta
                AND pep.nrctremp = epr.nrctremp
@@ -86,12 +86,10 @@ DECLARE
 
   vr_cdhistor craplem.cdhistor%TYPE;
   vr_vllanmto cecred.craplem.vllanmto%TYPE := 0;
-
-  -- Variáveis para armazenar os valores de saída da procedure
+  
   vr_cdcritic INTEGER;
   vr_dscritic VARCHAR2(32767);
 
-  -- outras variaveis para otimização
   vr_cdcooper cecred.crapepr.cdcooper%TYPE := NULL;
   vr_nrdconta cecred.crapepr.nrdconta%TYPE := NULL;
   vr_nrctremp cecred.crapepr.nrctremp%TYPE := NULL;
@@ -199,8 +197,6 @@ BEGIN
       
       END IF;
     
-      -- Determina qual historico usar dependendo se o saldo a regularizar
-      -- for positivo ou negativo.
       IF NVL(vr_vllanmto, 0) < 0 THEN
         vr_cdhistor := 3918;
         vr_vllanmto := vr_vllanmto * -1;
