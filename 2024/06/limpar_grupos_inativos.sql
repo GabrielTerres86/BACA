@@ -144,4 +144,7 @@ BEGIN
   UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 14 AND a.nrdconta = 178888 AND a.nrctremp = 167142 AND a.tpctrato = 90;
   UPDATE cecred.tbrisco_operacoes a SET a.dhtransmissao = NULL WHERE a.cdcooper = 13 AND a.nrdconta = 581810 AND a.nrctremp = 365991 AND a.tpctrato = 90;
   COMMIT;
+  UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 17979366 AND nrctremp = 17979366;
+  UPDATE cecred.tbrisco_operacoes SET dhtransmissao = null WHERE cdcooper = 1 AND nrdconta = 11760389 AND nrctremp = 11760389;
+  commit;
 END;
