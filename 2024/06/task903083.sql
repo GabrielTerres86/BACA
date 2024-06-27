@@ -4,5 +4,10 @@ BEGIN
    where cdacesso = 'PESSOA_LIGADA_CNSLH_FSCL'
      and cdcooper = 11;
      
+  update cecred.crapprm 
+     set dsvlrprm = ',19453302872,00744768900,02577766998,23443332900,'
+   where cdacesso = 'PESSOA_LIGADA_CNSLH_FSCL'
+     and cdcooper = 7;
+     
   COMMIT;
 END;
