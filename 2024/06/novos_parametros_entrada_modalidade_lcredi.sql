@@ -18,7 +18,7 @@ BEGIN
                        NRSEQRDR)
               VALUES ('CONSMOD_LCREDI', 
                       'TELA_LCREDI', 
-                      'pc_busca_modalidade_web', 
+                      'pc_busca_mod_lcredi_web', 
                       'pr_nrregist, pr_nriniseq, pr_dsoperac', 
                       483);
      
@@ -27,4 +27,5 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
+    RAISE_application_error(-20500, SQLERRM);
 END;
