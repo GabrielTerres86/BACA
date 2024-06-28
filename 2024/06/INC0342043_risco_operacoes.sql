@@ -68,7 +68,7 @@ BEGIN
             o.qtparcelas_controle_riscomelhora,
             o.dhalteracao,
             NULL dhtransmissao
-       from tbrisco_operacoes o , squad_riscos.craplim l        
+       from tbrisco_operacoes o , craplim l        
       WHERE o.cdcooper = 5
       AND l.cdcooper = o.cdcooper
       AND l.nrdconta = o.nrdconta
