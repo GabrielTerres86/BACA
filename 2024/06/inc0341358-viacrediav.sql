@@ -25,7 +25,7 @@ DECLARE
          AND lct.cdcooper = cot.cdcooper 
          AND lct.nrdconta = cot.nrdconta
          AND lct.cdcooper = 16
-         and lct.nrdconta = 99939754
+         and lct.nrdconta = 60186
     group by lct.nrdconta,cot.vldcotas,cot.CDCOOPER) a;
     rw_crapcot_base cr_crapcot_base%ROWTYPE;  
     
