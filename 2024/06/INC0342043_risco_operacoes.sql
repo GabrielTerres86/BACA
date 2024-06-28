@@ -69,13 +69,13 @@ BEGIN
             o.dhalteracao,
             NULL dhtransmissao
        from tbrisco_operacoes o , craplim l        
-      WHERE o.cdcooper = 5
-      AND l.cdcooper = o.cdcooper
-      AND l.nrdconta = o.nrdconta
-      AND l.nrctrlim = o.nrctremp
-      AND l.TPCTRLIM = 1
-      AND l.INSITLIM = 2
-        AND o.nrdconta IN( 234478,16723260,17345855)
+        WHERE o.cdcooper = 5
+        AND l.cdcooper = o.cdcooper
+        AND l.nrdconta = o.nrdconta
+        AND l.nrctrlim = o.nrctremp
+        AND l.tpctrlim = 1
+        AND l.insitlim = 2
+        AND o.nrdconta IN (234478,16723260,17345855)
         AND o.tpctrato = 1;
     
     COMMIT;
