@@ -186,7 +186,7 @@ BEGIN
           OR (o.cdcooper = 5 AND o.nrdconta = 17075955)
           OR (o.cdcooper = 5 AND o.nrdconta = 17549108)
           OR (o.cdcooper = 5 AND o.nrdconta = 18256040)
-          OR (o.cdcooper = 14 AND o.nrdconta = 401528))
+          OR (o.cdcooper = 14 AND o.nrdconta = 401528));
     
     COMMIT;
 
