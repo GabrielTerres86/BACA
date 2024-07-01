@@ -1,11 +1,10 @@
 DECLARE
-  vr_cooperativa  INTEGER := 9;
-  vr_conta        INTEGER := 81450303;
-  vr_cartao       NUMBER(25) := 6393500012985783;
-  vr_nrctrcrd     INTEGER := 85783;
+  vr_cooperativa  INTEGER := 10;
+  vr_conta        INTEGER := 81417799;
+  vr_cartao       NUMBER(25) := 5158940000185500;
+  vr_nrctrcrd     INTEGER := 85500;
   vr_cpf_titular  NUMBER(20);
   vr_nome_titular VARCHAR2(40) := 'CARTAO DO LABORATORIO';
-
 
   vr_eh_cartao_pj        BOOLEAN := TRUE;
   vr_admistradora_cartao INTEGER;
