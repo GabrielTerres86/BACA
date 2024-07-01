@@ -1,9 +1,14 @@
 DECLARE
-  vr_cooperativa INTEGER := 9;
-  vr_conta       INTEGER := 81684061;
-  vr_cartao      NUMBER(25) := 5588190184171591;
-  vr_nrctrcrd    INTEGER := 90999;
-  vr_cpf_titular NUMBER(20);
+  vr_cooperativa  INTEGER := 9;
+  vr_conta        INTEGER := 81450303;
+  vr_cartao       NUMBER(25) := 6393500012985783;
+  vr_nrctrcrd     INTEGER := 85783;
+  vr_cpf_titular  NUMBER(20);
+  vr_nome_titular VARCHAR2(40) := 'CARTAO DO LABORATORIO';
+
+
+  vr_eh_cartao_pj        BOOLEAN := TRUE;
+  vr_admistradora_cartao INTEGER;
 
   vr_existe_craw BOOLEAN := FALSE;
   vr_existe_crap BOOLEAN := FALSE;
@@ -21,6 +26,12 @@ DECLARE
   rw_crapcrd cr_crapcrd%ROWTYPE;
 
 BEGIN
+
+  IF vr_eh_cartao_pj THEN
+    vr_admistradora_cartao := 15;
+  ELSE
+    vr_admistradora_cartao := 12;
+  END IF;
 
   OPEN cr_crawcrd;
   FETCH cr_crawcrd
@@ -41,14 +52,14 @@ BEGIN
   IF NOT vr_existe_craw THEN
     INSERT INTO crawcrd
       (NRCRCARD,NRDCONTA,NMTITCRD,NRCPFTIT,CDGRAUPR,VLSALARI,VLSALCON,VLOUTRAS,VLALUGUE,DDDEBITO,CDLIMCRD,DTPROPOS,CDOPERAD,INSITCRD,NRCTRCRD,DTMVTOLT,CDAGENCI,CDBCCXLT,NRDOLOTE,NRSEQDIG,DTSOLICI,DTENTREG,DTVALIDA,DTANUIDA
-       ,VLANUIDA,INANUIDA,QTANUIDA,QTPARCAN,DTLIBERA,DTCANCEL,CDMOTIVO,NRPROTOC,DTENTR2V,TPCARTAO,CDADMCRD,DTNASCCR,NRDOCCRD,DTULTVAL,NRCTAAV1,FLGIMPNP,NMDAVAL1,DSCPFAV1,DSENDAV1##1,DSENDAV1##2,NRCTAAV2,NMDAVAL2,DSCPFAV2
-       ,DSENDAV2##1,DSENDAV2##2,DSCFCAV1,DSCFCAV2,NMCJGAV1,NMCJGAV2,DTSOL2VI,VLLIMDLR,CDCOOPER,FLGCTITG,DTECTITG,FLGDEBCC,FLGRMCOR,FLGPROTE,FLGMALAD,NRCCTITG,DT2VIASN,NRREPINC,NRREPENT,NRREPLIM,NRREPVEN,NRREPSEN,NRREPCAR
-       ,NRREPCAN,DDDEBANT,NMEXTTTL,TPENVCRD,TPDPAGTO,VLLIMCRD,NMEMPCRD,FLGPRCRD,NRSEQCRD,CDORIGEM,FLGDEBIT,DTREJEIT,CDOPEEXC,CDAGEEXC,DTINSEXC,CDOPEORI,CDAGEORI,DTINSORI,DTREFATU,INSITDEC,DTAPROVA,DSPROTOC,DSJUSTIF,CDOPEENT
-       ,INUPGRAD,CDOPESUP,DSOBSCMT,DTENVEST,DTENEFES,DSENDENV,IDLIMITE,IDCOMPON)
+      ,VLANUIDA,INANUIDA,QTANUIDA,QTPARCAN,DTLIBERA,DTCANCEL,CDMOTIVO,NRPROTOC,DTENTR2V,TPCARTAO,CDADMCRD,DTNASCCR,NRDOCCRD,DTULTVAL,NRCTAAV1,FLGIMPNP,NMDAVAL1,DSCPFAV1,DSENDAV1##1,DSENDAV1##2,NRCTAAV2,NMDAVAL2,DSCPFAV2
+      ,DSENDAV2##1,DSENDAV2##2,DSCFCAV1,DSCFCAV2,NMCJGAV1,NMCJGAV2,DTSOL2VI,VLLIMDLR,CDCOOPER,FLGCTITG,DTECTITG,FLGDEBCC,FLGRMCOR,FLGPROTE,FLGMALAD,NRCCTITG,DT2VIASN,NRREPINC,NRREPENT,NRREPLIM,NRREPVEN,NRREPSEN,NRREPCAR
+      ,NRREPCAN,DDDEBANT,NMEXTTTL,TPENVCRD,TPDPAGTO,VLLIMCRD,NMEMPCRD,FLGPRCRD,NRSEQCRD,CDORIGEM,FLGDEBIT,DTREJEIT,CDOPEEXC,CDAGEEXC,DTINSEXC,CDOPEORI,CDAGEORI,DTINSORI,DTREFATU,INSITDEC,DTAPROVA,DSPROTOC,DSJUSTIF,CDOPEENT
+      ,INUPGRAD,CDOPESUP,DSOBSCMT,DTENVEST,DTENEFES,DSENDENV,IDLIMITE,IDCOMPON)
     VALUES
       (vr_cartao
       ,vr_conta
-      ,'LAIS CARDOSO '
+      ,vr_nome_titular
       ,0
       ,5
       ,1471.04
@@ -80,7 +91,7 @@ BEGIN
       ,0.00
       ,NULL
       ,2
-      ,12
+      ,vr_admistradora_cartao
       ,to_date('16-10-1990', 'dd-mm-yyyy')
       ,'92538354548'
       ,NULL
@@ -155,12 +166,12 @@ BEGIN
   
     INSERT INTO crapcrd
       (NRDCONTA,NRCRCARD,NRCPFTIT,NMTITCRD,DDDEBITO,CDLIMCRD,DTVALIDA,NRCTRCRD,DTCANCEL,CDMOTIVO,NRPROTOC,DTANUCRD,VLANUCRD,INANUCRD,CDADMCRD,TPCARTAO,DTULTVAL,VLLIMDLR,CDCOOPER,DTALTVAL,DTALTLIM,DTALTLDL,DTALTDDB,INACETAA
-       ,QTSENERR,CDOPETAA,DTACETAA,DSSENTAA,FLGDEBIT,DSSENPIN,CDOPEORI,CDAGEORI,DTINSORI,DTREFATU,FLGPROVI,DTASSELE,DTASSSUP)
+      ,QTSENERR,CDOPETAA,DTACETAA,DSSENTAA,FLGDEBIT,DSSENPIN,CDOPEORI,CDAGEORI,DTINSORI,DTREFATU,FLGPROVI,DTASSELE,DTASSSUP)
     VALUES
       (vr_conta
       ,vr_cartao
       ,0
-      ,'LAIS CARDOSO '
+      ,vr_nome_titular
       ,32
       ,0
       ,to_date('30-04-2025', 'dd-mm-yyyy')
@@ -171,7 +182,7 @@ BEGIN
       ,NULL
       ,0.00
       ,0
-      ,12
+      ,vr_admistradora_cartao
       ,2
       ,NULL
       ,0.00
@@ -204,8 +215,8 @@ BEGIN
                     AND a.nrcrcard <> vr_cartao) LOOP
     vr_cpf_titular := cartao.nrcpftit;
   END LOOP;
-  
-  IF vr_cpf_titular IS NULL THEN
+
+  IF vr_cpf_titular IS NULL AND NOT vr_eh_cartao_pj THEN
     FOR titular IN (SELECT a.nrcpfcgc
                       FROM crapttl a
                      WHERE a.cdcooper = vr_cooperativa
@@ -213,6 +224,18 @@ BEGIN
                        AND a.idseqttl = 1) LOOP
       vr_cpf_titular := titular.nrcpfcgc;
     END LOOP;
+  END IF;
+
+  IF vr_cpf_titular IS NULL AND vr_eh_cartao_pj THEN
+    FOR titular IN (SELECT snh.nrcpfcgc
+                      FROM crapsnh snh
+                     WHERE snh.cdcooper = vr_cooperativa
+                       AND snh.nrdconta = vr_conta
+                       AND snh.idseqttl = 1
+                       AND snh.tpdsenha = 3) LOOP
+      vr_cpf_titular := titular.nrcpfcgc;
+    END LOOP;
+  
   END IF;
 
   IF vr_cpf_titular IS NULL THEN
@@ -225,12 +248,14 @@ BEGIN
         ,card.nrcpftit = vr_cpf_titular
         ,card.qtsenerr = 0
         ,card.inacetaa = 1
+        ,card.cdadmcrd = vr_admistradora_cartao
    WHERE card.nrcrcard = vr_cartao;
 
   UPDATE crawcrd card
      SET card.cdcooper = vr_cooperativa
         ,card.nrdconta = vr_conta
         ,card.nrcpftit = vr_cpf_titular
+        ,card.cdadmcrd = vr_admistradora_cartao
    WHERE card.nrcrcard = vr_cartao;
 
   COMMIT;
