@@ -9,6 +9,11 @@ begin
                                 ,pr_dtrefere => '30/06/2024'
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
-                                
-   dbms_output.put_line('vr_cdcritic: ' || vr_cdcritic || ' = ' || vr_dscritic);
+
+   IF nvl(vr_cdcritic,0) > 0 or TRIM(vr_dscritic) IS not NULL THEN
+     dbms_output.put_line('vr_cdcritic: ' || vr_cdcritic || ' = ' || vr_dscritic);
+     ROLLBACK;
+   ELSE
+     COMMIT;
+   END IF;
 end;
