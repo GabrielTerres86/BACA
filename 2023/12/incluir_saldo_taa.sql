@@ -2,7 +2,7 @@ BEGIN
 	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	VALUES
-	  (to_date('26-06-2024', 'dd-mm-yyyy'),161,0.00,0.00,9);
+	  (to_date('04-07-2024', 'dd-mm-yyyy'),169,1000.00,1000.00,9);
 
 	COMMIT; 
 	
