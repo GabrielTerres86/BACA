@@ -73,5 +73,7 @@ BEGIN
 
     END LOOP;
   END LOOP;
-
+  
+  COMMIT;
+  
 END;
