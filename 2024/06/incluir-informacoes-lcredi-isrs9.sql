@@ -43,7 +43,24 @@ BEGIN
   gene0001.pc_escr_linha_arquivo(vr_ind_arquivr,'CODIGO;OBSERVACAO');
   
   gene0001.pc_le_linha_arquivo(pr_utlfileh => vr_ind_arquiv,
-                               pr_des_text => vr_linha);                              
+                               pr_des_text => vr_linha);    
+                               
+  BEGIN        
+   UPDATE cecred.craplcr a 
+   SET a.tppessoa = CASE 
+                      WHEN a.cdsubmod IN (02,03) THEN 1
+                        WHEN a.cdsubmod IN (05,06,15,16,17) THEN 2
+                          ELSE 0
+                            END,
+       a.cdconvivencia = NULL,
+       a.cdmigracao = NULL;                     
+                             
+  COMMIT;
+  EXCEPTION
+   WHEN OTHERS THEN
+     ROLLBACK;
+     vr_dscritic := 'Erro ao atulizar tipo de pessoa na craplcr';         
+  END;                                                          
                                 
   LOOP
       BEGIN
@@ -93,23 +110,7 @@ BEGIN
    END LOOP;
    gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivr); 
    COMMIT;
-   
-   
-   BEGIN        
-     UPDATE cecred.craplcr a 
-     SET a.tppessoa = CASE 
-                        WHEN a.cdsubmod IN (02,03) THEN 1
-                          WHEN a.cdsubmod IN (05,06,15,16,17) THEN 2
-                            ELSE 0
-                              END; 
-   COMMIT;
-   EXCEPTION
-     WHEN OTHERS THEN
-       ROLLBACK;
-       vr_dscritic := 'Erro ao atulizar tipo de pessoa na craplcr';         
-   END; 
-   
-   
+     
 EXCEPTION 
   WHEN OTHERS THEN
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivr); 
