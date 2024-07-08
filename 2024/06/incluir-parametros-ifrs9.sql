@@ -9,8 +9,8 @@ DECLARE
   vr_campo           GENE0002.typ_split;
   vr_texto_padrao    VARCHAR2(200); 
       
-  vr_cdconvivencia   credito.tbcred_integracao_parametro.cdconvivencia%TYPE;
-  vr_nmproduto       credito.tbcred_integracao_parametro.nmproduto_convivencia%TYPE;
+  vr_cdproduto   credito.tbcred_integracao_parametro.cdproduto%TYPE;
+  vr_nmproduto       credito.tbcred_integracao_parametro.nmproduto%TYPE;
   vr_cdacao          credito.tbcred_integracao_parametro.cdacao%TYPE;
   vr_cdfila          credito.tbcred_integracao_parametro.cdfila%TYPE;
   vr_nrope           credito.tbcred_integracao_parametro.nrope%TYPE;
@@ -64,24 +64,24 @@ BEGIN
       vr_cont  := vr_cont+1;
       vr_campo := GENE0002.fn_quebra_string(pr_string => vr_linha, pr_delimit => ';');
             
-      vr_cdconvivencia := GENE0002.fn_char_para_number(vr_campo(1));
+      vr_cdproduto := GENE0002.fn_char_para_number(vr_campo(1));
       vr_nmproduto     := vr_campo(2);
       vr_cdacao        := vr_campo(3);
       vr_cdfila        := vr_campo(4);
       vr_nrope         := GENE0002.fn_char_para_number(vr_campo(5));
       vr_payload       := vr_campo(6);
       
-      vr_texto_padrao := vr_cdconvivencia || ';' ||
+      vr_texto_padrao := vr_cdproduto || ';' ||
                          vr_nmproduto || ';';      
       
       BEGIN        
-        INSERT INTO credito.tbcred_integracao_parametro (cdconvivencia,
-                                                         nmproduto_convivencia,
+        INSERT INTO credito.tbcred_integracao_parametro (cdproduto,
+                                                         nmproduto,
                                                          cdacao,
                                                          cdfila,
                                                          nrope,
                                                          dspayload)
-        VALUES(vr_cdconvivencia,
+        VALUES(vr_cdproduto,
                vr_nmproduto,    
                vr_cdacao,       
                vr_cdfila,       
@@ -89,7 +89,7 @@ BEGIN
                vr_payload);
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir linha: '||vr_cont||' | Produto: '||vr_cdconvivencia;         
+          vr_dscritic := 'Erro ao inserir linha: '||vr_cont||' | Produto: '||vr_cdproduto;         
       END;                                                                                                                                                          
      
       IF vr_dscritic IS NOT NULL THEN
