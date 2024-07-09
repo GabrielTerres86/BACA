@@ -191,7 +191,7 @@ DECLARE
         BEGIN
           vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
                          || 'PCPS0002.pc_proc_xml_APCS104'
-                         || ' --> NU Portabilidade já existe na base de dados: '||rg_dadosret.nrnuport;
+                         || ' -'||'-> NU Portabilidade já existe na base de dados: '||rg_dadosret.nrnuport;
           
           BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3
                                     ,pr_ind_tipo_log => 1
@@ -337,9 +337,9 @@ DECLARE
           BEGIN
             vr_dsmsglog := to_char(sysdate,vr_dsmasklog)||' - '
                            || 'PCPS0002.pc_proc_xml_APCS102'
-                           || ' --> Erro ao incluir registro de portabilidade: '||rg_dadosret.nrnuport;
+                           || ' -'||'-> Erro ao incluir registro de portabilidade: '||rg_dadosret.nrnuport;
             
-            BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3 -- LOG da Central
+            BTCH0001.pc_gera_log_batch(pr_cdcooper     => 3
                                       ,pr_ind_tipo_log => 1
                                       ,pr_des_log      => vr_dsmsglog
                                       ,pr_nmarqlog     => vr_dsarqlg);
