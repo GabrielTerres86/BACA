@@ -1,6 +1,6 @@
 DECLARE
-  vr_cooperativa  INTEGER := 10;
-  vr_conta        INTEGER := 81358016;
+  vr_cooperativa  INTEGER := 9;
+  vr_conta        INTEGER := 81613970;
   vr_cartao       NUMBER(25) := 6393500065179583;
   vr_nrctrcrd     INTEGER := 79583;
   vr_cpf_titular  NUMBER(20);
