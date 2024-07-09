@@ -1,0 +1,13 @@
+BEGIN
+  
+  UPDATE CECRED.crapcot
+    SET vldcotas = 1000
+  WHERE cdcooper = 2
+    AND nrdconta = 18708013;
+  
+  COMMIT;
+  
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE_APPLICATION_ERROR(-20000, 'ERRO: ' || SQLERRM);
+END;
