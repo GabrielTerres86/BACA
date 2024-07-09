@@ -1,0 +1,8 @@
+BEGIN
+
+UPDATE CECRED.crapaca a
+   SET a.nmproced = 'PC_VALIDA_INCLUSAO_MANUAL_PJ'
+ WHERE a.nmdeacao = 'VALIDA_INCLUSAO_MANUAL_PJ';
+
+COMMIT;
+END;
