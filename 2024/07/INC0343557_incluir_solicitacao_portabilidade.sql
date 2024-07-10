@@ -121,7 +121,7 @@ DECLARE
     CURSOR cr_portab(pr_nrnuport  tbcc_portabilidade_envia.nrnu_portabilidade%TYPE) IS
       SELECT t.nrnu_portabilidade
            , ROWID   dsdrowid
-        FROM tbcc_portabilidade_envia t
+        FROM cecred.tbcc_portabilidade_envia t
        WHERE t.nrnu_portabilidade = pr_nrnuport;
     rg_portab   cr_portab%ROWTYPE;
     
@@ -130,8 +130,8 @@ DECLARE
            , t.nrdconta
            , x.cdmodalidade_tipo cdmodali
            , COUNT(*) OVER (PARTITION BY 1) idqtdreg
-        FROM tbcc_tipo_conta x 
-           , crapass         t
+        FROM cecred.tbcc_tipo_conta x 
+           , cecred.crapass         t
        WHERE t.inpessoa = x.inpessoa
          AND t.cdtipcta = x.cdtipo_conta
          AND t.nrcpfcgc = pr_nrcpfcgc
@@ -142,7 +142,7 @@ DECLARE
                      ,pr_nrdconta  crapttl.nrdconta%TYPE) IS
       SELECT t.nrcpfemp
            , t.nmextemp
-        FROM crapttl t
+        FROM cecred.crapttl t
        WHERE t.cdcooper = pr_cdcooper
          AND t.nrdconta = pr_nrdconta
          AND t.idseqttl = 1;
@@ -164,7 +164,6 @@ DECLARE
     vr_cdcodrep     tbcc_portabilidade_recebe.cdmotivo%TYPE;
     vr_dtavalia     tbcc_portabilidade_recebe.dtavaliacao%TYPE;
     vr_cdoperad     tbcc_portabilidade_recebe.cdoperador%TYPE;
-    vr_exc_erro     EXCEPTION;
     
   BEGIN
     
@@ -280,7 +279,7 @@ DECLARE
       
       BEGIN
         
-        INSERT INTO tbcc_portabilidade_recebe
+        INSERT INTO cecred.tbcc_portabilidade_recebe
                           (nrnu_portabilidade
                           ,cdcooper
                           ,nrdconta
@@ -348,7 +347,7 @@ DECLARE
               NULL;
           END;
           
-          RAISE vr_exc_erro;
+          RAISE_APPLICATION_ERROR(-20002,'Erro na rotina PCPS.pc_proc_xml_APCS102. ' ||vr_dscritic);
       END;
     
     END LOOP;
