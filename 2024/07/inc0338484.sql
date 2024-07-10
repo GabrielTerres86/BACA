@@ -120,7 +120,7 @@ BEGIN
                                                pr_tplotmov => 5,
                                                pr_nrdolote => 600031,
                                                pr_nrdconta => vr_nrdconta,
-                                               pr_cdhistor => 3919,
+                                               pr_cdhistor => 3026,
                                                pr_nrctremp => vr_nrctremp,
                                                pr_vllanmto => rw_pag.vlparepr,
                                                pr_dtpagemp => rw_crapdat.dtmvtolt,
