@@ -77,10 +77,9 @@ INSERT INTO cecred.crapsda (nrdconta,
               vlsrdcpo, 
               vlsdcota, 
               vlblqjud
-             FROM crapsda
-             WHERE dtmvtolt = '09/05/2024'
+             FROM cecred.crapsda
+             WHERE dtmvtolt = to_date('09/05/2024','DD/MM/RRRR')
                    AND cdcooper = 1
                    AND nrdconta = 99914492;
-
 commit;
 end;
