@@ -44,6 +44,13 @@ BEGIN
     RAISE vr_exc_saida;
   END IF; 
   
+  
+  UPDATE cecred.crapbdt a
+        SET a.insitbdt = 4
+      WHERE a.cdcooper = vr_cdcooper
+        AND a.nrdconta = vr_nrdconta
+        AND a.nrborder = vr_nrborder;
+
   COMMIT;
 
 EXCEPTION
