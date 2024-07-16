@@ -3,7 +3,9 @@ DECLARE
   vr_nmdireto           VARCHAR2(100);
   vr_nmarquiv           VARCHAR2(50) := 'INC0332449_na.csv';
   vr_input_file         UTL_FILE.FILE_TYPE;
+
   vr_nmarqbkp           VARCHAR2(50) := 'INC0332449_ajusta_dtvig_avt_ROLLBACK';
+  
   vr_ind_arquiv         utl_file.file_type;
   vr_nmarqlog           VARCHAR2(50) := 'INC0332449_ajusta_dtvig_avt_relat_exec.txt';
   vr_ind_arqlog         utl_file.file_type;
@@ -73,7 +75,7 @@ BEGIN
   gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'CDCOOPER;NRDCONTA;NRCTREMP;NRCPFCGC;NRDCTATO;DTADMSOC;DTVALIDA;ROWID_AJUSTAR;STATUS LOG;DETALHES');
   
   gene0001.pc_escr_linha_arquivo(vr_ind_arquiv, 'BEGIN');
-  gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'InÌcio: ' || TO_CHAR(SYSDATE, 'DD/MM/RRRR HH24:MI:SS') );
+  gene0001.pc_escr_linha_arquivo(vr_ind_arqlog, 'In√≠cio: ' || TO_CHAR(SYSDATE, 'DD/MM/RRRR HH24:MI:SS') );
   vr_count := 0;
   
   OPEN cr_dados;
@@ -153,6 +155,6 @@ EXCEPTION
     
     ROLLBACK;
     
-    RAISE_APPLICATION_ERROR(-20004, 'ERRO N√O TRATADO: ' || SQLERRM);
+    RAISE_APPLICATION_ERROR(-20004, 'ERRO N√ÉO TRATADO: ' || SQLERRM);
     
 END;
