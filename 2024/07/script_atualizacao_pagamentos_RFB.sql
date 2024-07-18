@@ -9,9 +9,9 @@ BEGIN
   UPDATE tbconv_remessa_pagfor rem
           SET rem.nmarquivo_serpro         = 'K3244.K05438BA.B0850316.D240717.H000703',
               rem.dhenvio_remessa_serpro   = to_date('16/07/2024 23:00:01', 'DD/MM/YYYY HH245:mi:ss'),
-              rem.cdstatus_remessa_serpro  = 1, -- Enviado com sucesso
+              rem.cdstatus_remessa_serpro  = 1,
               rem.idremessa_serpro         = 316
-        WHERE TRUNC(rem.DHENVIO_REMESSA)           = ('16/07/2024') -- gerado    hoje 
+        WHERE TRUNC(rem.DHENVIO_REMESSA)           = ('16/07/2024')
    AND rem.CDCONVENIO_PAGFOR = 'RFB.%';         
   COMMIT;
 END;
