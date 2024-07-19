@@ -55,7 +55,11 @@ BEGIN
 
 EXCEPTION
   WHEN vr_exc_saida THEN
-    ROLLBACK;
+       vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+       dbms_output.put_line(vr_dscritic);
+       ROLLBACK;
   WHEN OTHERS THEN
-    ROLLBACK;
+       vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
+       dbms_output.put_line(vr_dscritic);
+       ROLLBACK;		
 END;
