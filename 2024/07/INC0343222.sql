@@ -82,7 +82,7 @@ DECLARE
     vr_tbaltdel    vr_tpaltdel;
     vr_tbaltupd    vr_tpaltupd;
     vr_dsindice    VARCHAR2(50);
-    vr_dtmvtolt    DATE := datascooperativa(7).dtmvtolt;
+    vr_dtmvtolt    DATE := datascooperativa(14).dtmvtolt;
     vr_lgrowid     ROWID;
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(2000);
