@@ -16,7 +16,7 @@ BEGIN
                                      pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                      pr_nrdconta    => vr_nrdconta,
                                      pr_cdhistor    => 2670,
-                                     pr_vllanmto    => to_char('10772,69'),
+                                     pr_vllanmto    => 10772.69,
                                      pr_cdpesqbb    => 'Desconto de Título do Borderô ' || vr_nrborder, 
                                      pr_cdoperad    => 1,
                                      pr_cdcritic    => vr_cdcritic,
@@ -25,7 +25,6 @@ BEGIN
                                      pr_tab_retorno => vr_tab_retorno);
                                                                                                                                  
   IF nvl(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
-    dbms_output.put_line(vr_dscritic);
     RAISE vr_exc_saida;
   END IF;
   
@@ -36,11 +35,10 @@ BEGIN
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                         ,pr_cdorigem => 5
                                         ,pr_cdhistor => 2671
-                                        ,pr_vllanmto => to_char('10905,00')
+                                        ,pr_vllanmto => 10905.00
                                         ,pr_dscritic => vr_dscritic );
                                         
   IF vr_dscritic IS NOT NULL THEN
-    dbms_output.put_line(vr_dscritic);
     RAISE vr_exc_saida;
   END IF; 
   
@@ -56,10 +54,10 @@ BEGIN
 EXCEPTION
   WHEN vr_exc_saida THEN
        vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
-       dbms_output.put_line(vr_dscritic);
+       raise_application_error(-20000, vr_dscritic);
        ROLLBACK;
   WHEN OTHERS THEN
        vr_dscritic := vr_dscritic || SQLERRM || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE;
-       dbms_output.put_line(vr_dscritic);
+       raise_application_error(-20000, vr_dscritic);
        ROLLBACK;		
 END;
