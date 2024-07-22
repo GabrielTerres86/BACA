@@ -16,7 +16,7 @@ BEGIN
                                      pr_dtmvtolt    => rw_crapdat.dtmvtolt,
                                      pr_nrdconta    => vr_nrdconta,
                                      pr_cdhistor    => 2670,
-                                     pr_vllanmto    => '10772.69',
+                                     pr_vllanmto    => to_number('10772.69'),
                                      pr_cdpesqbb    => 'Desconto de Título do Borderô ' || vr_nrborder, 
                                      pr_cdoperad    => 1,
                                      pr_cdcritic    => vr_cdcritic,
@@ -36,7 +36,7 @@ BEGIN
                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                         ,pr_cdorigem => 5
                                         ,pr_cdhistor => 2671
-                                        ,pr_vllanmto => '10905.00'
+                                        ,pr_vllanmto => to_number('10905.00')
                                         ,pr_dscritic => vr_dscritic );
                                         
   IF vr_dscritic IS NOT NULL THEN
