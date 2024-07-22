@@ -293,12 +293,6 @@ BEGIN
             CECRED.pc_internal_exception(pr_cdcooper => 0
                                         ,pr_compleme => 'Etapa 2 - Erro ao inserir na tabela tbcobran_remessa_npc - INC0346948');
         END;
-        PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-                                     ,pr_cdoperad => 't0035324'
-                                     ,pr_dtmvtolt => TRUNC(SYSDATE)
-                                     ,pr_dsmensag => 'Etapa 2 - Erro ao integrar instrução na cabine JDNPC (OPTIT) - INC0346948'
-                                     ,pr_des_erro => vr_des_erro
-                                     ,pr_dscritic => vr_dscritic);
     END;
   
     BEGIN
@@ -346,12 +340,6 @@ BEGIN
             CECRED.pc_internal_exception(pr_cdcooper => rw_crapcob.cdcooper
                                         ,pr_compleme => 'Etapa 3 - Erro ao atualizar tabela crapcob - INC0346948');
         END;
-        PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-                                     ,pr_cdoperad => 't0035324'
-                                     ,pr_dtmvtolt => TRUNC(SYSDATE)
-                                     ,pr_dsmensag => 'Etapa 3 - Erro ao atualizar tabela crapcob - INC0346948'
-                                     ,pr_des_erro => vr_des_erro
-                                     ,pr_dscritic => vr_dscritic);
     END;
   END LOOP;
   COMMIT;
