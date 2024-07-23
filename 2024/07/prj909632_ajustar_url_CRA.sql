@@ -1,11 +1,11 @@
 BEGIN
   UPDATE cecred.crapprm prm
-     SET prm.dsvlrprm = 'https://homolog.cenprotsc.com.br/ieptb/services/ProtestoNacionalInterfaceV1'
+     SET prm.dsvlrprm = 'https://www.cenprotsc.com.br/ieptb/services/ProtestoInterface'
    WHERE prm.nmsistem = 'CRED'
      AND prm.cdcooper = 3
      AND prm.cdacesso IN ('WS_IEPTB_CANCELAMENTO', 'WS_IEPTB_ENDERECO');
   UPDATE cecred.crapprm prm
-     SET prm.dsvlrprm = 'homoailos_ws129;Homoailos_ws129'
+     SET prm.dsvlrprm = 'processarquivos_ws;ws_dhqb0023'
    WHERE prm.nmsistem = 'CRED'
      AND prm.cdcooper = 3
      AND prm.cdacesso IN ('WS_IEPTB_AUTHENTICATION');
