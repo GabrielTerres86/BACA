@@ -4,7 +4,7 @@ DECLARE
 
 BEGIN
 
-  UPDATE cecred.craptit tit
+  UPDATE craptit tit
      SET tit.cdctrbxo = ' '
    WHERE tit.progress_recid IN (244012081
                                ,244012721
