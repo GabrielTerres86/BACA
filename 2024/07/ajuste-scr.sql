@@ -1,8 +1,6 @@
--- Created on 26/07/2024 by T0032717 
 DECLARE
   CURSOR cr_principal IS
-    SELECT /*+ parallel */
-           a.nrcpfcgc
+    SELECT a.nrcpfcgc
           ,o.dtrefere
           ,o.qtopesfn
           ,o.qtifssfn
