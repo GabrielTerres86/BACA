@@ -7,6 +7,10 @@ declare
   
   vr_cdcooper   CECRED.crapcop.CDCOOPER%TYPE;
   
+  CURSOR cr_max_recid IS
+    select (max(o.progress_recid) + 100) PROGRESS_RECID
+    from crapope o;
+  
   TYPE tp_rec IS RECORD (
     operador    VARCHAR2(20)
     , nmoperad  VARCHAR2(60)
@@ -226,9 +230,14 @@ begin
   vr_operads.EXTEND(1);
   vr_operads(40) := vr_operad;
   
+  vr_progress_id := 0;
   
-  
-  vr_progress_id := 2031546;
+  OPEN cr_max_recid;
+  FETCH cr_max_recid INTO vr_progress_id;
+  IF cr_max_recid%NOTFOUND THEN
+    vr_progress_id := TO_NUMBER( TO_CHAR(SYSDATE, 'MMDDHH24SS') );
+  END IF;
+  CLOSE cr_max_recid;
   
   FOR i IN vr_operads.FIRST..vr_operads.LAST LOOP
     
@@ -242,37 +251,42 @@ begin
     LOOP
       FETCH cr_cooper INTO vr_cdcooper;
       EXIT WHEN cr_cooper%NOTFOUND;
-        
+      
       vr_progress_id := vr_progress_id + 1;
-        
+      
       BEGIN
-          
+        
         INSERT INTO crapope (CDOPERAD
           , CDDSENHA, DTALTSNH, NRDEDIAS
           , NMOPERAD, CDSITOPE, NVOPERAD, TPOPERAD, VLPAGCHQ
           , CDCOOPER, CDAGENCI, FLGDOPGD, FLGACRES, DSDLOGIN, FLGDONET, VLAPVCRE, CDCOMITE, VLESTOR1, DSIMPRES, VLESTOR2, CDPACTRA, FLGPERAC
-          , VLLIMTED, VLAPVCAP, CDDEPART, INSAQESP, DSDEMAIL, INUTLCRM, INSAQDES)
+          , VLLIMTED, VLAPVCAP, CDDEPART, INSAQESP, DSDEMAIL, INUTLCRM, INSAQDES, PROGRESS_RECID)
         VALUES (vr_operads(i).operador
           , vr_operads(i).operador, to_date(SYSDATE, 'dd-mm-yyyy'), 30
           , vr_operads(i).nmoperad, 1, 2, 1, 0.00
           , vr_cdcooper, 1, 0, 0, ' ', 1, 0.00, 0, 0.00, ' ', 0.00, 1, 0
-          , 0.00, 99999.00, 14, 0, ' ', 2, 1);
-          
-        DBMS_OUTPUT.PUT_LINE('   - Cooper: ' || vr_cdcooper);
-          
+          , 0.00, 99999.00, 14, 0, ' ', 2, 1, vr_progress_id);
+        
+        DBMS_OUTPUT.PUT_LINE('   - Cooper: ' || vr_cdcooper || ' - recid: ' || vr_progress_id);
+        
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
-            
+          
           IF INSTR(SQLERRM, 'CRAPOPE##CRAPOPE1', 1) > 0 THEN
-              
-            DBMS_OUTPUT.PUT_LINE( ' **** Operador JÁ cadastrado (CRAPOPE##CRAPOPE1): ' || vr_operads(i).operador || ' - ' || vr_operads(i).nmoperad || ' ( Cooper: ' || vr_cdcooper || ')' );
+            
+            DBMS_OUTPUT.PUT_LINE( ' **** Operador JÁ cadastrado (CRAPOPE##CRAPOPE1): ' || vr_operads(i).operador || ' - ' || vr_operads(i).nmoperad || ' ( Cooper: ' || vr_cdcooper || ')' || ' - recid: ' || vr_progress_id );
             NULL;
-              
+            
+          ELSIF INSTR(SQLERRM, 'CRAPOPE##PROGRESS_RECID', 1) > 0 THEN
+            
+            DBMS_OUTPUT.PUT_LINE( ' **** Erro no RECID (CRAPOPE##PROGRESS_RECID). Tentando aplicar: (' || vr_progress_id || ') Pulando 100k: ' || (vr_progress_id + 100000) );
+            vr_progress_id := (vr_progress_id + 100000);
+            
           ELSE 
             
             vr_dscritic := 'Erro ao inserir operador (DUP_VAL_ON_INDEX) ' || vr_operads(i).operador || ' - ' || SQLERRM;
             CLOSE cr_cooper;
-              
+            
             RAISE vr_exception;
             
           END IF;
