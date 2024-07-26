@@ -1,9 +1,9 @@
 DECLARE
    vr_aux_ambiente    INTEGER       := 3;             
    vr_aux_diretor     VARCHAR2(100) := 'RITM0405331';     
-   vr_aux_arquivo     VARCHAR2(100) := 'registros_cheques';
+   vr_aux_arquivo     VARCHAR2(100) := 'registros_titulos';
    vr_aux_cdcooper    NUMBER := 13; 
-   vr_aux_tpctrlim    NUMBER := 2;
+   vr_aux_tpctrlim    NUMBER := 3;
    vr_handle          UTL_FILE.FILE_TYPE; 
    vr_handle_log      UTL_FILE.FILE_TYPE;
    vr_handle_regs     UTL_FILE.FILE_TYPE;
@@ -41,13 +41,14 @@ DECLARE
        AND lim.tpctrlim = vr_aux_tpctrlim;
   rw_conta_ambiente cr_conta_ambiente%ROWTYPE;
   
-  PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE                
-                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  
-                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  
-                                         ,pr_nrctrlim IN craplim.nrctrlim%TYPE  
-                                         ,pr_cddlinha IN craplim.cddlinha%TYPE  
-                                         ,pr_cdcritic OUT PLS_INTEGER           
-                                         ,pr_dscritic OUT VARCHAR2) IS          
+  PROCEDURE pc_renovar_limite_cred_manual(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                         ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
+                                         ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                                         ,pr_cddlinha IN craplim.cddlinha%TYPE
+                                         ,pr_tpdescto IN crapldc.cddlinha%TYPE
+                                         ,pr_cdcritic OUT PLS_INTEGER
+                                         ,pr_dscritic OUT VARCHAR2) IS
   BEGIN
 
   DECLARE
@@ -73,13 +74,15 @@ DECLARE
          AND craplim.insitlim = 2;
     rw_craplim cr_craplim%ROWTYPE;
 
-    CURSOR cr_craplrt (pr_cdcooper IN craplrt.cdcooper%TYPE,
-                       pr_cddlinha IN craplrt.cddlinha%TYPE) IS
-      SELECT craplrt.flgstlcr
-        FROM cecred.craplrt
-       WHERE craplrt.cdcooper = pr_cdcooper AND
-             craplrt.cddlinha = pr_cddlinha;
-    rw_craplrt cr_craplrt%ROWTYPE;
+    CURSOR cr_crapldc (pr_cdcooper IN crapldc.cdcooper%TYPE,
+                       pr_cddlinha IN crapldc.cddlinha%TYPE,
+                       pr_tpdescto IN crapldc.tpdescto%TYPE) IS
+      SELECT crapldc.flgstlcr
+        FROM cecred.crapldc
+       WHERE crapldc.cdcooper = pr_cdcooper 
+         AND crapldc.cddlinha = pr_cddlinha
+         AND crapldc.tpdescto = pr_tpdescto;
+    rw_crapldc cr_crapldc%ROWTYPE;
 
 
     CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE,
@@ -121,15 +124,16 @@ DECLARE
       CLOSE cr_craplim;
     END IF;
 
-    OPEN cr_craplrt(pr_cdcooper => pr_cdcooper,
-                    pr_cddlinha => pr_cddlinha);
-    FETCH cr_craplrt INTO rw_craplrt;
-    IF cr_craplrt%NOTFOUND THEN
-      CLOSE cr_craplrt;
-      vr_dscritic := 'Linha de Credito invalida. Linha: ' || pr_cddlinha;
+    OPEN cr_crapldc(pr_cdcooper => pr_cdcooper,
+                    pr_cddlinha => pr_cddlinha,
+                    pr_tpdescto => pr_tpdescto);
+    FETCH cr_crapldc INTO rw_crapldc;
+    IF cr_crapldc%NOTFOUND THEN
+      CLOSE cr_crapldc;
+      vr_dscritic := 'Linha de desconto invalida. Linha: ' || pr_cddlinha;
       RAISE vr_exc_saida;
     ELSE
-      CLOSE cr_craplrt;
+      CLOSE cr_crapldc;
     END IF;
  
     UPDATE cecred.craplim lim
@@ -318,6 +322,7 @@ BEGIN
                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                       ,pr_nrctrlim => vr_tab_carga(vr_idx1).nrctrlim
                                       ,pr_cddlinha => vr_tab_carga(vr_idx1).cddlinha
+                                      ,pr_tpdescto => vr_aux_tpctrlim
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
          IF vr_dscritic IS NOT NULL THEN
