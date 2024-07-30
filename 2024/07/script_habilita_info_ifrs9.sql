@@ -23,7 +23,6 @@ BEGIN
 
   aux_cdpartar_add :=  aux_cdpartar_add + 1;
 
-  -- Habilitado IFRS9 = 1 e Desabilitado = 0
   insert into crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
   values (aux_cdpartar_add, 'Habilita|Desabilita IFRS9', 2, 13);
 
