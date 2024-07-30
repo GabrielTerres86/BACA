@@ -6,7 +6,8 @@ BEGIN
 	 AND cc.cdcooper = 1;
    
   UPDATE cecred.crapcyb cc
-     SET cc.dtefetiv = to_date('18/10/2023', 'DD/MM/RRRR')
+     SET cc.dtefetiv = to_date('17/10/2023', 'DD/MM/RRRR'),
+	     cc.dtdpagto = to_date('18/10/2023', 'DD/MM/RRRR')	 
    WHERE cc.nrdconta = 87838702
      AND cc.cdcooper = 1
      AND cc.nrctremp = 7505059;
