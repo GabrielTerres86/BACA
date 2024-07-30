@@ -1,6 +1,6 @@
 BEGIN
   UPDATE cecred.crapcyb a
-     SET a.nrdconta = 99662957
+     SET a.nrctremp = 99662957
    WHERE a.cdcooper = 14
      AND a.nrdconta = 99662957
      AND a.cdorigem = 1
