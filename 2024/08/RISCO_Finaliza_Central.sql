@@ -208,7 +208,7 @@ BEGIN
       RAISE vr_exc_erro;
     END IF;
 
-
+/*
    GESTAODERISCO.Limparcargascentralrisco(pr_cdcooper   => pr_cdcooper
                                          ,pr_dtrefere => vr_dtmvcentral_ant -- central do dia anterior
                                          ,pr_cdProcesso => 0
@@ -216,6 +216,7 @@ BEGIN
    IF vr_dscritic IS NOT NULL THEN
      RAISE vr_exc_erro;
    END IF;
+*/
 
   END IF;
   --------------------------------------------------------------------------------------------------------------------------------------------------
