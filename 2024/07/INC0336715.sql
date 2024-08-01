@@ -10,7 +10,7 @@ BEGIN
 	     cc.dtdpagto = to_date('18/10/2023', 'DD/MM/RRRR')	 
    WHERE cc.nrdconta = 12161233
      AND cc.cdcooper = 1
-     AND cc.nrctremp = 12161233;
+     AND cc.nrctremp = 7505059;
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
