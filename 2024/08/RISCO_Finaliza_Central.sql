@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-257
 declare 
 
   vr_exc_erro  EXCEPTION;
@@ -16,8 +14,8 @@ declare
   pr_cdcooper   INTEGER:=1;
   vr_tpCalculo  INTEGER;
 
-  vr_vltotprv NUMBER(14,2); --> Total acumulado de provisão
-  vr_vltotdiv NUMBER(14,2); --> Total acumulado de dívida
+  vr_vltotprv NUMBER(14,2); --> Total acumulado de provisÃ£o
+  vr_vltotdiv NUMBER(14,2); --> Total acumulado de dÃ­vida
 
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT cop.nmrescop
@@ -153,14 +151,14 @@ BEGIN
          VALUES(3                      --> Cooperativa conectada
                ,vr_dtrefere    --> Data atual
                ,rw_crapcop.nrctactl    --> Conta da cooperativa conectada
-               ,vr_vltotprv            --> Total acumulado de provisão
-               ,vr_vltotdiv);          --> Total acumulado de dívidas
+               ,vr_vltotprv            --> Total acumulado de provisÃ£o
+               ,vr_vltotdiv);          --> Total acumulado de dÃ­vidas
       EXCEPTION
         WHEN DUP_VAL_ON_INDEX THEN
           BEGIN
             UPDATE crapbnd
-               SET vltotprv = vr_vltotprv          --> Total acumulado de provisão
-                  ,vltotdiv = vr_vltotdiv          --> Total acumulado de dívidas
+               SET vltotprv = vr_vltotprv          --> Total acumulado de provisÃ£o
+                  ,vltotdiv = vr_vltotdiv          --> Total acumulado de dÃ­vidas
              WHERE cdcooper = 3                    --> Cooperativa Gravar sempre na Cecred
                AND dtmvtolt = vr_dtrefere  --> Data atual
                AND nrdconta = rw_crapcop.nrctactl; --> Conta da cooperativa conectada
@@ -257,11 +255,3 @@ EXCEPTION
 
 
 END;
-0
-6
-pr_cdcooper
-vr_dtmvcentral
-vr_dtrefere
-vr_dtmvcentral_ant
-vr_flgmensal
-vr_tpCalculo
