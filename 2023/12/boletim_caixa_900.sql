@@ -17,7 +17,7 @@ BEGIN
     ,HRFECBCX)
   VALUES
     (10
-    ,to_date('30-07-2024', 'dd-mm-yyyy')
+    ,to_date('02-08-2024', 'dd-mm-yyyy')
     ,91
     ,900
     ,1
