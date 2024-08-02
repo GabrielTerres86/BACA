@@ -206,7 +206,7 @@ BEGIN
 
 
     update cecred.crapass a
-       set a.cdmotdem = null
+       set a.cdmotdem = 0
      where a.cdcooper = rg_crapass.cdcooper
        and a.nrdconta = rg_crapass.nrdconta;
     
