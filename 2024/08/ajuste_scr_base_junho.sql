@@ -44,6 +44,14 @@ DECLARE
   rw_crapvop cr_crapvop%ROWTYPE;
 BEGIN
   
+  UPDATE CRAPPRM
+   SET DSVLRPRM = '999'
+ WHERE NMSISTEM = 'CRED'
+   AND CDCOOPER = 0
+   AND CDACESSO = 'QTDIAEXPURGOCARGA_RISCO';
+  
+  COMMIT;
+  
   FOR rw_principal IN cr_principal LOOP
     BEGIN
       INSERT INTO cecred.crapopf(nrcpfcgc, dtrefere, qtopesfn, qtifssfn, qtsbjsfn, vlsbjsfn, percdocp,
