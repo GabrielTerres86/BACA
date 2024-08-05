@@ -61,7 +61,7 @@ BEGIN
                                 ,pr_dtrefere => rw_principal.dtrefere) LOOP
       BEGIN
         INSERT INTO cecred.crapvop(nrcpfcgc, dtrefere, cdvencto, vlvencto, cdmodali, flgmoest)
-        VALUES (rw_crapvop.nrcpfcgc_destino, rw_crapvop.dtrefere, rw_crapvop.cdvencto, rw_crapvop.vlvencto, rw_crapvop.cdmodali, rw_crapvop.flgmoest);
+        VALUES (rw_principal.nrcpfcgc_destino, rw_crapvop.dtrefere, rw_crapvop.cdvencto, rw_crapvop.vlvencto, rw_crapvop.cdmodali, rw_crapvop.flgmoest);
       EXCEPTION
         WHEN OTHERS THEN
           dbms_output.put_line('Erro ao inserir crapvop - nrcpfcgc: ' || rw_principal.nrcpfcgc_destino);
