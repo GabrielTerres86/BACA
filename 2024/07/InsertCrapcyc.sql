@@ -1,9 +1,8 @@
 BEGIN
-  UPDATE cecred.crapcyb a
-     SET a.nrctremp = 99662957
-   WHERE a.cdcooper = 14
-     AND a.nrdconta = 99662957
+  UPDATE cecred.crapcyc a
+     SET a.flextjud = 1
+   WHERE a.cdcooper = 1
      AND a.cdorigem = 1
-     AND a.nrctremp = 336980;
+     AND a.nrdconta = 99139553;
   COMMIT;
 END;
