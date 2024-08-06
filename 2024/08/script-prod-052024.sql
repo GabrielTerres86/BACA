@@ -31,7 +31,7 @@ DECLARE
                 )
             ELSE
                 1
-        END AS saldo_contrato --caso valor maior que zero incluir lançamento
+        END AS saldo_contrato 
     FROM
       cecred.crapass ass,
       cecred.crapepr epr
