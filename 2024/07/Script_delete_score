@@ -62,4 +62,3 @@ EXCEPTION
   WHEN OTHERS THEN
     raise_application_error(-20000, SQLERRM);
 END;
-/
