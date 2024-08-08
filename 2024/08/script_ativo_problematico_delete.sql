@@ -1,4 +1,4 @@
-﻿BEGIN
+BEGIN
   
   DELETE FROM CREDITO.tblim_ativo_problematico;
   
