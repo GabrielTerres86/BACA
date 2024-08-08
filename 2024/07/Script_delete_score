@@ -1,4 +1,5 @@
 DECLARE
+
   vr_dscritic         VARCHAR2(4000);
   vr_exc_erro         EXCEPTION;
   vr_retfile          VARCHAR2(500);
