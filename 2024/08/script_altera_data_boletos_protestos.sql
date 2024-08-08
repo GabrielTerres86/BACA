@@ -1,6 +1,6 @@
 
 BEGIN
-  UPDATE crapcre c SET c.dtmvtolt = trunc(SYSDATE) WHERE c.rowid IN ('AAAljBAABAAOfL4AAU');
+  UPDATE crapcre c SET c.dtmvtolt = trunc(SYSDATE-1) WHERE c.rowid IN ('AAAljBAABAAOfL4AAU');
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
