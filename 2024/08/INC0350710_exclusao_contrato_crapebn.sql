@@ -1,0 +1,10 @@
+BEGIN
+  DELETE FROM cecred.CRAPEBN WHERE cdcooper = 14 and nrdconta = 18463185 and nrctremp in (15728, 20995);
+  DELETE FROM cecred.CRAPEBN WHERE cdcooper = 14 and nrdconta = 146897   and nrctremp in (110660, 1893064);
+  
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20500, SQLERRM);
+END;
