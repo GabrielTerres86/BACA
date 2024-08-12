@@ -9,7 +9,7 @@ BEGIN
     FROM cecred.tbseg_historico_relatorio t;
   
   INSERT INTO CECRED.TBSEG_HISTORICO_RELATORIO (IDHISTORICO_RELATORIO, CDACESSO, DSTEXPRM, DSVLRPRM, DTINICIO, FLTPCUSTEIO, TPPESSOA)
-  VALUES (vr_seq_hist, 'TERMO_CANCELAMENTO_PJ', 'Relatório Prestamista referente ao termo de cancelamento do seguro prestamista', 'termo_cancelamento_pj.jasper', '01/08/2024', 0, 2);
+  VALUES (vr_seq_hist, 'TERMO_CANCELAMENTO_PJ', 'Relatório Prestamista referente ao termo de cancelamento do seguro prestamista', 'termo_cancelamento_pj.jasper', to_date('01/08/2024','dd/mm/yyyy'), 0, 2);
   
   COMMIT;
 END;
