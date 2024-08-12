@@ -3,8 +3,10 @@ BEGIN
   UPDATE cecred.craplau
      SET DSORIGEM = 'INTERNET'
         ,DSCEDENT = 'DEBITO TED'
-   WHERE progress_recid IN
-         (104328510, 104328257, 104328174, 104328302, 104329112, 104328522, 104329107);
+   WHERE dtmvtolt >= to_date('09/08/2024','DD/MM/RRRR')
+     AND cdhistor = 555
+     AND dsorigem = 'InternetBank'
+     AND insitlau = 1;
          
   COMMIT;  
 
