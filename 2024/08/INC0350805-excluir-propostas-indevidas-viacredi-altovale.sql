@@ -13,7 +13,7 @@ CURSOR cr_propostas IS
 		 w.dtfimvig
 	FROM cecred.crawseg w
    WHERE NOT EXISTS (SELECT 0
-	         		   FROM tbseg_prestamista p
+	         		   FROM cecred.tbseg_prestamista p
 					  WHERE p.cdcooper = w.cdcooper
 						AND p.nrdconta = w.nrdconta
 						AND p.nrctremp = w.nrctrato
