@@ -1,7 +1,7 @@
 BEGIN
   
   UPDATE crapcop t 
-     SET t.iniopstr = 36000
+     SET t.iniopstr = 54000
    WHERE t.cdcooper = 13;
   
   COMMIT;
