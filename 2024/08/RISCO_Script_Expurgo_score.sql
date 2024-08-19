@@ -20,7 +20,7 @@ BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET nls_numeric_characters = '',.''';
 
   FOR rw_crapcop IN cr_crapcop LOOP
-    vr_jobname := 'expurgoScore_' || to_char(rw_crapcop.cdcooper) || '_';
+    vr_jobname := 'expurgoScore_' || TRIM(to_char(rw_crapcop.cdcooper,'09')) || '_';
     vr_dsplsql := 'DECLARE'                                                     || chr(13) ||
                   '  vr_dtlimite_expurgo DATE;'                                 || chr(13) ||
                   'BEGIN'                                                       || chr(13) ||
