@@ -25,7 +25,7 @@ BEGIN
                   'BEGIN'                                                       || chr(13) ||
                   '  SELECT (MAX(DTBASE) - INTERVAL ''12'' MONTH) AS vr_dtlimite_expurgo' || chr(13) ||
                   '    INTO vr_dtlimite_expurgo'                                || chr(13) ||
-                  '    FROM TBCRD_SCORE'                                        || chr(13) ||
+                  '    FROM CECRED.TBCRD_SCORE'                                 || chr(13) ||
                   '   WHERE CDCOOPER =  '|| rw_crapcop.cdcooper                 || chr(13) ||
                   '     AND CDMODELO IN (3,4)'                                  || chr(13) ||
                   '     AND FLVIGENTE = 0;'                                     || chr(13) ||
@@ -52,14 +52,13 @@ BEGIN
 
   END LOOP;
 
-  -- Coop Zero - 0
   vr_jobname := 'expurgoScore_0_';
   vr_dsplsql := 'DECLARE'                                                     || chr(13) ||
                 '  vr_dtlimite_expurgo DATE;'                                 || chr(13) ||
                 'BEGIN'                                                       || chr(13) ||
                 '  SELECT (MAX(DTBASE) - INTERVAL ''12'' MONTH) AS vr_dtlimite_expurgo' || chr(13) ||
                 '    INTO vr_dtlimite_expurgo'                                || chr(13) ||
-                '    FROM TBCRD_SCORE'                                        || chr(13) ||
+                '    FROM CECRED.TBCRD_SCORE'                                 || chr(13) ||
                 '   WHERE CDCOOPER =  0'                                      || chr(13) ||
                 '     AND CDMODELO IN (3,4)'                                  || chr(13) ||
                 '     AND FLVIGENTE = 0;'                                     || chr(13) ||
