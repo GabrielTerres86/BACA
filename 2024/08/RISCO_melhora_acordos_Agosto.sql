@@ -216,7 +216,7 @@ BEGIN
   END;   
 
   gene0001.pc_OScommand_Shell(pr_des_comando => 'mv '|| vr_nmdireto||'/' || vr_nmarquiv || ' '
-                                                     || vr_nmdireto||'/' || 'PROC_' || to_char(sysdate,'ddmmyyyy_hh24miss') || vr_nmarquiv
+                                                     || vr_nmdireto||'/' || 'PROC_' || to_char(sysdate,'ddmmyyyy_hh24miss') ||'_'|| vr_nmarquiv
                              ,pr_typ_saida   => vr_typ_saida
                              ,pr_des_saida   => vr_dscritic);
   IF NVL(vr_typ_saida,' ') = 'ERR' THEN
