@@ -16,7 +16,7 @@ BEGIN
          (SELECT b.dtmvtoan
             FROM crapdat b
            WHERE b.cdcooper = a.cdcooper)
-   WHERE a.cdcooper = 12
+   WHERE a.cdcooper = 6
      AND a.dtdbaixa IS NULL;
   COMMIT;
 EXCEPTION
