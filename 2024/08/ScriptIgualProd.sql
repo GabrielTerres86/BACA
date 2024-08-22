@@ -21,7 +21,7 @@ DECLARE
 
   CURSOR cr_crapass(pr_cdcooper IN cecred.crapass.cdcooper%TYPE
                    ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE
-           ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
+				   ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
     SELECT
         ass.cdagenci,
         epr.inliquid,
