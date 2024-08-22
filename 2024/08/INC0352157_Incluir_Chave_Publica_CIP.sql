@@ -1,6 +1,6 @@
 BEGIN
   
-  INSERT INTO tbgen_chaves_crypto(cdacesso
+  INSERT INTO cecred.tbgen_chaves_crypto(cdacesso
                                  ,dtinicio_vigencia
                                  ,dschave_crypto
                                  ,dsserie_chave)
