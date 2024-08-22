@@ -21,7 +21,7 @@ DECLARE
 
   CURSOR cr_crapass(pr_cdcooper IN cecred.crapass.cdcooper%TYPE
                    ,pr_nrdconta IN cecred.crapass.nrdconta%TYPE
-				   ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
+                   ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE) IS
     SELECT
         ass.cdagenci,
         epr.inliquid,
@@ -35,7 +35,7 @@ DECLARE
                 )
             ELSE
                 0
-        END AS saldo_contrato
+        END AS saldo_contrato 
     FROM
       cecred.crapass ass,
       cecred.crapepr epr
@@ -4997,21 +4997,21 @@ BEGIN
     CLOSE cr_crapass;
 
     IF rw_crapass.inliquid = 1 AND rw_crapass.inprejuz = 0 THEN
-
+  
       IF rw_crapass.saldo_contrato <> 0 THEN
-
+  
           vr_lancamen := 0;
           vr_historic := 0;
-
+  
           IF nvl(rw_crapass.saldo_contrato, 0) < 0 THEN
               vr_historic := 3918;
               vr_lancamen := rw_crapass.saldo_contrato * -1;
             ELSIF nvl(rw_crapass.saldo_contrato, 0) > 0 THEN
               vr_historic := 3919;
               vr_lancamen := rw_crapass.saldo_contrato;
-          END IF;
-
-
+            END IF;
+        
+        
             cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => v_dados(x).vr_cdcooper,
                                                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                                    pr_cdagenci => rw_crapass.cdagenci,
@@ -5035,13 +5035,13 @@ BEGIN
                                                    pr_cdorigem => 5,
                                                    pr_cdcritic => vr_cdcritic,
                                                    pr_dscritic => vr_dscritic);
-
+         
             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_saida;
             END IF;
-
-        END IF;
-    ELSE
+    
+    END IF;
+    ELSE 
    cecred.EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => v_dados(x).vr_cdcooper,
                                                pr_dtmvtolt => rw_crapdat.dtmvtolt,
                                                pr_cdagenci => rw_crapass.cdagenci,
