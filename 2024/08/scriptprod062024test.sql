@@ -35,7 +35,7 @@ DECLARE
                 )
             ELSE
                 0
-        END AS saldo_contrato 
+        END AS saldo_contrato
     FROM
       cecred.crapass ass,
       cecred.crapepr epr
