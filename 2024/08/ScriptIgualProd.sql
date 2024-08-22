@@ -49,14 +49,6 @@ DECLARE
 
 BEGIN
 
-  v_dados.extend();
-  v_dados(v_dados.last()).vr_cdcooper := 1;
-  v_dados(v_dados.last()).vr_nrdconta := 99234645;
-  v_dados(v_dados.last()).vr_nrctremp := 7492262;
-  v_dados(v_dados.last()).vr_vllanmto := 20209.82;
-  v_dados(v_dados.last()).vr_cdhistor := 3918;
-
-
   FOR x IN NVL(v_dados.first(), 1) .. nvl(v_dados.last(), 0) LOOP
 
     OPEN cecred.btch0001.cr_crapdat(pr_cdcooper => v_dados(x).vr_cdcooper);
