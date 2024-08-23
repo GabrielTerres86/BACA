@@ -87,10 +87,8 @@ BEGIN
             a.cdconvivencia = vr_prodconvivencia
         WHERE a.cdcooper = vr_cdcooper
           AND a.cdlcremp = vr_cdlcremp;                   
-      COMMIT;
       EXCEPTION
         WHEN OTHERS THEN
-        ROLLBACK;
         vr_dscritic := 'Erro ao atualizar Linha convivencia';         
       END; 
                                                                                                                                                                
