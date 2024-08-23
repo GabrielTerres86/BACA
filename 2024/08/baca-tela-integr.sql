@@ -31,13 +31,13 @@ BEGIN
   VALUES
     ('INTEGR'
     ,5
-    ,'C'
+    ,'C,A'
     ,'INTEGRACAO TOPAZ'
     ,'INTEGRACAO TOPAZ'
     ,0
     ,1
     ,' '
-    ,'CONSULTA'
+    ,'CONSULTAR,ALTERAR'
     ,1
     ,3
     ,1
@@ -131,6 +131,38 @@ BEGIN
     ,'CREDITO.atualizarSituacaoPayload'
     ,'pr_idintegracao,pr_cdacao,pr_dsopcao'
     ,vr_nrseqrdr);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'C', 'f0033078', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'A', 'f0033078', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'C', 'f0034476', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'A', 'f0034476', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'C', 'f0034976', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'A', 'f0034976', ' ', 3, 1, 0, 2);
+    
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'C', 'f0034370', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'A', 'f0034370', ' ', 3, 1, 0, 2);
+    
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'C', 'f0033754', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTEGR', 'A', 'f0033754', ' ', 3, 1, 0, 2);
+            
+
 
   COMMIT;
 EXCEPTION
