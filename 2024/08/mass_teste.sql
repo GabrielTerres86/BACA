@@ -7,7 +7,7 @@ begin
       values (1,99996502,50);
       
    insert into crapebn (cdcooper,nrdconta,vlsdeved)
-      values (1,99996502,50);
+      values (1,99999137,50);
 	  
     commit;
 
