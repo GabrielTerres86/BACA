@@ -1,15 +1,14 @@
 BEGIN   
-    UPDATE CRAPSTF 
-    SET VLDSDINI = 1000 
-    WHERE CDCOOPER = 9
-    AND NRTERFIN = 193 
-    AND PROGRESS_RECID = 1465677;
-    COMMIT; 
+    	INSERT INTO crapstf
+	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
+	    VALUES
+	  (to_date('27-08-2024', 'dd-mm-yyyy'),193,1000.00,1000.00,9);
 
     	INSERT INTO crapstf
 	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
 	    VALUES
-	  (to_date('22-08-2024', 'dd-mm-yyyy'),191,1000.00,1000.00,9);
+	  (to_date('27-08-2024', 'dd-mm-yyyy'),170,1000.00,1000.00,9);
+
     COMMIT; 
     
   END;
