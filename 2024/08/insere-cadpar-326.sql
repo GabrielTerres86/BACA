@@ -1,11 +1,8 @@
-
 DECLARE
-  --Buscar na craprdr
   CURSOR cr_crapcop IS 
    SELECT cop.cdcooper
    FROM crapcop cop;     
    
-  --Vars
   vr_cdcooper crapcop.cdcooper%TYPE;
   vr_nmparam crappat.nmpartar%TYPE;
   vr_cdpartar crappat.cdpartar%TYPE; 
