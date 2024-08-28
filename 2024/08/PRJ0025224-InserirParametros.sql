@@ -23,36 +23,46 @@ DECLARE
 BEGIN
   vr_tab_param.delete;
 
-  vr_tab_param(1).nmpartar := 'Recuperação - Linha de crédito renegociação';
-  vr_tab_param(1).tpdedado := 2;
-  vr_tab_param(1).cdprodut := 12;
+  vr_tab_param(1).nmpartar := 'IFRS9 - Linha de crédito renegociação da recuperação de crédito';
+  vr_tab_param(1).tpdedado := 1;
+  vr_tab_param(1).cdprodut := 0;
   vr_tab_param(1).cdbattar := 'CDLCREDRENEG';
-  vr_tab_param(1).nmidenti := 'Recuperação - Linha de crédito renegociação';
+  vr_tab_param(1).nmidenti := 'IFRS9 - Linha de crédito renegociação da recuperação de crédito';
   vr_tab_param(1).cdprogra := ' ';
   vr_tab_param(1).tpcadast := 2;
   vr_tab_param(1).cdcooper := 3;
   vr_tab_param(1).dsconteu := '0';
 
-  vr_tab_param(2).nmpartar := 'Recuperação - Finalidade renegociação';
-  vr_tab_param(2).tpdedado := 2;
-  vr_tab_param(2).cdprodut := 12;
+  vr_tab_param(2).nmpartar := 'IFRS9 - Finalidade renegociação da recuperação de crédito';
+  vr_tab_param(2).tpdedado := 1;
+  vr_tab_param(2).cdprodut := 0;
   vr_tab_param(2).cdbattar := 'CDFINALRENEG';
-  vr_tab_param(2).nmidenti := 'Recuperação - Finalidade renegociação';
+  vr_tab_param(2).nmidenti := 'IFRS9 - Finalidade renegociação da recuperação de crédito';
   vr_tab_param(2).cdprogra := ' ';
   vr_tab_param(2).tpcadast := 2;
   vr_tab_param(2).cdcooper := 3;
   vr_tab_param(2).dsconteu := '0';
 
-  vr_tab_param(3).nmpartar := 'Recuperação - Tipo empréstimo renegociação';
-  vr_tab_param(3).tpdedado := 2;
-  vr_tab_param(3).cdprodut := 12;
+  vr_tab_param(3).nmpartar := 'IFRS9 - Tipo empréstimo renegociação da recuperação de crédito';
+  vr_tab_param(3).tpdedado := 1;
+  vr_tab_param(3).cdprodut := 0;
   vr_tab_param(3).cdbattar := 'TPEMPRTRENEG';
-  vr_tab_param(3).nmidenti := 'Recuperação - Tipo empréstimo renegociação';
+  vr_tab_param(3).nmidenti := 'IFRS9 - Tipo empréstimo renegociação da recuperação de crédito';
   vr_tab_param(3).cdprogra := ' ';
   vr_tab_param(3).tpcadast := 2;
   vr_tab_param(3).cdcooper := 3;
   vr_tab_param(3).dsconteu := '0';
-  
+
+  vr_tab_param(4).nmpartar := 'IFRS9 - Habilitar renegociação da recuperação de crédito';
+  vr_tab_param(4).tpdedado := 1;
+  vr_tab_param(4).cdprodut := 0;
+  vr_tab_param(4).cdbattar := 'INIFRS9RECUP';
+  vr_tab_param(4).nmidenti := 'IFRS9 - Habilitar renegociação da recuperação de crédito';
+  vr_tab_param(4).cdprogra := ' ';
+  vr_tab_param(4).tpcadast := 2;
+  vr_tab_param(4).cdcooper := 3;
+  vr_tab_param(4).dsconteu := '0';
+
   FOR idx IN vr_tab_param.first .. vr_tab_param.last LOOP
     FOR rw_crapbat IN cr_crapbat(pr_cdbattar => vr_tab_param(idx).cdbattar) LOOP
       DELETE 
