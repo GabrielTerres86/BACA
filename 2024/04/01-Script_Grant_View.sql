@@ -1,0 +1,8 @@
+BEGIN
+
+  EXECUTE IMMEDIATE 'GRANT ALL ON CECRED.VW_CARTAO TO ilakecadastropositivo';
+  
+  COMMIT;
+
+END;
+/
