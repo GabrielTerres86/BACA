@@ -7,7 +7,7 @@ begin
   
   PGTA0001.pc_gera_retorno_tit_pago(pr_cdcooper => 1
                                   , pr_dtmvtolt => to_date('23082024','ddmmyyyy')
-                                  , pr_idorigem => 3 -- Ayllos
+                                  , pr_idorigem => 3
                                   , pr_cdoperad => '1'
                                   , pr_cdcritic => vr_cdcritic
                                   , pr_dscritic => vr_dscritic );
