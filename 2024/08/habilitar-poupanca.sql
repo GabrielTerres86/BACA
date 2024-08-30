@@ -1,8 +1,8 @@
 DECLARE
-  vr_idprglog tbgen_prglog.idprglog%TYPE;
+  vr_idprglog  tbgen_prglog.idprglog%TYPE;
   CURSOR cr_crapprm IS
     select a.cdcooper
-      from crapcop a 
+      from cecred.crapcop a 
      where a.flgativo = 1 
        and a.cdcooper <> 3
        and a.cdcooper not in (select cdcooper
@@ -14,10 +14,10 @@ BEGIN
   
   FOR rw_crapprm in cr_crapprm LOOP
     
-    insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+    insert into cecred.crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
     values ('CRED', rw_crapprm.cdcooper, 'COOP_PILOTO_POUPANCA_PF', 'Indica se a cooperativa habilita contratacao de POUPANCA (0=Inativa,1=Piloto para algumas contas,2=Ativa)', '2');
 
-    insert into crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
+    insert into cecred.crapprm (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
     values ('CRED', rw_crapprm.cdcooper, 'CAPT_POUPANCA_RENT_ATIVA', 'Indica se a rentabilidade da poupanca esta ativa para a cooperativa', '1');
 
   END LOOP;
