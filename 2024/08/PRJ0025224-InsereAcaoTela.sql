@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (nmdeacao
     ,nmproced
     ,lstparam
@@ -10,7 +10,7 @@ BEGIN
     ,'pr_cdcooper, pr_nrdconta'
     ,71);
 
-  INSERT INTO crapaca
+  INSERT INTO cecred.crapaca
     (nmdeacao
     ,nmproced
     ,lstparam
