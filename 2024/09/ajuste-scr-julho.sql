@@ -43,9 +43,6 @@ DECLARE
        AND v.dtrefere = pr_dtrefere;
   rw_crapvop cr_crapvop%ROWTYPE;
 BEGIN
-  insert into CRAPPRM (NMSISTEM, CDCOOPER, CDACESSO, DSTEXPRM, DSVLRPRM)
-   values ('CRED', 0, 'LINHA_PEAC_3040_SOLIDARI', 'Parametro linha LINHA_PEAC_3040_SOLIDARIO', '4627,4626');
-  COMMIT;
   
   FOR rw_principal IN cr_principal LOOP
     BEGIN
