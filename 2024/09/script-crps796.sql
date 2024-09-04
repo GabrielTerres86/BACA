@@ -7,5 +7,7 @@ begin
                    ,pr_dsjobnam => 'JB_POUP_REL_1'
                    ,pr_cdcritic => vr_cdcritic
                    ,pr_dscritic => vr_dscritic);
+				   
+  COMMIT;				   
 
 end;
