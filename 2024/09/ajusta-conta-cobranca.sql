@@ -1,7 +1,12 @@
 BEGIN
-  UPDATE cobranca.tbcobran_ailosmais_conta_corrente a
-     SET a.nrconta_corrente = 99838354
-   WHERE a.idailosmais_conta_corrente = '115E99116DE207AEE0630A29357CFFEB';
+  INSERT INTO cobranca.tbcobran_ailosmais_conta_corrente
+  (nrconta_corrente
+  ,cdcooperativa
+  ,dsdominio)
+VALUES
+  (18712665
+  ,1
+  ,'ACORDO - COM DESCONTO');
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
