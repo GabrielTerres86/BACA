@@ -1,0 +1,6 @@
+BEGIN
+  UPDATE cecred.tbcadast_empresa_consig
+     SET CDLOCAL_CONCILIACAO = 2
+   WHERE CDLOCAL_CONCILIACAO = 1;
+  COMMIT;
+END;
