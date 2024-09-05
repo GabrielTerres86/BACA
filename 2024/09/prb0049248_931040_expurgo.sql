@@ -9,7 +9,7 @@ BEGIN
                   ,pr_dsmensagem IN tbgen_prglog_ocorrencia.dsmensagem%TYPE DEFAULT NULL
                   ,pr_idprglog   IN OUT tbgen_prglog.idprglog%TYPE) IS
   BEGIN
-    pc_log_programa(pr_dstiplog      => ''O'' -- Ocorrencia
+    pc_log_programa(pr_dstiplog      => ''O''
                    ,pr_cdprograma    => pr_cdprograma
                    ,pr_cdcooper      => 3
                    ,pr_tpexecucao    => 0
