@@ -1,38 +1,38 @@
-INSERT INTO CREDITO.TBCRED_PROPOSTA_PERDA_ESPERADA
-(
-    IDPROPOSTA_PERDA_ESPERADA, 
-    IDCOOPERATIVA, 
-    NRCONTA, 
-    NRPROPOSTA, 
-    IDPRODUTO, 
-    IDSISTEMA, 
-    IDPARAMETRO_MACROECONOMICO, 
-    DHREGISTRO, 
-    CDESTAGIO_CONCESSAO, 
-    PEPE_CONCESSAO, 
-    VLPE_CONCESSAO, 
-    TPPOLITICA_CONCESSAO, 
-    NRSCORE_CREDITO, 
-    PEPD_12
-)
-VALUES
-(
-    SYS_GUID(), 
-    6, 
-    82069018, 
-    285123, 
-    0, 
-    1, 
-    NULL, 
-    SYSDATE, 
-    'A', 
-    71.9, 
-    11.5, 
-    1, 
-    10, 
-    80
-);
-
-COMMIT;
-
+BEGIN
+        INSERT INTO CREDITO.TBCRED_PROPOSTA_PERDA_ESPERADA
+        (
+            IDPROPOSTA_PERDA_ESPERADA, 
+            IDCOOPERATIVA, 
+            NRCONTA, 
+            NRPROPOSTA, 
+            IDPRODUTO, 
+            IDSISTEMA, 
+            IDPARAMETRO_MACROECONOMICO, 
+            DHREGISTRO, 
+            CDESTAGIO_CONCESSAO, 
+            PEPE_CONCESSAO, 
+            VLPE_CONCESSAO, 
+            TPPOLITICA_CONCESSAO, 
+            NRSCORE_CREDITO, 
+            PEPD_12
+        )
+        VALUES
+        (
+            SYS_GUID(), 
+            6, 
+            82069018, 
+            285123, 
+            0, 
+            1, 
+            NULL, 
+            SYSDATE, 
+            'A', 
+            71.9, 
+            11.5, 
+            1, 
+            10, 
+            80
+        );
+    COMMIT;
+END;
 /
