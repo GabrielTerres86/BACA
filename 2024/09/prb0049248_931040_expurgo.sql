@@ -110,4 +110,11 @@ END;';
                            ,auto_drop       => TRUE
                            ,enabled         => TRUE);
 
+  COMMIT;
+
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    sistema.excecaointerna(pr_cdcooper => 3, pr_compleme => vr_cdprogra);
+    RAISE;
 END;
