@@ -28,3 +28,4 @@ VALUES(
  0, 
  0, 
  0);
+ commit;
