@@ -7,7 +7,7 @@ BEGIN
 
   COMMIT;
   
-  gestaoderisco.gerarCargaScore(pr_idscore => 1021,
+  gestaoderisco.gerarCargaScore(pr_idscore => 1481,
                                 pr_dscritic => vr_dscritic);
 
   IF TRIM(vr_dscritic) IS NOT NULL THEN
