@@ -1,5 +1,5 @@
 BEGIN
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -80,7 +80,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -161,7 +161,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -242,7 +242,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -323,7 +323,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -404,7 +404,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -485,7 +485,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -566,7 +566,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -647,7 +647,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -728,7 +728,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -809,7 +809,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -890,7 +890,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -971,7 +971,7 @@ BEGIN
     ,' '
     ,NULL);
 
-  INSERT INTO crapceb
+  INSERT INTO cecred.crapceb
     (CDCOOPER
     ,NRDCONTA
     ,NRCONVEN
@@ -1057,4 +1057,6 @@ BEGIN
 EXCEPTION
   WHEN OTHERS THEN
     ROLLBACK;
+    sistema.excecaointerna(pr_cdcooper => 3, pr_compleme => 'us945659_inserir_convenios.sql');
+    RAISE;
 END;
