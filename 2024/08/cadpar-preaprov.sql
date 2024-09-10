@@ -1,7 +1,7 @@
 BEGIN
   
   insert into cecred.crappat (CDPARTAR, NMPARTAR, TPDEDADO, CDPRODUT)
-  values (323, 'Pre-Aprovado fluxo IFRS9', 1, 0);  
+  values (323, 'Pre-Aprovado fluxo IFRS9', 1, 12);  
   insert into cecred.crappco (CDPARTAR, CDCOOPER, DSCONTEU)
   values (323, 7, '0');
   insert into cecred.crappco (CDPARTAR, CDCOOPER, DSCONTEU)
