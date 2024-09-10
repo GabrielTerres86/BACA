@@ -27,7 +27,7 @@ BEGIN
 	 DHREGISTRO)
 	VALUES(SYS_GUID() , 
 	       6,
-	       '10/09/2024', 
+	       SYSDATE, 
 	       82069018, 
 	       285124, 
 	       0, 
@@ -48,7 +48,7 @@ BEGIN
 	       0, 
 	       79.05, 
 	       2300, 
-	       '10/09/2024', 
+	       SYSDATE, 
 	       SYSDATE );
 	      
 	COMMIT;
