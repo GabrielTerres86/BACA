@@ -110,7 +110,7 @@ BEGIN
     COMMIT;
   END LOOP;
   
-  update tbseg_parametros_prst p set p.nrapolic = '77001393', P.PAGSEGU = 0.0588 where p.nrapolic = '000000077001299' and p.tppessoa = 2; 
-  UPDATE tbseg_prestamista p set p.nrapolice = '77001393' where p.nrapolice = '000000077001299';
+  update CECRED.tbseg_parametros_prst p set p.nrapolic = '77001393', P.PAGSEGU = 0.0588 where p.nrapolic = '000000077001299' and p.tppessoa = 2; 
+  UPDATE CECRED.tbseg_prestamista p set p.nrapolice = '77001393' where p.nrapolice = '000000077001299';
   COMMIT;
 END;
