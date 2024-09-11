@@ -108,15 +108,6 @@ BEGIN
   INSERT INTO cecred.crapaca
     (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
   VALUES
-    ('BUSCA_PAYLOAD'
-    ,NULL
-    ,'CREDITO.obterPayloadIntegracao'
-    ,'pr_rowidpayload'
-    ,vr_nrseqrdr);
-
-  INSERT INTO cecred.crapaca
-    (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
-  VALUES
     ('INSERE_PAYLOAD'
     ,NULL
     ,'CREDITO.incluirPayloadBorderoIntegr'
@@ -162,8 +153,18 @@ BEGIN
   insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
   values ('INTBRD', 'A', 'f0033754', ' ', 3, 1, 0, 2);
             
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTBRD', 'C', 'f0032641 ', ' ', 3, 1, 0, 2);
 
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTBRD', 'A', 'f0032641 ', ' ', 3, 1, 0, 2);
 
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTBRD', 'C', 'f0033639 ', ' ', 3, 1, 0, 2);
+
+  insert into CECRED.crapace (NMDATELA, CDDOPCAO, CDOPERAD, NMROTINA, CDCOOPER, NRMODULO, IDEVENTO, IDAMBACE)
+  values ('INTBRD', 'A', 'f0033639 ', ' ', 3, 1, 0, 2);
+  
   COMMIT;
 EXCEPTION
 
