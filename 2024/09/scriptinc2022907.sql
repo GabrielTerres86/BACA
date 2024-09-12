@@ -1,7 +1,7 @@
 DECLARE
   vr_idprglog  tbgen_prglog.idprglog%TYPE := 0;
 BEGIN
-  UPDATE craprda
+  UPDATE cecred.craprda
      SET vlslfmes = 0,
          insaqtot = 1,
          vlsdrdca = 0
