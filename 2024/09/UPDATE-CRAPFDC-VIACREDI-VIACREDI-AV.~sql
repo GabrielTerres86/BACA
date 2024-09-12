@@ -2,8 +2,7 @@ begin
   
 update cecred.crapfdc c 
   set c.incheque = 8,
-      c.dtliqchq = trunc(sysdate),
-      c.dtretchq = trunc(sysdate)
+      c.dtliqchq = trunc(sysdate)
 where c.progress_recid in 
 (select c.progress_recid
   from crapfdc c
