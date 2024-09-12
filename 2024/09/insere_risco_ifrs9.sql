@@ -26,12 +26,12 @@ BEGIN
 	 DTPE_FINAL, 
 	 DHREGISTRO)
 	VALUES(SYS_GUID() , 
-	       6,
-	       SYSDATE, 
-	       82069018, 
+	       16,
+	       TO_DATE('2024-05-21 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 
+	       81312890, 
 	       285124, 
 	       0, 
-	       '409', 
+	       '1902', 
 	       '11', 
 	       '1', 
 	       '1', 
@@ -48,8 +48,8 @@ BEGIN
 	       1, 
 	       79.05, 
 	       2300, 
-	       SYSDATE, 
-	       SYSDATE );
+	       TO_DATE('2024-05-21 00:00:00', 'YYYY-MM-DD HH24:MI:SS'), 
+	       TO_DATE('2024-05-21 00:00:00', 'YYYY-MM-DD HH24:MI:SS'));
 	      
 	COMMIT;
 
