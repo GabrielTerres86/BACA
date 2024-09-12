@@ -1,8 +1,8 @@
 BEGIN   
-    	INSERT INTO crapstf
-	  (DTMVTOLT,NRTERFIN,VLDSDINI,VLDSDFIN,CDCOOPER)
-	    VALUES
-	  (to_date('12-09-2024', 'dd-mm-yyyy'),201,1000.00,1000.00,9);
+    	update crapstf set VLDSDINI = 1000.00, VLDSDFIN = 1000.00
+	   where NRTERFIN = 201 and
+	   CDCOOPER = 9 and
+	   DTMVTOLT = to_date('12-09-2024', 'dd-mm-yyyy')
 
     COMMIT; 
     
