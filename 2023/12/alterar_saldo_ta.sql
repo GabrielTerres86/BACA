@@ -1,9 +1,9 @@
 BEGIN   
-       update crapstf set VLDSDINI = 1000.00, VLDSDFIN = 1000.00
-	   where NRTERFIN = 201 and
-	   CDCOOPER = 9 and
-	   DTMVTOLT = to_date('12-09-2024', 'dd-mm-yyyy');
+    UPDATE CRAPSTF 
+    SET VLDSDINI = 1000 
+    WHERE CDCOOPER = 9 
+    AND NRTERFIN = 201 
+    AND PROGRESS_RECID = 1465982;
 
     COMMIT; 
-    
   END;
