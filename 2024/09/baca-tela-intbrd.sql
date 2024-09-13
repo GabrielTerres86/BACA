@@ -96,6 +96,15 @@ BEGIN
     ,'pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdacao,pr_pagina,pr_dtopeini,pr_dtopefin,pr_cddopcao,pr_idtrnsc '
     ,vr_nrseqrdr);
 
+   INSERT INTO cecred.crapaca
+    (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
+  VALUES
+    ('BUSCA_PAYLOAD'
+    ,NULL
+    ,'CREDITO.obterPayloadIntegracao'
+    ,'pr_rowidpayload'
+    ,vr_nrseqrdr);
+	
   INSERT INTO cecred.crapaca
     (NMDEACAO, NMPACKAG, NMPROCED, LSTPARAM, NRSEQRDR)
   VALUES
