@@ -13,4 +13,13 @@ BEGIN
                             77873279, 77872934, 77874055, 77870370, 77872362, 77871284, 77873626, 77870204, 77873648, 77871447,
                             77870744, 77870640, 77870386, 77874147, 77870310, 77870343, 77871626);
   COMMIT;
+
+  UPDATE cecred.craplft
+     SET insitfat   = 1,
+         dtmvtolt   = to_date('16/09/2024', 'DD/MM/YYYY'),
+         dtvencto   = to_date('16/09/2024', 'DD/MM/YYYY'),
+         nrseqdig   = nrseqdig  + 9000000
+   WHERE progress_recid IN (77868315,77857666,77862073,77868029,77868864,77863965);
+
+  COMMIT;
 END;
