@@ -4,8 +4,7 @@ declare
 
 BEGIN
   
-    -- Inicializa sessão do Centralizado para NÃO deixar as triggers do Aimaro rodarem em Loop.
-  CADA0016.pc_sessao_trigger( pr_tpmodule => 1, -- Incializa 
+  CADA0016.pc_sessao_trigger( pr_tpmodule => 1,
                               pr_dsmodule => vr_dsmodule);
 
   UPDATE CECRED.CRAPTFC F SET F.NRDRAMAL = TRUNC( DBMS_RANDOM.VALUE(100, 999) ) WHERE F.CDCOOPER = 1 AND F.NRDCONTA = 86668331 AND F.IDSEQTTL = 1 AND F.NRDDDTFC = 47 AND F.NRTELEFO = 33305365;
@@ -309,8 +308,7 @@ BEGIN
   UPDATE CECRED.CRAPTFC F SET F.NRDRAMAL = TRUNC( DBMS_RANDOM.VALUE(100, 999) ) WHERE F.CDCOOPER = 2 AND F.NRDCONTA = 18698980 AND F.IDSEQTTL = 1 AND F.NRDDDTFC = 47 AND F.NRTELEFO = 992061987;
   UPDATE CECRED.CRAPTFC F SET F.NRDRAMAL = TRUNC( DBMS_RANDOM.VALUE(100, 999) ) WHERE F.CDCOOPER = 1 AND F.NRDCONTA = 18704638 AND F.IDSEQTTL = 1 AND F.NRDDDTFC = 27 AND F.NRTELEFO = 33484001;
   
-  -- Finaliza sessao do cadastro centralizado.
-  CADA0016.pc_sessao_trigger( pr_tpmodule => 2, -- Finaliza
+  CADA0016.pc_sessao_trigger( pr_tpmodule => 2, 
                               pr_dsmodule => vr_dsmodule);
   
   COMMIT;
