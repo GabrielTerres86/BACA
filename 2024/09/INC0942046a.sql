@@ -649,10 +649,70 @@ BEGIN
 
 
   
-  pc_gera_extrato_cnab(pr_cdcooper => 1
+ pc_gera_extrato_cnab(pr_cdcooper => 1
                       ,pr_nrdconta => 6489044  
                       ,pr_dtrefere => to_date('25/06/2024','dd/mm/yyyy'));
-					  
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('26/06/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('27/06/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('28/06/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('29/06/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('30/06/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('01/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('02/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('03/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('04/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('05/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('06/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('07/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('08/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('09/07/2024','dd/mm/yyyy'));
+ 
+ pc_gera_extrato_cnab(pr_cdcooper => 1
+                      ,pr_nrdconta => 6489044  
+                      ,pr_dtrefere => to_date('10/07/2024','dd/mm/yyyy'));					  
+ 
  pc_gera_extrato_cnab(pr_cdcooper => 1
                      ,pr_nrdconta => 6489044   
                      ,pr_dtrefere => to_date('11/07/2024','dd/mm/yyyy'));
