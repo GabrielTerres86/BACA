@@ -1,0 +1,4 @@
+BEGIN
+  INSERT INTO PIX.TBPIX_TIPO_LIMITE (IDTIPO_LIMITE, NMTIPO_LIMITE) VALUES (6, 'Transferência dispositivo não cadastrado');
+COMMIT;
+END;
