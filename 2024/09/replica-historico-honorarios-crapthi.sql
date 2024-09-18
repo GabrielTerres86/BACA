@@ -21,7 +21,7 @@ BEGIN
   
     IF cr_crapthi%FOUND THEN
       rw_crapthi.cdhistor       := 4593;
-      rw_crapthi.progress_recid := rw_crapthi.progress_recid + 100000;
+      rw_crapthi.progress_recid := rw_crapthi.progress_recid + 1000000;
     INSERT INTO crapthi VALUES rw_crapthi;
     END IF;
     CLOSE cr_crapthi;
@@ -32,7 +32,7 @@ BEGIN
   
     IF cr_craphis%FOUND THEN
       rw_craphis.cdhistor       := 4593;
-      rw_craphis.progress_recid := rw_craphis.progress_recid + 100000;
+      rw_craphis.progress_recid := rw_craphis.progress_recid + 1000000;
     INSERT INTO craphis VALUES rw_craphis;
     END IF;
     CLOSE cr_craphis;
