@@ -95,6 +95,18 @@ BEGIN
     END IF;
 
   END LOOP;
+  
+  delete from cecred.tbepr_renegociacao_crapepr where cdcooper = 1 and nrdconta = 6631533 and nrctremp = 5395951 and nrversao = 3;
+
+  delete from cecred.tbepr_renegociacao_crawepr where cdcooper = 1 and nrdconta = 6631533 and nrctremp = 5395951 and nrversao = 3;
+
+  delete from cecred.tbepr_renegociacao_craplem where cdcooper = 1 and nrdconta = 6631533 and nrctremp = 5395951 and nrversao = 3;
+
+  delete from cecred.tbepr_renegociacao_crappep where cdcooper = 1 and nrdconta = 6631533 and nrctremp = 5395951 and nrversao = 3;
+
+  delete from  cecred.tbepr_renegociacao where cdcooper = 1 and nrdconta = 6631533 and nrctremp = 8537687;
+
+  delete from cecred.tbepr_renegociacao_contrato where cdcooper = 1 and nrdconta = 6631533 and nrctremp = 8537687;
 
   COMMIT;
 
