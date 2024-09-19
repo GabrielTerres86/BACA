@@ -7,7 +7,7 @@ DECLARE
     SELECT cdcooper
       FROM cecred.crapcop c
      WHERE c.flgativo = 1 
-       AND c.cdcooper not in (1,8,16)
+       AND c.cdcooper = 1
      ORDER BY c.cdcooper DESC;
   rw_crapcop cr_crapcop%ROWTYPE;
   
