@@ -25,6 +25,7 @@ DECLARE
   
 BEGIN 
   vr_registros := cecred.GENE0002.fn_quebra_string(pr_string  =>
+'6;1061612;23472|' ||
 '6;1061612;24410|' ||
 '6;1061612;24496|' ||
 '6;1061612;24375|' ||
