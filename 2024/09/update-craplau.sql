@@ -1,10 +1,19 @@
-begin
-  
-update cecred.craplau
-  set craplau.dtdebito = to_date('24/09/2024','dd/mm/yyyy')
-where craplau.nrdconta = 8076901 
-  and craplau.cdcooper = 1 
-  and craplau.progress_recid = 42398793
+BEGIN
+  UPDATE cecred.craplft
+     SET flintegra  = NULL,
+         cdsituacao = NULL,
+         dsintegra  = NULL,
+         insitfat   = 1,
+         dtmvtolt   = to_date('20/09/2024', 'DD/MM/YYYY'),
+         dtvencto   = to_date('20/09/2024', 'DD/MM/YYYY'),
+         nrseqdig   = nrseqdig + 9000000
+   WHERE progress_recid IN (77943474);
+  COMMIT;
 
-commit;
-end;
+  UPDATE cecred.craplau
+     SET dtdebito = to_date('25/09/2020', 'dd/mm/yyyy')
+   WHERE nrdconta = 8076901
+     AND cdcooper = 1
+     AND progress_recid = 42398793;
+  COMMIT;
+END;
