@@ -28,13 +28,6 @@ DECLARE
   
 BEGIN
   
-  UPDATE CRAPPRM
-     SET DSVLRPRM = '360'
-   WHERE NMSISTEM = 'CRED'
-     AND CDCOOPER = 0
-     AND CDACESSO = 'QTDIAEXPURGOCARGA_RISCO';
-  commit;
-
   vr_nmdireto := cecred.gene0001.fn_param_sistema('CRED',3,'ROOT_MICROS') || 'cpd/bacas/RISCO/RATING';
   vr_nmarqrbk := 'ROLLBACK_INC0325959_'||to_char(sysdate,'ddmmyyyy_hh24miss')||'.sql';
     
