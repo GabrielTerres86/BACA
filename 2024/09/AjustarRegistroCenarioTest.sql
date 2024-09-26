@@ -118,7 +118,7 @@ BEGIN
                      ,cdhistor
                      ,nrseqdig
                      ,vllanmto
-                     ,nrdctabb
+                     ,vr_nrdconta
                      ,cdpesqbb
                      ,vldoipmf
                      ,nrautdoc
