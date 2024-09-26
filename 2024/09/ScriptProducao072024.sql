@@ -3990,7 +3990,7 @@ BEGIN
                                                    pr_cdoperad => 1,
                                                    pr_cdpactra => rw_crapass.cdagenci,
                                                    pr_tplotmov => 5,
-                                                   pr_nrdolote => 600031,
+                                                   pr_nrdolote => 999999,
                                                    pr_nrdconta => v_dados(x).vr_nrdconta,
                                                    pr_cdhistor => vr_historic,
                                                    pr_nrctremp => v_dados(x).vr_nrctremp,
