@@ -2,6 +2,7 @@ DECLARE
   vr_cdcooper CONSTANT NUMBER := 7;
   vr_nrdconta CONSTANT NUMBER := 99884089;
   vr_vldsdisp NUMBER;
+  vr_nrseqdig NUMBER;
   
   CURSOR cr_saldo(pr_dtmvtolt DATE) IS
     SELECT * 
@@ -116,7 +117,13 @@ BEGIN
                      ,vr_nrdconta
                      ,nrdocmto
                      ,cdhistor
-                     ,nrseqdig
+                     ,(SELECT NVL(MAX(x.nrseqdig),0)+1
+                         FROM craplcm x
+                        WHERE x.cdcooper = vr_cdcooper
+                          AND x.dtmvtolt = to_date('23/09/2024','dd/mm/yyyy')
+                          AND x.cdagenci = t.cdagenci
+                          AND x.cdbccxlt = cdbccxlt
+                          AND x.nrdolote = nrdolote)
                      ,vllanmto
                      ,vr_nrdconta
                      ,cdpesqbb
