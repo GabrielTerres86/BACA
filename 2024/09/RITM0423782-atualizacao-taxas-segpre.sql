@@ -1,5 +1,3 @@
-PL/SQL Developer Test script 3.0
-81
 DECLARE
 
   vr_count NUMBER := 0;
@@ -34,8 +32,8 @@ DECLARE
            p.peinvalidez/10 as new_peinvalidez,
            p.peiftttaxa,
            p.peiftttaxa/10 as new_peiftttaxa           
-      FROM tbseg_prestamista p,
-           crapass a
+      FROM cecred.tbseg_prestamista p,
+           cecred.crapass a
      WHERE p.cdcooper = a.cdcooper
        AND p.nrdconta = a.nrdconta
        AND p.tpcustei = 0
@@ -80,6 +78,4 @@ BEGIN
   END LOOP;
   COMMIT;
 
-END;     
-0
-0
+END;
