@@ -34,7 +34,7 @@ begin
         SET ASS.QTFOLTAL = ASS.QTFOLTAL + 2
           , ASS.QTEXTMES = ASS.QTEXTMES + 2
           , ASS.QTFOLMES = ASS.QTFOLMES + 2
-          , ASS.NMPAIPTL = 'TST CARGA MDM TESTE 04'
+          , ASS.NMPAIPTL = 'TST CARGA MDM TESTE 05'
       WHERE ASS.CDCOOPER = rg_dados.CDCOOPER
         AND ASS.NRDCONTA = rg_dados.NRDCONTA;
       
