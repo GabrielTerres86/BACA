@@ -96,10 +96,10 @@ BEGIN
                    , crapsda t2
                WHERE t1.cdcooper = vr_cdcooper
                  AND t1.nrdconta = vr_nrdconta 
-                 AND t1.dtmvtolt = '20/09/2024'
+                 AND t1.dtmvtolt = to_date('20/09/2024','dd/mm/yyyy')
                  AND t2.cdcooper = vr_cdcooper
                  AND t2.nrdconta = 99999552 
-                 AND t2.dtmvtolt >= '21/09/2024');
+                 AND t2.dtmvtolt >= to_date('21/09/2024','dd/mm/yyyy'));
        
   UPDATE craplcm t
      SET t.dtmvtolt = to_date('27/09/2024','dd/mm/yyyy')
