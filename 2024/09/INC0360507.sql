@@ -36,7 +36,7 @@ BEGIN
   dbms_lob.createtemporary(vr_dados_rollback, TRUE, dbms_lob.CALL);
   dbms_lob.open(vr_dados_rollback, dbms_lob.lob_readwrite);     
   
-  vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '7;15684393;143548;C;D|'||
+  vr_conta := cecred.GENE0002.fn_quebra_string(pr_string  => '7;15684393;143458;C;D|'||
                                                              '10;62618;58986;C;D'
                                                              ,
                                                pr_delimit => '|');
