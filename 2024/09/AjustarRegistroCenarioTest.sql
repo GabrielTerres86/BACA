@@ -1,158 +1,111 @@
 DECLARE
   vr_cdcooper CONSTANT NUMBER := 7;
   vr_nrdconta CONSTANT NUMBER := 99884089;
-  vr_vldsdisp NUMBER;
-  vr_nrseqdig NUMBER;
-  
-  CURSOR cr_saldo(pr_dtmvtolt DATE) IS
-    SELECT * 
-      FROM crapsda t 
-     WHERE t.cdcooper = 1 
-       AND t.nrdconta = 84794941 
-       AND t.dtmvtolt = pr_dtmvtolt;
-  rw_saldo  cr_saldo%ROWTYPE;
   
 BEGIN
   
-  UPDATE crapdat t
-     SET t.dtmvtolt    = to_date('23/09/2024','dd/mm/yyyy')
-       , t.dtmvtoan    = to_date('20/09/2024','dd/mm/yyyy')
-       , t.dtmvtopr    = to_date('24/09/2024','dd/mm/yyyy')
-       , t.dtmvtocd    = to_date('23/09/2024','dd/mm/yyyy')
-       , t.dtmvcentral = to_date('23/09/2024','dd/mm/yyyy')
-   WHERE t.cdcooper = vr_cdcooper;
-  
-  OPEN  cr_saldo(to_date('16/02/2024','dd/mm/yyyy'));
-  FETCH cr_saldo INTO rw_saldo;
-  CLOSE cr_saldo;
-  
-  vr_vldsdisp := rw_saldo.vlsddisp;
-   
-  UPDATE crapsda t 
-     SET t.vlsddisp = rw_saldo.vlsddisp
-       , t.vlsdchsl = rw_saldo.vlsdchsl
-       , t.vlsdbloq = rw_saldo.vlsdbloq
-       , t.vlsdblpr = rw_saldo.vlsdblpr
-       , t.vlsdblfp = rw_saldo.vlsdblfp
-       , t.vlsdindi = rw_saldo.vlsdindi
-       , t.vllimcre = rw_saldo.vllimcre
-       , t.vlsdeved = rw_saldo.vlsdeved
-       , t.vldeschq = rw_saldo.vldeschq
-       , t.vllimutl = rw_saldo.vllimutl
-       , t.vladdutl = rw_saldo.vladdutl
-       , t.vlsdrdca = rw_saldo.vlsdrdca
-       , t.vlsdrdpp = rw_saldo.vlsdrdpp
-       , t.vllimdsc = rw_saldo.vllimdsc
-       , t.vldestit = rw_saldo.vldestit
-       , t.vllimtit = rw_saldo.vllimtit
-       , t.vlsdcota = rw_saldo.vlsdcota
-       , t.vlblqjud = rw_saldo.vlblqjud
-   WHERE t.cdcooper = vr_cdcooper
-     AND t.nrdconta = vr_nrdconta
-     AND t.dtmvtolt = to_date('20/09/2024','dd/mm/yyyy');
-  
-  OPEN  cr_saldo(to_date('19/02/2024','dd/mm/yyyy'));
-  FETCH cr_saldo INTO rw_saldo;
-  CLOSE cr_saldo;
-  
-  DELETE crapsda t 
-   WHERE t.cdcooper = vr_cdcooper
-     AND t.nrdconta = vr_nrdconta
-     AND t.dtmvtolt >= to_date('23/09/2024','dd/mm/yyyy');
-  
-  UPDATE crapsld t
-     SET t.vlsddisp = vr_vldsdisp
-   WHERE t.cdcooper = vr_cdcooper
-     AND t.nrdconta = vr_nrdconta;
-     
-  DELETE craplcm t
-   WHERE t.cdcooper = vr_cdcooper
-     AND t.nrdconta = vr_nrdconta
-     AND t.dtmvtolt >= to_date('23/09/2024','dd/mm/yyyy');
-     
-  UPDATE crapass t
-     SET t.vllimcre = 5000
-   WHERE t.cdcooper = vr_cdcooper
-     AND t.nrdconta = vr_nrdconta;
-
-  INSERT INTO craplcm(dtmvtolt
-                     ,cdagenci
-                     ,cdbccxlt
-                     ,nrdolote
-                     ,nrdconta
-                     ,nrdocmto
-                     ,cdhistor
-                     ,nrseqdig
-                     ,vllanmto
-                     ,nrdctabb
-                     ,cdpesqbb
-                     ,vldoipmf
-                     ,nrautdoc
-                     ,nrsequni
-                     ,cdbanchq
-                     ,cdcmpchq
-                     ,cdagechq
-                     ,nrctachq
-                     ,nrlotchq
-                     ,sqlotchq
-                     ,dtrefere
-                     ,hrtransa
-                     ,cdoperad
-                     ,dsidenti
-                     ,cdcooper
-                     ,nrdctitg
-                     ,dscedent
-                     ,cdcoptfn
-                     ,cdagetfn
-                     ,nrterfin
-                     ,nrparepr
-                     ,nrseqava
-                     ,nraplica
-                     ,cdorigem
-                     ,idlautom)
-              (SELECT to_date('23/09/2024','dd/mm/yyyy')
-                     ,cdagenci
-                     ,cdbccxlt
-                     ,nrdolote
-                     ,vr_nrdconta
-                     ,nrdocmto
-                     ,cdhistor
-                     ,(SELECT NVL(MAX(x.nrseqdig),0)+1
-                         FROM craplcm x
-                        WHERE x.cdcooper = vr_cdcooper
-                          AND x.dtmvtolt = to_date('23/09/2024','dd/mm/yyyy')
-                          AND x.cdagenci = t.cdagenci
-                          AND x.cdbccxlt = cdbccxlt
-                          AND x.nrdolote = nrdolote)
-                     ,vllanmto
-                     ,vr_nrdconta
-                     ,cdpesqbb
-                     ,vldoipmf
-                     ,nrautdoc
-                     ,nrsequni
-                     ,cdbanchq
-                     ,cdcmpchq
-                     ,cdagechq
-                     ,nrctachq
-                     ,nrlotchq
-                     ,sqlotchq
-                     ,dtrefere
-                     ,hrtransa
-                     ,cdoperad
-                     ,dsidenti
-                     ,vr_cdcooper
-                     ,nrdctitg
-                     ,dscedent
-                     ,cdcoptfn
-                     ,cdagetfn
-                     ,nrterfin
-                     ,nrparepr
-                     ,nrseqava
-                     ,nraplica
-                     ,cdorigem
-                     ,idlautom
-                  FROM craplcm t 
-                 WHERE ROWID IN ('AAAkspAAAAAKQaqAAN','AAAkspAAAAABQYiAAg'));
+  INSERT INTO crapsda(nrdconta,
+                      dtmvtolt,
+                      vlsddisp,
+                      vlsdchsl,
+                      vlsdbloq,
+                      vlsdblpr,
+                      vlsdblfp,
+                      vlsdindi,
+                      vllimcre,
+                      cdcooper,
+                      vlsdeved,
+                      vldeschq,
+                      vllimutl,
+                      vladdutl,
+                      vlsdrdca,
+                      vlsdrdpp,
+                      vllimdsc,
+                      vlprepla,
+                      vlprerpp,
+                      vlcrdsal,
+                      qtchqliq,
+                      qtchqass,
+                      dtdsdclq,
+                      vltotpar,
+                      vlopcdia,
+                      vlavaliz,
+                      vlavlatr,
+                      qtdevolu,
+                      vltotren,
+                      vldestit,
+                      vllimtit,
+                      vlsdempr,
+                      vlsdfina,
+                      vlsrdc30,
+                      vlsrdc60,
+                      vlsrdcpr,
+                      vlsrdcpo,
+                      vlsdcota,
+                      vlblqjud,
+                      vlblqaco,
+                      vllimcpa,
+                      vlblqprj,
+                      vllimcrdpa,
+                      vlblqapli)
+            ( SELECT t1.nrdconta,
+                     t2.dtmvtolt,
+                     t1.vlsddisp,
+                     t1.vlsdchsl,
+                     t1.vlsdbloq,
+                     t1.vlsdblpr,
+                     t1.vlsdblfp,
+                     t1.vlsdindi,
+                     t1.vllimcre,
+                     t1.cdcooper,
+                     t1.vlsdeved,
+                     t1.vldeschq,
+                     t1.vllimutl,
+                     t1.vladdutl,
+                     t1.vlsdrdca,
+                     t1.vlsdrdpp,
+                     t1.vllimdsc,
+                     t1.vlprepla,
+                     t1.vlprerpp,
+                     t1.vlcrdsal,
+                     t1.qtchqliq,
+                     t1.qtchqass,
+                     t1.dtdsdclq,
+                     t1.vltotpar,
+                     t1.vlopcdia,
+                     t1.vlavaliz,
+                     t1.vlavlatr,
+                     t1.qtdevolu,
+                     t1.vltotren,
+                     t1.vldestit,
+                     t1.vllimtit,
+                     t1.vlsdempr,
+                     t1.vlsdfina,
+                     t1.vlsrdc30,
+                     t1.vlsrdc60,
+                     t1.vlsrdcpr,
+                     t1.vlsrdcpo,
+                     t1.vlsdcota,
+                     t1.vlblqjud,
+                     t1.vlblqaco,
+                     t1.vllimcpa,
+                     t1.vlblqprj,
+                     t1.vllimcrdpa,
+                     t1.vlblqapli 
+                FROM crapsda t1 
+                   , crapsda t2
+               WHERE t1.cdcooper = vr_cdcooper
+                 AND t1.nrdconta = vr_nrdconta 
+                 AND t1.dtmvtolt = '20/09/2024'
+                 AND t2.cdcooper = vr_cdcooper
+                 AND t2.nrdconta = 99999552 
+                 AND t2.dtmvtolt >= '21/09/2024');
+       
+  UPDATE craplcm t
+     SET t.dtmvtolt = to_date('27/09/2024','dd/mm/yyyy')
+   WHERE t.cdcooper = vr_cdcooper 
+     AND t.nrdconta = vr_nrdconta 
+     AND t.dtmvtolt = to_date('23/09/2024','dd/mm/yyyy');
   
   COMMIT;
   
