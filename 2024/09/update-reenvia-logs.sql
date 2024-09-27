@@ -1,0 +1,10 @@
+BEGIN 
+  UPDATE CREDITO.tbcred_integracao_pagamento A
+  SET A.CDSITUACAO = 0
+  WHERE A.CDCOOPERATIVA = 16;
+COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_application_error(-20500, SQLERRM);
+END;
