@@ -1,6 +1,3 @@
-PL/SQL Developer Test script 3.0
-120
--- INC0359562
 declare 
   vr_dscritic    cecred.crapcri.dscritic%TYPE;
   vr_diretorio   VARCHAR2(200);
@@ -18,7 +15,7 @@ declare
     WHERE t.cdcooper >= 1
       AND t.cdmodali = 101
       AND t.innivris < 10
-      AND t.dtrefere = '29/08/2024' --'26/09/2024'
+      AND t.dtrefere = '26/09/2024'
       AND c.cdcooper = t.cdcooper
       AND c.nrdconta = t.nrdconta
       AND c.nrctremp = t.NRCTREMP
@@ -120,6 +117,3 @@ EXCEPTION
     fecharArquivos;
     raise_application_error(-20500, SQLERRM);
 END;
-0
-1
-vr_rollback
