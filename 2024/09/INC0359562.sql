@@ -15,7 +15,7 @@ declare
     WHERE t.cdcooper >= 1
       AND t.cdmodali = 101
       AND t.innivris < 10
-      AND t.dtrefere = '26/09/2024'
+      AND t.dtrefere = to_date('26/09/2024','dd/mm/rrrr')
       AND c.cdcooper = t.cdcooper
       AND c.nrdconta = t.nrdconta
       AND c.nrctremp = t.NRCTREMP
