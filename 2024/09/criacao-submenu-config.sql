@@ -14,4 +14,4 @@ VALUES (1063, 1021, 'Limites - Pix automático', 1, 1, 1, '2.63.0', null, 0);
 
 COMMIT;
 
-END
+END;
