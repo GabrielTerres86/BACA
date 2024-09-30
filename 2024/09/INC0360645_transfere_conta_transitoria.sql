@@ -15,7 +15,6 @@ BEGIN
   
   vr_dtmvtolt := btch0001.rw_crapdat.dtmvtolt;
 
-  -- Call the procedure
   PREJ0003.pc_gera_transf_cta_prj(pr_cdcooper => vr_cdcooper
                                  ,pr_nrdconta => vr_nrdconta
                                  ,pr_vllanmto => vr_vlrlanc
