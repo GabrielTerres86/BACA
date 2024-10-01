@@ -7,7 +7,7 @@ begin
   GESTAODERISCO.geraCargaCentral(pr_cdcooper => 1
                                 ,pr_flgexddt => TRUE
                                 ,pr_flgsaida => TRUE
-                                ,pr_dtrefere => '30/09/2024'
+                                ,pr_dtrefere => to_date('30/09/2024','dd/mm/rrrr')
                                 ,pr_cdcritic => vr_cdcritic
                                 ,pr_dscritic => vr_dscritic);
 
@@ -18,3 +18,4 @@ begin
      COMMIT;
    END IF;
 end;
+ 
