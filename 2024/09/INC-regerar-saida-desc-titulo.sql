@@ -42,5 +42,6 @@ BEGIN
     RAISE vr_exc_erro;
   END IF;
 
+  COMMIT;
   
 end;
