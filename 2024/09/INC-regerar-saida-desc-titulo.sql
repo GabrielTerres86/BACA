@@ -43,5 +43,15 @@ BEGIN
   END IF;
 
   COMMIT;
-  
+
+  UPDATE gestaoderisco.tbrisco_central_carga t
+     SET t.cdstatus = 3
+    WHERE t.idcentral_carga = 54721;
+
+  UPDATE gestaoderisco.tbrisco_central_carga t
+     SET t.cdstatus = 2
+    WHERE t.idcentral_carga = 54822;
+
+  COMMIT;
+
 end;
