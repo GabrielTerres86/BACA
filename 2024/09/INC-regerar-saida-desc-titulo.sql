@@ -46,10 +46,12 @@ BEGIN
 
   UPDATE gestaoderisco.tbrisco_central_carga t
      SET t.cdstatus = 3
+        ,t.dhfimcar_aimaro = sysdate
     WHERE t.idcentral_carga = 54721;
 
   UPDATE gestaoderisco.tbrisco_central_carga t
      SET t.cdstatus = 2
+        ,t.dhfimcar_aimaro = sysdate
     WHERE t.idcentral_carga = 54822;
 
   COMMIT;
