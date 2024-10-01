@@ -4,24 +4,16 @@ declare
   vr_dscritic VARCHAR2(4000);
 
 
+
+
 PROCEDURE gerarCargaDescontoTitulo(pr_cdcooper      IN crapris.cdcooper%TYPE
-                                                                  ,pr_idcarga       IN INTEGER
-                                                                  ,pr_idprglog      IN NUMBER                  --> identificador do log
-                                                                  ,pr_dtrefere      IN crapdat.dtmvtolt%TYPE  --> Data de referencia
-                                                                  ,pr_dtultdia      IN crapdat.dtultdia%TYPE  --> Data de referencia
-                                                                  ,pr_cdcritic     OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
-                                                                  ,pr_dscritic     OUT VARCHAR2) IS           --> Descricao da Critica
-/* ............................................................................
-   
-   Autor      : Darlei Zillmer
-   Data       : 04/04/2022
-   Dominio    : Gestão de Risco
-   Subdominio : Central de risco
-   Objetivo   : Gerar carga das operações de desconto de cheque
-   Alteracoes :
-  
-  ............................................................................ */
-  
+                                  ,pr_idcarga       IN INTEGER
+                                  ,pr_idprglog      IN NUMBER                  --> identificador do log
+                                  ,pr_dtrefere      IN crapdat.dtmvtolt%TYPE  --> Data de referencia
+                                  ,pr_dtultdia      IN crapdat.dtultdia%TYPE  --> Data de referencia
+                                  ,pr_cdcritic     OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
+                                  ,pr_dscritic     OUT VARCHAR2) IS           --> Descricao da Critica
+
   ---> Variaveis <---
   vr_cdprograma VARCHAR2(25) := 'gerarCargaDescontoTitulo';
   vr_dtinproc   CONSTANT DATE         := SYSDATE;
@@ -752,6 +744,12 @@ BEGIN
       vr_nrvarcam := GESTAODERISCO.tiposDados3040.ct_nrvarcam;  -- Variacao Cambial
       vr_cdnatope := GESTAODERISCO.tiposDados3040.ct_cdnatope;  -- Natureza da Operacao
       vr_cepconce := GESTAODERISCO.tiposdadosriscos.nrcepsingular; -- Cep Dependencia Concesssao Operacao
+     
+       IF vr_qtdiaatr > 90  THEN
+          GESTAODERISCO.adicionarCaracteristica(pr_dscarori => vr_dscaresp
+                                               ,pr_dscarnov => '19'     
+                                               ,pr_dscaralt => vr_dscaresp);                                      
+       END IF;
       
       -- OPERACAO
       vr_tab_oper(vr_idoperacao).idcarga     := pr_idcarga;
@@ -861,6 +859,7 @@ BEGIN
       IF nvl(vr_nrctaav1, 0) <> 0 OR (nvl(vr_nrctaav2, 0) <> 0 AND vr_nrctaav2 <> vr_nrctaav1) THEN
         GESTAODERISCO.obterGarantiasProduto(pr_cdcooper => pr_cdcooper
                                            ,pr_nrdconta => rw_crapcob.nrdconta
+                                           ,pr_nrctremp => rw_crapcob.nrctrlim
                                            ,pr_idoperac => vr_idoperacao
                                            ,pr_nrctaav1 => vr_nrctaav1
                                            ,pr_nrctaav2 => vr_nrctaav2
@@ -988,20 +987,21 @@ END gerarCargaDescontoTitulo;
 
 
 procedure geraCargaCentral(pr_cdcooper  IN crapris.cdcooper%TYPE  --> Cooperativa
-                                                          ,pr_flgexemp  IN BOOLEAN DEFAULT FALSE  --> Carregar tabelas referentes a emprestimos e executar programas (TR, PP, POS)
-                                                          ,pr_flgbndes  IN BOOLEAN DEFAULT FALSE  --> Carregar tabelas referentes a emprestimos e executar programas (BNDES)
-                                                          ,pr_flgexlim  IN BOOLEAN DEFAULT FALSE  --> Executar limite
-                                                          ,pr_flgexadp  IN BOOLEAN DEFAULT FALSE  --> Executar ADP
-                                                          ,pr_flgexddc  IN BOOLEAN DEFAULT FALSE  --> Executar Desconto de Cheque
-                                                          ,pr_flgexddt  IN BOOLEAN DEFAULT FALSE  --> Executar Desconto de Titulo
-                                                          ,pr_flgeximo  IN BOOLEAN DEFAULT FALSE  --> Executar Contratos Imobiliarios
-                                                          ,pr_flgcarta  IN BOOLEAN DEFAULT FALSE  --> Executar Cartoes Bancoob / BB
-                                                          ,pr_flggarpr  IN BOOLEAN DEFAULT FALSE  --> Executar Movimentos de Risco de Provisão e Garantia
-                                                          ,pr_flgsaida  IN BOOLEAN DEFAULT FALSE  --> Executar Saidas
-                                                          ,pr_dtrefere  IN crapdat.dtmvtolt%TYPE  --> Data de referencia principal
-                                                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
-                                                          ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
+                          ,pr_flgexemp  IN BOOLEAN DEFAULT FALSE  --> Carregar tabelas referentes a emprestimos e executar programas (TR, PP, POS)
+                          ,pr_flgbndes  IN BOOLEAN DEFAULT FALSE  --> Carregar tabelas referentes a emprestimos e executar programas (BNDES)
+                          ,pr_flgexlim  IN BOOLEAN DEFAULT FALSE  --> Executar limite
+                          ,pr_flgexadp  IN BOOLEAN DEFAULT FALSE  --> Executar ADP
+                          ,pr_flgexddc  IN BOOLEAN DEFAULT FALSE  --> Executar Desconto de Cheque
+                          ,pr_flgexddt  IN BOOLEAN DEFAULT FALSE  --> Executar Desconto de Titulo
+                          ,pr_flgeximo  IN BOOLEAN DEFAULT FALSE  --> Executar Contratos Imobiliarios
+                          ,pr_flgcarta  IN BOOLEAN DEFAULT FALSE  --> Executar Cartoes Bancoob / BB
+                          ,pr_flggarpr  IN BOOLEAN DEFAULT FALSE  --> Executar Movimentos de Risco de Provisão e Garantia
+                          ,pr_flgsaida  IN BOOLEAN DEFAULT FALSE  --> Executar Saidas
+                          ,pr_dtrefere  IN crapdat.dtmvtolt%TYPE  --> Data de referencia principal
+                          ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Codigo da Critica
+                          ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
 
+  ---> Variaveis <---
   vr_cdprograma VARCHAR2(25) := 'geraCargaCentral';
   vr_dtinproc   CONSTANT DATE         := SYSDATE;
   vr_dscomple   VARCHAR2(2000);
@@ -1247,13 +1247,13 @@ BEGIN
         vr_dtmvtolt := pr_rw_crapdat.dtultdia;
       END IF;
     END IF;
-      gerarCargaDescontoTitulo(pr_cdcooper => pr_cdcooper
-                              ,pr_idcarga  => vr_idcarga -- IN
-                              ,pr_idprglog => vr_idprglog
-                              ,pr_dtrefere => vr_dtmvtolt
-                              ,pr_dtultdia => pr_rw_crapdat.dtultdia
-                              ,pr_cdcritic => vr_cdcritic
-                              ,pr_dscritic => vr_dscritic);
+    gerarCargaDescontoTitulo(pr_cdcooper => pr_cdcooper
+                            ,pr_idcarga  => vr_idcarga -- IN
+                            ,pr_idprglog => vr_idprglog
+                            ,pr_dtrefere => vr_dtmvtolt
+                            ,pr_dtultdia => pr_rw_crapdat.dtultdia
+                            ,pr_cdcritic => vr_cdcritic
+                            ,pr_dscritic => vr_dscritic);
     
     -- Testar retorno de erro
     IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -1666,4 +1666,3 @@ begin
 
 
 end;
- 
