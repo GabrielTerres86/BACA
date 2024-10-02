@@ -1,5 +1,5 @@
 BEGIN
-  -- Test statements here
+
   FOR rw IN (  SELECT cob.progress_recid
 	                   ,cob.dtvencto
                      ,dsc.*
@@ -35,4 +35,3 @@ EXCEPTION
 	  ROLLBACK;
     raise_application_error(-20500, SQLERRM);
 END;
-/
