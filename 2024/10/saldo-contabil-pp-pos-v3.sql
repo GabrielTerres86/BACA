@@ -5,11 +5,16 @@ DECLARE
   vr_vlmrapar   NUMBER := 0;
   vr_vliofcpl   NUMBER := 0;
   vr_vljurmes   NUMBER := 0;
-  pr_vljurcor   NUMBER;
+  pr_vljurcor   NUMBER := 0;
   rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;
   vr_jura60     VARCHAR2(3) := 'NAO';
-  vr_vljurmes59 NUMBER;
-  vr_vljurmes60 NUMBER;
+  vr_vljurmes59 NUMBER := 0;
+  vr_vljurmes60 NUMBER := 0;
+  vr_jurantpp   VARCHAR2(3) := 'NAO';
+  vr_vljurcor59 number := 0;
+  vr_vljurcor60 number := 0;
+  vr_vlmrapar59 number := 0;
+  vr_vlmrapar60 number := 0;
 
   CURSOR cr_contrato(pr_cdcooper crapepr.cdcooper%TYPE) IS
     SELECT epr.cdcooper, epr.nrdconta, epr.nrctremp, lcr.dsoperac,
@@ -22,7 +27,7 @@ DECLARE
         ON epr.cdcooper = asso.cdcooper
            AND epr.nrdconta = asso.nrdconta
      WHERE epr.cdcooper = pr_cdcooper
-           AND epr.tpemprst = 1
+           AND epr.tpemprst = 2
            AND epr.inliquid = 0
            AND epr.inprejuz = 0;
 
@@ -30,7 +35,8 @@ DECLARE
                    ,pr_nrdconta IN cecred.crapepr.nrdconta%TYPE
                    ,pr_nrctremp IN cecred.crapepr.nrctremp%TYPE
                    ,pr_dtrefere IN cecred.crapdat.dtmvtoan%TYPE) IS
-    SELECT e.cdcooper, e.nrdconta, e.nrctremp, e.vljura60, e.qtdiaatr,e.vljurantpp
+    SELECT e.cdcooper, e.nrdconta, e.nrctremp, e.vljura60, e.qtdiaatr,
+           e.vljurantpp
       FROM gestaoderisco.tbrisco_juros_emprestimo e
      WHERE e.cdcooper = pr_cdcooper
            AND e.nrdconta = pr_nrdconta
@@ -43,11 +49,15 @@ DECLARE
                             ,pr_nrctremp   IN crapepr.nrctremp%TYPE
                             ,pr_vlmtapar   OUT NUMBER
                             ,pr_vlmrapar   OUT NUMBER
+                            ,pr_vlmrapar59 OUT NUMBER
+                            ,pr_vlmrapar60 OUT NUMBER
                             ,pr_vliofcpl   OUT NUMBER
                             ,pr_vljurmes   OUT NUMBER
-                            ,pr_vljurcor   OUT NUMBER
                             ,pr_vljurmes59 OUT NUMBER
-                            ,pr_vljurmes60 OUT NUMBER) IS
+                            ,pr_vljurmes60 OUT NUMBER
+                            ,pr_vljurcor   OUT NUMBER
+                            ,pr_vljurcor59 OUT NUMBER
+                            ,pr_vljurcor60 OUT NUMBER) IS
   
     rw_crapdat             BTCH0001.cr_crapdat%ROWTYPE;
     vr_tab_pgto_parcel_pp  empr0001.typ_tab_pgto_parcel;
@@ -75,6 +85,39 @@ DECLARE
     vr_vlmoralanc    NUMBER;
     vr_vljurmes59    NUMBER;
     vr_vljurmes60    NUMBER;
+    vr_vljuremu59    NUMBER;
+    vr_vljuremu60    NUMBER;
+    vr_vljurcor59    NUMBER;
+    vr_vljurcor60    NUMBER;
+    vr_qtdiaatraso   NUMBER;
+    vr_datajuros59   DATE;
+    vr_qtdias59mora  NUMBER := 0;
+    vr_qtdias60mora  NUMBER := 0;
+    vr_vlmoradia     NUMBER := 0;
+    vr_vlmora59      NUMBER := 0;
+    vr_vlmora60      NUMBER := 0;
+  
+    CURSOR cr_crappep_minmora(pr_cdcooper IN crappep.cdcooper%TYPE
+                             ,pr_nrdconta IN crappep.nrdconta%TYPE
+                             ,pr_nrctremp IN crappep.nrctremp%TYPE) IS
+      SELECT MIN(a.dtvencto) dtvencto
+        FROM crappep a
+       WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctremp = pr_nrctremp
+             AND inliquid = 0;
+    rw_crappep_minmora cr_crappep_minmora%ROWTYPE;
+  
+    CURSOR cr_craplem_mora(pr_cdcooper IN craplem.cdcooper%TYPE
+                          ,pr_nrdconta IN craplem.nrdconta%TYPE
+                          ,pr_nrctremp IN craplem.nrctremp%TYPE) IS
+      SELECT MAX(dtmvtolt) dtmvtolt
+        FROM craplem
+       WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+             AND nrctremp = pr_nrctremp
+             AND cdhistor IN (2346, 2347);
+    rw_craplem_mora cr_craplem_mora%ROWTYPE;
   
     CURSOR cr_mora_pos_deb(pr_cdcooper crapepr.cdcooper%TYPE
                           ,pr_nrdconta crapepr.nrdconta%TYPE
@@ -160,24 +203,26 @@ DECLARE
              AND a.inliquid = 0
              AND a.dtvencto < pr_dtmvtolt;
   
-    PROCEDURE obterJurosCorrecaoPos(pr_cdcooper IN crapdat.cdcooper%TYPE
-                                   ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE
-                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                                   ,pr_flgbatch IN BOOLEAN DEFAULT FALSE
-                                   ,pr_nrdconta IN crapepr.nrdconta%TYPE
-                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE
-                                   ,pr_dtlibera IN crawepr.dtlibera%TYPE
-                                   ,pr_vlrdtaxa IN NUMBER
-                                   ,pr_dtvencto IN crappep.dtvencto%TYPE
-                                   ,pr_insitpar IN PLS_INTEGER DEFAULT NULL
-                                   ,pr_vlsprojt IN NUMBER
-                                   ,pr_ehmensal IN BOOLEAN
-                                   ,pr_dtrefcor IN crapepr.dtrefcor%TYPE
-                                   ,pr_vljurcor OUT NUMBER
-                                   ,pr_qtdiacal OUT craplem.qtdiacal%TYPE
-                                   ,pr_vltaxprd OUT craplem.vltaxprd%TYPE
-                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                   ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+    PROCEDURE obterJurosCorrecaoPos(pr_cdcooper   IN crapdat.cdcooper%TYPE
+                                   ,pr_dtmvtoan   IN crapdat.dtmvtoan%TYPE
+                                   ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                   ,pr_flgbatch   IN BOOLEAN DEFAULT FALSE
+                                   ,pr_nrdconta   IN crapepr.nrdconta%TYPE
+                                   ,pr_nrctremp   IN crapepr.nrctremp%TYPE
+                                   ,pr_dtlibera   IN crawepr.dtlibera%TYPE
+                                   ,pr_vlrdtaxa   IN NUMBER
+                                   ,pr_dtvencto   IN crappep.dtvencto%TYPE
+                                   ,pr_insitpar   IN PLS_INTEGER DEFAULT NULL
+                                   ,pr_vlsprojt   IN NUMBER
+                                   ,pr_ehmensal   IN BOOLEAN
+                                   ,pr_dtrefcor   IN crapepr.dtrefcor%TYPE
+                                   ,pr_vljurcor   OUT NUMBER
+                                   ,pr_vljurcor59 OUT NUMBER
+                                   ,pr_vljurcor60 OUT NUMBER
+                                   ,pr_qtdiacal   OUT craplem.qtdiacal%TYPE
+                                   ,pr_vltaxprd   OUT craplem.vltaxprd%TYPE
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS
     BEGIN
     
       DECLARE
@@ -233,19 +278,64 @@ DECLARE
                  AND craplem.nrctremp = pr_nrctremp
                  AND craplem.cdhistor IN (2331, 2330, 2335, 2334);
       
-        vr_qtdedias       PLS_INTEGER;
-        vr_taxa_periodo   NUMBER(25, 8);
-        vr_vlpago_total   NUMBER(25, 2);
-        vr_vlpago_parcial NUMBER(25, 2);
-        vr_vljuros_mensal craplem.vllanmto%TYPE := 0;
-        vr_data_final     DATE;
-        vr_data_inicial   DATE;
-        vr_dtvencto_calc  DATE;
+        CURSOR cr_crappep_minvecto(pr_cdcooper IN crappep.cdcooper%TYPE
+                                  ,pr_nrdconta IN crappep.nrdconta%TYPE
+                                  ,pr_nrctremp IN crappep.nrctremp%TYPE) IS
+          SELECT MIN(a.dtvencto) dtvencto
+            FROM crappep a
+           WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta
+                 AND nrctremp = pr_nrctremp
+                 AND inliquid = 0;
+        rw_crappep_minvecto cr_crappep_minvecto%ROWTYPE;
+      
+        vr_qtdedias         PLS_INTEGER;
+        vr_taxa_periodo     NUMBER(25, 8);
+        vr_vlpago_total     NUMBER(25, 2);
+        vr_vlpago_parcial   NUMBER(25, 2);
+        vr_vljuros_mensal   craplem.vllanmto%TYPE := 0;
+        vr_data_final       DATE;
+        vr_data_inicial     DATE;
+        vr_dtvencto_calc    DATE;
+        vr_qtdiaatraso      NUMBER := 0;
+        vr_datajuros59      DATE;
+        vr_qtdedias59       PLS_INTEGER;
+        vr_vlpago_total59   NUMBER(25, 2);
+        vr_vlpago_parcial59 NUMBER(25, 2);
+        vr_vljuros_mensal59 craplem.vllanmto%TYPE := 0;
+        vr_dtvencto_calc59  DATE;
+        vr_qtdedias60       PLS_INTEGER;
+        vr_vlpago_total60   NUMBER(25, 2);
+        vr_vlpago_parcial60 NUMBER(25, 2);
+        vr_vljuros_mensal60 craplem.vllanmto%TYPE := 0;
+        vr_dtvencto_calc60  DATE;
       
         vr_exc_erro EXCEPTION;
         vr_cdcritic crapcri.cdcritic%TYPE;
         vr_dscritic VARCHAR2(4000);
       BEGIN
+      
+        ----------------------59-60--------------------------------------------------
+        OPEN cr_crappep_minvecto(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => pr_nrdconta,
+                                 pr_nrctremp => pr_nrctremp);
+        FETCH cr_crappep_minvecto
+          INTO rw_crappep_minvecto;
+        IF cr_crappep_minvecto%FOUND THEN
+          IF rw_crappep_minvecto.dtvencto < pr_dtmvtolt THEN
+            vr_qtdiaatraso := pr_dtmvtolt - rw_crappep_minvecto.dtvencto;
+          END IF;
+        END IF;
+        CLOSE cr_crappep_minvecto;
+        IF vr_qtdiaatraso > 1 THEN
+          IF vr_qtdiaatraso > 59 THEN
+            vr_datajuros59 := rw_crappep_minvecto.dtvencto + 59;
+          ELSE
+            vr_datajuros59 := rw_crappep_minvecto.dtvencto + vr_qtdiaatraso;
+          END IF;
+        END IF;
+        -----------------------------------------------------------------------------
+      
         IF pr_dtrefcor IS NOT NULL THEN
           vr_data_inicial := pr_dtrefcor;
         ELSE
@@ -325,6 +415,147 @@ DECLARE
       
         pr_qtdiacal := vr_qtdedias;
         pr_vltaxprd := vr_taxa_periodo;
+      
+        -- ********************************** 59 **************************************************************
+        IF nvl(vr_qtdiaatraso, 0) > 0 THEN
+          empr0011.pc_calcula_qtd_dias_uteis(pr_cdcooper => pr_cdcooper,
+                                             pr_flgbatch => pr_flgbatch,
+                                             pr_dtefetiv => pr_dtlibera,
+                                             pr_datainicial => vr_data_inicial,
+                                             pr_datafinal => vr_datajuros59,
+                                             pr_qtdiaute => vr_qtdedias59,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
+        
+          IF NVL(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        
+          vr_taxa_periodo := ROUND(POWER((1 + (pr_vlrdtaxa / 100)),
+                                         (vr_qtdedias59 / 252)) - 1, 8);
+          IF vr_taxa_periodo <= 0 THEN
+            vr_taxa_periodo := 0;
+          END IF;
+        
+          vr_dtvencto_calc59 := TO_DATE(TO_CHAR(pr_dtvencto, 'DD') || '/' ||
+                                        TO_CHAR(pr_dtmvtolt, 'MM/RRRR'),
+                                        'DD/MM/RRRR');
+          IF vr_dtvencto_calc59 > pr_dtmvtoan AND
+             vr_dtvencto_calc59 <= pr_dtmvtolt THEN
+            vr_dtvencto_calc59 := ADD_MONTHS(vr_dtvencto_calc59, -1);
+          ELSIF vr_dtvencto_calc59 > pr_dtmvtolt THEN
+            vr_dtvencto_calc59 := ADD_MONTHS(vr_dtvencto_calc59, -1);
+          END IF;
+          vr_dtvencto_calc59 := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                            pr_dtmvtolt => vr_dtvencto_calc59,
+                                                            pr_tipo => 'P');
+        
+          vr_vljuros_mensal59 := 0;
+          OPEN cr_craplem_juros(pr_cdcooper => pr_cdcooper,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_nrctremp => pr_nrctremp,
+                                pr_dtinicio => vr_dtvencto_calc59,
+                                pr_dtfim => pr_dtmvtolt);
+          FETCH cr_craplem_juros
+            INTO vr_vljuros_mensal59;
+          CLOSE cr_craplem_juros;
+        
+          vr_vlpago_total59 := 0;
+          OPEN cr_craplem_pago_total(pr_cdcooper => pr_cdcooper,
+                                     pr_nrdconta => pr_nrdconta,
+                                     pr_nrctremp => pr_nrctremp,
+                                     pr_dtinicio => vr_dtvencto_calc59,
+                                     pr_dtfim => pr_dtmvtolt);
+          FETCH cr_craplem_pago_total
+            INTO vr_vlpago_total59;
+          CLOSE cr_craplem_pago_total;
+        
+          vr_vlpago_parcial59 := 0;
+          OPEN cr_craplem_pago_parcial(pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta,
+                                       pr_nrctremp => pr_nrctremp);
+          FETCH cr_craplem_pago_parcial
+            INTO vr_vlpago_parcial59;
+          CLOSE cr_craplem_pago_parcial;
+        
+          pr_vljurcor59 := (NVL(pr_vlsprojt, 0) + NVL(vr_vljuros_mensal59, 0) -
+                           NVL(vr_vlpago_total59, 0) -
+                           NVL(vr_vlpago_parcial59, 0)) * vr_taxa_periodo;
+        
+        END IF;
+      
+        IF nvl(vr_qtdiaatraso, 0) > 59 THEN
+          empr0011.pc_calcula_qtd_dias_uteis(pr_cdcooper => pr_cdcooper,
+                                             pr_flgbatch => pr_flgbatch,
+                                             pr_dtefetiv => pr_dtlibera,
+                                             pr_datainicial => CASE
+                                                                  WHEN NVL(pr_vljurcor59, 0) > 0 THEN
+                                                                   vr_datajuros59
+                                                                  ELSE
+                                                                   vr_data_inicial
+                                                                END,
+                                             pr_datafinal => vr_data_final,
+                                             pr_qtdiaute => vr_qtdedias60,
+                                             pr_cdcritic => vr_cdcritic,
+                                             pr_dscritic => vr_dscritic);
+        
+          IF NVL(vr_cdcritic, 0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+        
+          vr_taxa_periodo := ROUND(POWER((1 + (pr_vlrdtaxa / 100)),
+                                         (vr_qtdedias60 / 252)) - 1, 8);
+          IF vr_taxa_periodo <= 0 THEN
+            vr_taxa_periodo := 0;
+          END IF;
+        
+          vr_dtvencto_calc60 := TO_DATE(TO_CHAR(pr_dtvencto, 'DD') || '/' ||
+                                        TO_CHAR(pr_dtmvtolt, 'MM/RRRR'),
+                                        'DD/MM/RRRR');
+          IF vr_dtvencto_calc60 > pr_dtmvtoan AND
+             vr_dtvencto_calc60 <= pr_dtmvtolt THEN
+            vr_dtvencto_calc60 := ADD_MONTHS(vr_dtvencto_calc60, -1);
+          ELSIF vr_dtvencto_calc60 > pr_dtmvtolt THEN
+            vr_dtvencto_calc60 := ADD_MONTHS(vr_dtvencto_calc60, -1);
+          END IF;
+          vr_dtvencto_calc60 := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                            pr_dtmvtolt => vr_dtvencto_calc60,
+                                                            pr_tipo => 'P');
+        
+          vr_vljuros_mensal60 := 0;
+          OPEN cr_craplem_juros(pr_cdcooper => pr_cdcooper,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_nrctremp => pr_nrctremp,
+                                pr_dtinicio => vr_dtvencto_calc60,
+                                pr_dtfim => pr_dtmvtolt);
+          FETCH cr_craplem_juros
+            INTO vr_vljuros_mensal60;
+          CLOSE cr_craplem_juros;
+        
+          vr_vlpago_total60 := 0;
+          OPEN cr_craplem_pago_total(pr_cdcooper => pr_cdcooper,
+                                     pr_nrdconta => pr_nrdconta,
+                                     pr_nrctremp => pr_nrctremp,
+                                     pr_dtinicio => vr_dtvencto_calc60,
+                                     pr_dtfim => pr_dtmvtolt);
+          FETCH cr_craplem_pago_total
+            INTO vr_vlpago_total60;
+          CLOSE cr_craplem_pago_total;
+        
+          vr_vlpago_parcial60 := 0;
+          OPEN cr_craplem_pago_parcial(pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta,
+                                       pr_nrctremp => pr_nrctremp);
+          FETCH cr_craplem_pago_parcial
+            INTO vr_vlpago_parcial60;
+          CLOSE cr_craplem_pago_parcial;
+        
+          pr_vljurcor60 := (NVL(pr_vlsprojt, 0) + NVL(vr_vljuros_mensal60, 0) -
+                           NVL(vr_vlpago_total60, 0) -
+                           NVL(vr_vlpago_parcial60, 0)) * vr_taxa_periodo;
+        
+        END IF;
+        -- ********************************** 59 **************************************************************
       
       EXCEPTION
         WHEN vr_exc_erro THEN
@@ -649,8 +880,45 @@ DECLARE
             ELSE
               vr_vljurmes59 := pr_vljurmes;
             END IF;
-            -------************* 60 ******************--------
+          ELSIF vr_qtdiaatraso > 59 THEN
+            IF NVL(vr_vljurmes59, 0) > 0 THEN
+              vr_diavtolt60 := to_number(to_char(vr_datajuros59, 'DD'));
+              vr_mesvtolt60 := to_number(to_char(vr_datajuros59, 'MM'));
+              vr_anovtolt60 := to_number(to_char(vr_datajuros59, 'YYYY'));
+            ELSE
+              vr_diavtolt60 := vr_diavtolt;
+              vr_mesvtolt60 := vr_mesvtolt;
+              vr_anovtolt60 := vr_anovtolt;
+            END IF;
+          
+            --Retornar Dia/mes/ano de referencia
+            pr_diarefju60 := pr_diarefju;
+            pr_mesrefju60 := pr_mesrefju;
+            pr_anorefju60 := pr_anorefju;
+          
+            --Calcular Quantidade dias
+            EMPR0001.pc_calc_dias360(pr_ehmensal => pr_ehmensal,
+                                     pr_dtdpagto => to_char(pr_dtdpagto, 'DD'),
+                                     pr_diarefju => vr_diavtolt60,
+                                     pr_mesrefju => vr_mesvtolt60,
+                                     pr_anorefju => vr_anovtolt60,
+                                     pr_diafinal => pr_diarefju60,
+                                     pr_mesfinal => pr_mesrefju60,
+                                     pr_anofinal => pr_anorefju60,
+                                     pr_qtdedias => vr_qtdiajur60);
+          
+            vr_valor60    := 1 + (rw_crapepr_lanjur.txjuremp / 100);
+            vr_potencia60 := POWER(vr_valor60, vr_qtdiajur60);
+            vr_vljurmes60 := (rw_crapepr_lanjur.vlsdeved +
+                             nvl(vr_vljurmes59, 0)) * (vr_potencia60 - 1);
+          
+            IF vr_vljurmes60 <= 0 THEN
+              pr_vljurmes60 := 0;
+              RAISE vr_exc_saida;
+            END IF;
+          
           END IF;
+          -------************* 60 ******************--------
         
           pr_vljurmes59 := NVL(vr_vljurmes59, 0);
           pr_vljurmes60 := NVL(vr_vljurmes60, 0);
@@ -674,22 +942,37 @@ DECLARE
       END;
     END obterJurosPP;
   
-    PROCEDURE obterValorJurosRemPos(pr_cdcooper IN crapdat.cdcooper%TYPE
-                                   ,pr_dtmvtoan IN crapdat.dtmvtoan%TYPE
-                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
-                                   ,pr_nrdconta IN crapepr.nrdconta%TYPE
-                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE
-                                   ,pr_dtvencto IN crappep.dtvencto%TYPE
-                                   ,pr_diarefju IN OUT crapepr.diarefju%TYPE
-                                   ,pr_mesrefju IN OUT crapepr.mesrefju%TYPE
-                                   ,pr_anorefju IN OUT crapepr.anorefju%TYPE
-                                   ,pr_vljuremu OUT NUMBER
-                                   ,pr_vljurcor OUT NUMBER
-                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE
-                                   ,pr_dscritic OUT crapcri.dscritic%TYPE) IS
+    PROCEDURE obterValorJurosRemPos(pr_cdcooper   IN crapdat.cdcooper%TYPE
+                                   ,pr_dtmvtoan   IN crapdat.dtmvtoan%TYPE
+                                   ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE
+                                   ,pr_nrdconta   IN crapepr.nrdconta%TYPE
+                                   ,pr_nrctremp   IN crapepr.nrctremp%TYPE
+                                   ,pr_dtvencto   IN crappep.dtvencto%TYPE
+                                   ,pr_diarefju   IN OUT crapepr.diarefju%TYPE
+                                   ,pr_mesrefju   IN OUT crapepr.mesrefju%TYPE
+                                   ,pr_anorefju   IN OUT crapepr.anorefju%TYPE
+                                   ,pr_vljuremu   OUT NUMBER
+                                   ,pr_vljurcor   OUT NUMBER
+                                   ,pr_vljuremu59 OUT NUMBER
+                                   ,pr_vljuremu60 OUT NUMBER
+                                   ,pr_vljurcor59 OUT NUMBER
+                                   ,pr_vljurcor60 OUT NUMBER
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS
     BEGIN
     
       DECLARE
+        CURSOR cr_crappep_minvecto(pr_cdcooper IN crappep.cdcooper%TYPE
+                                  ,pr_nrdconta IN crappep.nrdconta%TYPE
+                                  ,pr_nrctremp IN crappep.nrctremp%TYPE) IS
+          SELECT MIN(a.dtvencto) dtvencto
+            FROM crappep a
+           WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta
+                 AND nrctremp = pr_nrctremp
+                 AND inliquid = 0;
+        rw_crappep_minvecto cr_crappep_minvecto%ROWTYPE;
+      
         CURSOR cr_craplem_juros(pr_cdcooper IN craplem.cdcooper%TYPE
                                ,pr_nrdconta IN craplem.nrdconta%TYPE
                                ,pr_nrctremp IN craplem.nrctremp%TYPE
@@ -775,22 +1058,42 @@ DECLARE
                                         AND inliquid = 0);
         rw_taxa_parc cr_taxa_parc%ROWTYPE;
       
-        vr_diavtolt       INTEGER;
-        vr_mesvtolt       INTEGER;
-        vr_anovtolt       INTEGER;
-        vr_qtdedias       PLS_INTEGER;
-        vr_vljuros_mensal craplem.vllanmto%TYPE := 0;
-        vr_data_final     DATE;
-        vr_dtvencto_calc  DATE;
-        vr_vlpago_total   NUMBER(25, 2);
-        vr_vlpago_parcial NUMBER(25, 2);
-        vr_flmensal       BOOLEAN;
-        vr_insitpar       NUMBER;
-        vr_vljurcor       NUMBER(25, 2);
-        vr_taxa_periodo   NUMBER(25, 8);
-        vr_qtdiacal       NUMBER;
-        rw_crapdat        BTCH0001.cr_crapdat%ROWTYPE;
-        vr_cdcritic       crapcri.cdcritic%TYPE;
+        vr_diavtolt         INTEGER;
+        vr_mesvtolt         INTEGER;
+        vr_anovtolt         INTEGER;
+        vr_qtdedias         PLS_INTEGER;
+        vr_vljuros_mensal   craplem.vllanmto%TYPE := 0;
+        vr_data_final       DATE;
+        vr_dtvencto_calc    DATE;
+        vr_vlpago_total     NUMBER(25, 2);
+        vr_vlpago_parcial   NUMBER(25, 2);
+        vr_flmensal         BOOLEAN;
+        vr_insitpar         NUMBER;
+        vr_vljurcor         NUMBER(25, 2);
+        vr_vljurcor59       NUMBER(25, 2);
+        vr_vljurcor60       NUMBER(25, 2);
+        vr_taxa_periodo     NUMBER(25, 8);
+        vr_qtdiacal         NUMBER;
+        rw_crapdat          BTCH0001.cr_crapdat%ROWTYPE;
+        vr_cdcritic         crapcri.cdcritic%TYPE;
+        vr_datajuros59      DATE;
+        vr_qtdiaatraso      NUMBER := 0;
+        pr_diarefju59       INTEGER;
+        pr_mesrefju59       INTEGER;
+        pr_anorefju59       INTEGER;
+        vr_diavtolt59       INTEGER;
+        vr_mesvtolt59       INTEGER;
+        vr_anovtolt59       INTEGER;
+        vr_dtvencto_calc59  DATE;
+        vr_vljuros_mensal59 craplem.vllanmto%TYPE := 0;
+        pr_diarefju60       INTEGER;
+        pr_mesrefju60       INTEGER;
+        pr_anorefju60       INTEGER;
+        vr_diavtolt60       INTEGER;
+        vr_mesvtolt60       INTEGER;
+        vr_anovtolt60       INTEGER;
+        vr_dtvencto_calc60  DATE;
+        vr_vljuros_mensal60 craplem.vllanmto%TYPE := 0;
       
       BEGIN
       
@@ -798,6 +1101,27 @@ DECLARE
         FETCH BTCH0001.cr_crapdat
           INTO rw_crapdat;
         CLOSE BTCH0001.cr_crapdat;
+      
+        ----------------------59-60--------------------------------------------------
+        OPEN cr_crappep_minvecto(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => pr_nrdconta,
+                                 pr_nrctremp => pr_nrctremp);
+        FETCH cr_crappep_minvecto
+          INTO rw_crappep_minvecto;
+        IF cr_crappep_minvecto%FOUND THEN
+          IF rw_crappep_minvecto.dtvencto < pr_dtmvtolt THEN
+            vr_qtdiaatraso := pr_dtmvtolt - rw_crappep_minvecto.dtvencto;
+          END IF;
+        END IF;
+        CLOSE cr_crappep_minvecto;
+        IF vr_qtdiaatraso > 1 THEN
+          IF vr_qtdiaatraso > 59 THEN
+            vr_datajuros59 := rw_crappep_minvecto.dtvencto + 59;
+          ELSE
+            vr_datajuros59 := rw_crappep_minvecto.dtvencto + vr_qtdiaatraso;
+          END IF;
+        END IF;
+        -----------------------------------------------------------------------------
       
         vr_flmensal := (TO_CHAR(rw_crapdat.dtmvtolt, 'MM') <>
                        TO_CHAR(rw_crapdat.dtmvtopr, 'MM'));
@@ -852,7 +1176,6 @@ DECLARE
       
         IF vr_qtdedias <= 0 THEN
           pr_vljuremu := 0;
-          RETURN;
         END IF;
       
         vr_dtvencto_calc := TO_DATE(TO_CHAR(pr_dtvencto, 'DD') || '/' ||
@@ -908,6 +1231,263 @@ DECLARE
           pr_vljuremu := 0;
         END IF;
       
+        -- ********************************** 59 **************************************************************
+        IF vr_datajuros59 >
+           to_date(vr_diavtolt || '/' || vr_mesvtolt || '/' || vr_anovtolt,
+                   'dd/mm/yyyy') THEN
+        
+          IF vr_datajuros59 <= pr_dtmvtolt THEN
+          
+            vr_diavtolt59 := vr_diavtolt;
+            vr_mesvtolt59 := vr_mesvtolt;
+            vr_anovtolt59 := vr_anovtolt;
+          
+            pr_diarefju59 := to_number(to_char(vr_datajuros59, 'DD'));
+            pr_mesrefju59 := to_number(to_char(vr_datajuros59, 'MM'));
+            pr_anorefju59 := to_number(to_char(vr_datajuros59, 'YYYY'));
+          
+            EMPR0001.pc_calc_dias360(pr_ehmensal => vr_flmensal,
+                                     pr_dtdpagto => to_char(pr_dtvencto, 'DD'),
+                                     pr_diarefju => vr_diavtolt59,
+                                     pr_mesrefju => vr_mesvtolt59,
+                                     pr_anorefju => vr_anovtolt59,
+                                     pr_diafinal => pr_diarefju59,
+                                     pr_mesfinal => pr_mesrefju59,
+                                     pr_anofinal => pr_anorefju59,
+                                     pr_qtdedias => vr_qtdedias);
+          
+            IF vr_qtdedias <= 0 THEN
+              pr_vljuremu59 := 0;
+            END IF;
+          
+            vr_dtvencto_calc59 := TO_DATE(TO_CHAR(pr_dtvencto, 'DD') || '/' ||
+                                          TO_CHAR(pr_dtmvtolt, 'MM/RRRR'),
+                                          'DD/MM/RRRR');
+            IF vr_dtvencto_calc59 > pr_dtmvtoan AND
+               vr_dtvencto_calc59 <= pr_dtmvtolt THEN
+              vr_dtvencto_calc59 := ADD_MONTHS(vr_dtvencto_calc59, -1);
+            ELSIF vr_dtvencto_calc59 > pr_dtmvtolt THEN
+              vr_dtvencto_calc59 := ADD_MONTHS(vr_dtvencto_calc59, -1);
+            END IF;
+          
+            vr_dtvencto_calc59 := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                              pr_dtmvtolt => vr_dtvencto_calc59,
+                                                              pr_tipo => 'P');
+          
+            vr_vljuros_mensal59 := 0;
+            OPEN cr_craplem_juros(pr_cdcooper => pr_cdcooper,
+                                  pr_nrdconta => pr_nrdconta,
+                                  pr_nrctremp => pr_nrctremp,
+                                  pr_dtinicio => vr_dtvencto_calc59,
+                                  pr_dtfim => pr_dtmvtolt);
+            FETCH cr_craplem_juros
+              INTO vr_vljuros_mensal59;
+            CLOSE cr_craplem_juros;
+          
+            vr_vlpago_total := 0;
+            OPEN cr_craplem_pago_total(pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta,
+                                       pr_nrctremp => pr_nrctremp,
+                                       pr_dtinicio => vr_dtvencto_calc59,
+                                       pr_dtfim => pr_dtmvtolt);
+            FETCH cr_craplem_pago_total
+              INTO vr_vlpago_total;
+            CLOSE cr_craplem_pago_total;
+          
+            vr_vlpago_parcial := 0;
+            OPEN cr_craplem_pago_parcial(pr_cdcooper => pr_cdcooper,
+                                         pr_nrdconta => pr_nrdconta,
+                                         pr_nrctremp => pr_nrctremp);
+            FETCH cr_craplem_pago_parcial
+              INTO vr_vlpago_parcial;
+            CLOSE cr_craplem_pago_parcial;
+          
+            pr_vljuremu59 := (NVL(rw_crapepr.vlsprojt, 0) +
+                             NVL(vr_vljuros_mensal59, 0) -
+                             NVL(vr_vlpago_total, 0) -
+                             NVL(vr_vlpago_parcial, 0)) *
+                             NVL((POWER(1 + rw_crapepr.txdiaria, vr_qtdedias) - 1),
+                                 0);
+          
+            pr_vljuremu59 := round(pr_vljuremu59, 2);
+          
+            IF pr_vljuremu59 <= 0 THEN
+              pr_vljuremu59 := 0;
+            END IF;
+          
+            -- ****** 60 *****--
+            IF NVL(pr_vljuremu59, 0) > 0 THEN
+              vr_diavtolt60 := to_number(to_char(vr_datajuros59, 'DD'));
+              vr_mesvtolt60 := to_number(to_char(vr_datajuros59, 'MM'));
+              vr_anovtolt60 := to_number(to_char(vr_datajuros59, 'YYYY'));
+            ELSE
+              vr_diavtolt60 := vr_diavtolt;
+              vr_mesvtolt60 := vr_mesvtolt;
+              vr_anovtolt60 := vr_anovtolt;
+            END IF;
+          
+            pr_diarefju60 := pr_diarefju;
+            pr_mesrefju60 := pr_mesrefju;
+            pr_anorefju60 := pr_anorefju;
+          
+            EMPR0001.pc_calc_dias360(pr_ehmensal => vr_flmensal,
+                                     pr_dtdpagto => to_char(pr_dtvencto, 'DD'),
+                                     pr_diarefju => vr_diavtolt60,
+                                     pr_mesrefju => vr_mesvtolt60,
+                                     pr_anorefju => vr_anovtolt60,
+                                     pr_diafinal => pr_diarefju60,
+                                     pr_mesfinal => pr_mesrefju60,
+                                     pr_anofinal => pr_anorefju60,
+                                     pr_qtdedias => vr_qtdedias);
+          
+            IF vr_qtdedias <= 0 THEN
+              pr_vljuremu60 := 0;
+            END IF;
+          
+            vr_dtvencto_calc60 := TO_DATE(TO_CHAR(pr_dtvencto, 'DD') || '/' ||
+                                          TO_CHAR(pr_dtmvtolt, 'MM/RRRR'),
+                                          'DD/MM/RRRR');
+            IF vr_dtvencto_calc60 > pr_dtmvtoan AND
+               vr_dtvencto_calc60 <= pr_dtmvtolt THEN
+              vr_dtvencto_calc60 := ADD_MONTHS(vr_dtvencto_calc60, -1);
+            ELSIF vr_dtvencto_calc60 > pr_dtmvtolt THEN
+              vr_dtvencto_calc60 := ADD_MONTHS(vr_dtvencto_calc60, -1);
+            END IF;
+          
+            vr_dtvencto_calc60 := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                              pr_dtmvtolt => vr_dtvencto_calc60,
+                                                              pr_tipo => 'P');
+          
+            vr_vljuros_mensal60 := 0;
+            OPEN cr_craplem_juros(pr_cdcooper => pr_cdcooper,
+                                  pr_nrdconta => pr_nrdconta,
+                                  pr_nrctremp => pr_nrctremp,
+                                  pr_dtinicio => vr_dtvencto_calc60,
+                                  pr_dtfim => pr_dtmvtolt);
+            FETCH cr_craplem_juros
+              INTO vr_vljuros_mensal60;
+            CLOSE cr_craplem_juros;
+          
+            vr_vlpago_total := 0;
+            OPEN cr_craplem_pago_total(pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta,
+                                       pr_nrctremp => pr_nrctremp,
+                                       pr_dtinicio => vr_dtvencto_calc60,
+                                       pr_dtfim => pr_dtmvtolt);
+            FETCH cr_craplem_pago_total
+              INTO vr_vlpago_total;
+            CLOSE cr_craplem_pago_total;
+          
+            vr_vlpago_parcial := 0;
+            OPEN cr_craplem_pago_parcial(pr_cdcooper => pr_cdcooper,
+                                         pr_nrdconta => pr_nrdconta,
+                                         pr_nrctremp => pr_nrctremp);
+            FETCH cr_craplem_pago_parcial
+              INTO vr_vlpago_parcial;
+            CLOSE cr_craplem_pago_parcial;
+          
+            pr_vljuremu60 := (NVL(rw_crapepr.vlsprojt, 0) +
+                             NVL(vr_vljuros_mensal60, 0) -
+                             NVL(vr_vlpago_total, 0) -
+                             NVL(vr_vlpago_parcial, 0)) *
+                             NVL((POWER(1 + rw_crapepr.txdiaria, vr_qtdedias) - 1),
+                                 0);
+          
+            pr_vljuremu60 := round(pr_vljuremu60, 2);
+          
+            IF pr_vljuremu60 <= 0 THEN
+              pr_vljuremu60 := 0;
+            END IF;
+          ELSE
+            pr_vljuremu59 := pr_vljuremu;
+          END IF;
+        ELSIF vr_qtdiaatraso > 59 THEN
+          IF NVL(pr_vljuremu59, 0) > 0 THEN
+            vr_diavtolt60 := to_number(to_char(vr_datajuros59, 'DD'));
+            vr_mesvtolt60 := to_number(to_char(vr_datajuros59, 'MM'));
+            vr_anovtolt60 := to_number(to_char(vr_datajuros59, 'YYYY'));
+          ELSE
+            vr_diavtolt60 := vr_diavtolt;
+            vr_mesvtolt60 := vr_mesvtolt;
+            vr_anovtolt60 := vr_anovtolt;
+          END IF;
+        
+          pr_diarefju60 := pr_diarefju;
+          pr_mesrefju60 := pr_mesrefju;
+          pr_anorefju60 := pr_anorefju;
+        
+          EMPR0001.pc_calc_dias360(pr_ehmensal => vr_flmensal,
+                                   pr_dtdpagto => to_char(pr_dtvencto, 'DD'),
+                                   pr_diarefju => vr_diavtolt60,
+                                   pr_mesrefju => vr_mesvtolt60,
+                                   pr_anorefju => vr_anovtolt60,
+                                   pr_diafinal => pr_diarefju60,
+                                   pr_mesfinal => pr_mesrefju60,
+                                   pr_anofinal => pr_anorefju60,
+                                   pr_qtdedias => vr_qtdedias);
+        
+          IF vr_qtdedias <= 0 THEN
+            pr_vljuremu60 := 0;
+          END IF;
+        
+          vr_dtvencto_calc60 := TO_DATE(TO_CHAR(pr_dtvencto, 'DD') || '/' ||
+                                        TO_CHAR(pr_dtmvtolt, 'MM/RRRR'),
+                                        'DD/MM/RRRR');
+          IF vr_dtvencto_calc60 > pr_dtmvtoan AND
+             vr_dtvencto_calc60 <= pr_dtmvtolt THEN
+            vr_dtvencto_calc60 := ADD_MONTHS(vr_dtvencto_calc60, -1);
+          ELSIF vr_dtvencto_calc60 > pr_dtmvtolt THEN
+            vr_dtvencto_calc60 := ADD_MONTHS(vr_dtvencto_calc60, -1);
+          END IF;
+        
+          vr_dtvencto_calc60 := gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
+                                                            pr_dtmvtolt => vr_dtvencto_calc60,
+                                                            pr_tipo => 'P');
+        
+          vr_vljuros_mensal60 := 0;
+          OPEN cr_craplem_juros(pr_cdcooper => pr_cdcooper,
+                                pr_nrdconta => pr_nrdconta,
+                                pr_nrctremp => pr_nrctremp,
+                                pr_dtinicio => vr_dtvencto_calc60,
+                                pr_dtfim => pr_dtmvtolt);
+          FETCH cr_craplem_juros
+            INTO vr_vljuros_mensal60;
+          CLOSE cr_craplem_juros;
+        
+          vr_vlpago_total := 0;
+          OPEN cr_craplem_pago_total(pr_cdcooper => pr_cdcooper,
+                                     pr_nrdconta => pr_nrdconta,
+                                     pr_nrctremp => pr_nrctremp,
+                                     pr_dtinicio => vr_dtvencto_calc60,
+                                     pr_dtfim => pr_dtmvtolt);
+          FETCH cr_craplem_pago_total
+            INTO vr_vlpago_total;
+          CLOSE cr_craplem_pago_total;
+        
+          vr_vlpago_parcial := 0;
+          OPEN cr_craplem_pago_parcial(pr_cdcooper => pr_cdcooper,
+                                       pr_nrdconta => pr_nrdconta,
+                                       pr_nrctremp => pr_nrctremp);
+          FETCH cr_craplem_pago_parcial
+            INTO vr_vlpago_parcial;
+          CLOSE cr_craplem_pago_parcial;
+        
+          pr_vljuremu60 := (NVL(rw_crapepr.vlsprojt, 0) +
+                           NVL(vr_vljuros_mensal60, 0) -
+                           NVL(vr_vlpago_total, 0) -
+                           NVL(vr_vlpago_parcial, 0)) *
+                           NVL((POWER(1 + rw_crapepr.txdiaria, vr_qtdedias) - 1),
+                               0);
+        
+          pr_vljuremu60 := round(pr_vljuremu60, 2);
+        
+          IF pr_vljuremu60 <= 0 THEN
+            pr_vljuremu60 := 0;
+          END IF;
+        
+        END IF;
+        -- ********************************** 59 **************************************************************
+      
         OPEN cr_taxa_parc(pr_cdcooper => pr_cdcooper,
                           pr_nrdconta => pr_nrdconta,
                           pr_nrctremp => pr_nrctremp);
@@ -928,12 +1508,16 @@ DECLARE
                               pr_ehmensal => vr_flmensal,
                               pr_dtrefcor => rw_crapepr.dtrefcor,
                               pr_vljurcor => vr_vljurcor,
+                              pr_vljurcor59 => vr_vljurcor59,
+                              pr_vljurcor60 => vr_vljurcor60,
                               pr_qtdiacal => vr_qtdiacal,
                               pr_vltaxprd => vr_taxa_periodo,
                               pr_cdcritic => vr_cdcritic,
                               pr_dscritic => vr_dscritic);
       
-        pr_vljurcor := nvl(vr_vljurcor, 0);
+        pr_vljurcor   := nvl(vr_vljurcor, 0);
+        pr_vljurcor59 := round(nvl(vr_vljurcor59, 0), 2);
+        pr_vljurcor60 := round(nvl(vr_vljurcor60, 0), 2);
       
       EXCEPTION
         WHEN OTHERS THEN
@@ -959,6 +1543,49 @@ DECLARE
     FETCH cr_crapepr
       INTO rw_crapepr;
     CLOSE cr_crapepr;
+  
+    IF nvl(rw_crapepr.tpemprst, 0) = 2 THEN
+      -- PÓS
+    
+      OPEN cr_crappep_minmora(pr_cdcooper => pr_cdcooper,
+                              pr_nrdconta => pr_nrdconta,
+                              pr_nrctremp => pr_nrctremp);
+      FETCH cr_crappep_minmora
+        INTO rw_crappep_minmora;
+      IF cr_crappep_minmora%FOUND THEN
+        IF rw_crappep_minmora.dtvencto < vr_dtmvtolt THEN
+          vr_qtdiaatraso := vr_dtmvtolt - rw_crappep_minmora.dtvencto;
+        END IF;
+      END IF;
+      CLOSE cr_crappep_minmora;
+      IF vr_qtdiaatraso > 1 THEN
+        IF vr_qtdiaatraso > 59 THEN
+          vr_datajuros59 := rw_crappep_minmora.dtvencto + 59;
+        ELSE
+          vr_datajuros59 := rw_crappep_minmora.dtvencto + vr_qtdiaatraso;
+        END IF;
+      END IF;
+    
+      OPEN cr_craplem_mora(pr_cdcooper => pr_cdcooper,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrctremp => pr_nrctremp);
+      FETCH cr_craplem_mora
+        INTO rw_craplem_mora;
+      CLOSE cr_craplem_mora;
+    
+      IF vr_datajuros59 > rw_craplem_mora.dtmvtolt AND vr_qtdiaatraso > 1 THEN
+        vr_qtdias59mora := vr_datajuros59 - rw_craplem_mora.dtmvtolt;
+      ELSE
+        vr_qtdias59mora := 0;
+      END IF;
+    
+      IF vr_dtmvtolt > vr_datajuros59 AND vr_qtdiaatraso > 59 THEN
+        vr_qtdias60mora := vr_dtmvtolt - vr_datajuros59;
+      ELSE
+        vr_qtdias60mora := 0;
+      END IF;
+    
+    END IF;
   
     FOR rw_parcela IN cr_crappep(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
@@ -1110,6 +1737,15 @@ DECLARE
     
       vr_vlmrapar := vr_vlmrapar - vr_vlmoralanc;
     
+      IF NVL(vr_vlmrapar, 0) > 0 AND
+         (vr_qtdias59mora > 0 OR vr_qtdias60mora > 0) THEN
+        vr_vlmoradia := vr_vlmrapar / (vr_qtdias59mora + vr_qtdias60mora);
+      
+        vr_vlmora59 := vr_qtdias59mora * vr_vlmoradia;
+      
+        vr_vlmora60 := vr_qtdias60mora * vr_vlmoradia;
+      END IF;
+    
       OPEN cr_parc_min(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta,
                        pr_nrctremp => pr_nrctremp);
       FETCH cr_parc_min
@@ -1127,17 +1763,30 @@ DECLARE
                             pr_anorefju => rw_crapepr.anorefju,
                             pr_vljuremu => vr_vljurmes,
                             pr_vljurcor => vr_vljurcor,
+                            pr_vljuremu59 => vr_vljuremu59,
+                            pr_vljuremu60 => vr_vljuremu60,
+                            pr_vljurcor59 => vr_vljurcor59,
+                            pr_vljurcor60 => vr_vljurcor60,
                             pr_cdcritic => vr_cdcritic,
                             pr_dscritic => vr_dscritic);
     END IF;
   
-    pr_vlmtapar   := nvl(vr_vlmtapar, 0);
-    pr_vlmrapar   := nvl(vr_vlmrapar, 0);
-    pr_vliofcpl   := nvl(vr_vliofcpl, 0);
-    pr_vljurmes   := round(nvl(vr_vljurmes, 0), 2);
-    pr_vljurcor   := nvl(vr_vljurcor, 0);
-    pr_vljurmes59 := round(nvl(vr_vljurmes59, 0), 2);
-    pr_vljurmes60 := round(nvl(vr_vljurmes60, 0), 2);
+    pr_vlmtapar := nvl(vr_vlmtapar, 0);
+    pr_vlmrapar := nvl(vr_vlmrapar, 0);
+    pr_vliofcpl := nvl(vr_vliofcpl, 0);
+    pr_vljurmes := round(nvl(vr_vljurmes, 0), 2);
+    pr_vljurcor := nvl(vr_vljurcor, 0);
+    IF nvl(rw_crapepr.tpemprst, 0) = 1 THEN
+      pr_vljurmes59 := round(nvl(vr_vljurmes59, 0), 2);
+      pr_vljurmes60 := round(nvl(vr_vljurmes60, 0), 2);
+    ELSIF nvl(rw_crapepr.tpemprst, 0) = 2 THEN
+      pr_vljurmes59 := round(nvl(vr_vljuremu59, 0), 2);
+      pr_vljurmes60 := round(nvl(vr_vljuremu60, 0), 2);
+      pr_vljurcor60 := vr_vljurcor60;
+      pr_vljurcor59 := vr_vljurcor59;
+      pr_vlmrapar59 := round(nvl(vr_vlmora59, 0), 2);
+      pr_vlmrapar60 := round(nvl(vr_vlmora60, 0), 2);
+    END IF;
   
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1155,7 +1804,7 @@ BEGIN
     INTO rw_crapdat;
   CLOSE CECRED.BTCH0001.cr_crapdat;
 
-  dbms_output.put_line('COOPERATIVA;PA;CONTA;CONTRATO;PRODUTO;VL MULTA;VL MORA;VL IOF ATRS;VL JUROS REM.;VL JUROS 59;VL JUROS 60;VL JUROS 60 ANTIGO;JUROS CORRECAO;JUROS +60;DIAS ATRASO');
+  dbms_output.put_line('COOPERATIVA;PA;CONTA;CONTRATO;PRODUTO;VL MULTA;VL MORA;VL MORA59;VL MORA60;VL IOF ATRS;VL JUROS REM.;VL JUROS 59;VL JUROS 60;VL JUROS 60 ANTIGO;JUROS CORRECAO;JUROS CORRECAO59;JUROS CORRECAO60;JUROS +60;DIAS ATRASO');
 
   FOR rw_contrato IN cr_contrato(pr_cdcooper => vr_cdcooper) LOOP
   
@@ -1171,15 +1820,26 @@ BEGIN
     IF NVL(rw_juro_60.vljura60, 0) > 0 THEN
       vr_jura60 := 'SIM';
     END IF;
+    IF NVL(rw_juro_60.vljurantpp, 0) > 0 THEN
+      vr_jurantpp := 'SIM';
+    END IF;
   
     obterValorAtraso(pr_cdcooper => rw_contrato.cdcooper,
                      pr_nrdconta => rw_contrato.nrdconta,
                      pr_nrctremp => rw_contrato.nrctremp,
-                     pr_vlmtapar => vr_vlmtapar, pr_vlmrapar => vr_vlmrapar,
-                     pr_vliofcpl => vr_vliofcpl, pr_vljurmes => vr_vljurmes,
-                     pr_vljurcor => pr_vljurcor,
+                     pr_vlmtapar => vr_vlmtapar, 
+                     pr_vlmrapar => vr_vlmrapar,
+                     pr_vlmrapar59 => vr_vlmrapar59,
+                     pr_vlmrapar60 => vr_vlmrapar60,
+                     pr_vliofcpl => vr_vliofcpl, 
+                     pr_vljurmes => vr_vljurmes,
                      pr_vljurmes59 => vr_vljurmes59,
-                     pr_vljurmes60 => vr_vljurmes60);
+                     pr_vljurmes60 => vr_vljurmes60,                    
+                     pr_vljurcor => pr_vljurcor,
+                     pr_vljurcor59 => vr_vljurcor59,
+                     pr_vljurcor60 =>  vr_vljurcor60);
+                     
+                     
   
     dbms_output.put_line(rw_contrato.cdcooper || ';' || 
                          rw_contrato.cdagenci || ';' ||
@@ -1187,14 +1847,18 @@ BEGIN
                          rw_contrato.nrctremp || ';' ||
                          rw_contrato.dsoperac || ';' || 
                          vr_vlmtapar || ';' ||
-                         vr_vlmrapar || ';' || 
+                         vr_vlmrapar || ';' ||
+                         vr_vlmrapar59 || ';' ||
+                         vr_vlmrapar60 || ';' || 
                          vr_vliofcpl || ';' ||
                          vr_vljurmes || ';' || 
                          vr_vljurmes59 || ';' ||
-                         vr_vljurmes60 || ';' ||
-                         rw_juro_60.vljurantpp || ';' ||
+                         vr_vljurmes60 || ';' || 
+                         vr_jurantpp || ';' ||
                          pr_vljurcor || ';' ||
-                         vr_jura60 || ';' || 
+                         vr_vljurcor59 || ';' ||
+                         vr_vljurcor60 || ';' || 
+                         vr_jura60 || ';' ||
                          nvl(rw_juro_60.qtdiaatr, 0));
   
   END LOOP;
