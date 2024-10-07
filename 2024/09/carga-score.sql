@@ -4,7 +4,7 @@ DECLARE
 begin
   
 
-  gestaoderisco.gerarCargaScore(pr_idscore => 00000000000000000000000000000000,
+  gestaoderisco.gerarCargaScore(pr_idscore => 1941,
                                 pr_dscritic => vr_dscritic);
 
   IF TRIM(vr_dscritic) IS NOT NULL THEN
