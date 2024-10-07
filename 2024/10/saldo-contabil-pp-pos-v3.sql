@@ -1,6 +1,9 @@
 DECLARE
 
-  vr_cdcooper   NUMBER := 8;
+  vr_cdcooper      NUMBER := 8;
+  vr_tpemprst      NUMBER := 2;
+  vr_cdconvivencia NUMBER := NULL;
+
   vr_vlmtapar   NUMBER := 0;
   vr_vlmrapar   NUMBER := 0;
   vr_vliofcpl   NUMBER := 0;
@@ -11,12 +14,14 @@ DECLARE
   vr_vljurmes59 NUMBER := 0;
   vr_vljurmes60 NUMBER := 0;
   vr_jurantpp   VARCHAR2(3) := 'NAO';
-  vr_vljurcor59 number := 0;
-  vr_vljurcor60 number := 0;
-  vr_vlmrapar59 number := 0;
-  vr_vlmrapar60 number := 0;
+  vr_vljurcor59 NUMBER := 0;
+  vr_vljurcor60 NUMBER := 0;
+  vr_vlmrapar59 NUMBER := 0;
+  vr_vlmrapar60 NUMBER := 0;
 
-  CURSOR cr_contrato(pr_cdcooper crapepr.cdcooper%TYPE) IS
+  CURSOR cr_contrato(pr_cdcooper      crapepr.cdcooper%TYPE
+                    ,pr_tpemprst      crapepr.tpemprst%TYPE
+                    ,pr_cdconvivencia craplcr.cdconvivencia%TYPE) IS
     SELECT epr.cdcooper, epr.nrdconta, epr.nrctremp, lcr.dsoperac,
            asso.cdagenci
       FROM crapepr epr
@@ -27,7 +32,8 @@ DECLARE
         ON epr.cdcooper = asso.cdcooper
            AND epr.nrdconta = asso.nrdconta
      WHERE epr.cdcooper = pr_cdcooper
-           AND epr.tpemprst = 2
+           AND epr.tpemprst = pr_tpemprst
+           AND lcr.cdconvivencia = NVL(pr_cdconvivencia,lcr.cdconvivencia)
            AND epr.inliquid = 0
            AND epr.inprejuz = 0;
 
@@ -676,6 +682,27 @@ DECLARE
                  AND crawepr.nrdconta = pr_nrdconta
                  AND crawepr.nrctremp = pr_nrctremp;
       
+        CURSOR cr_craplem_remu(pr_cdcooper IN craplem.cdcooper%TYPE
+                              ,pr_nrdconta IN craplem.nrdconta%TYPE
+                              ,pr_nrctremp IN craplem.nrctremp%TYPE) IS
+          SELECT MAX(dtmvtolt) dtmvtolt
+            FROM craplem
+           WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta
+                 AND nrctremp = pr_nrctremp
+                 AND cdhistor IN (1037, 1038);
+        rw_craplem_remu cr_craplem_remu%ROWTYPE;
+      
+        CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                         ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                         ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
+          SELECT cdfinemp
+            FROM crapepr
+           WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta
+                 AND nrctremp = pr_nrctremp;
+        rw_crapepr cr_crapepr%ROWTYPE;
+      
         vr_cdcritic INTEGER;
         vr_dscritic VARCHAR2(4000);
       
@@ -707,6 +734,12 @@ DECLARE
           END IF;
         
           --------------
+          OPEN cr_crapepr(pr_cdcooper => pr_cdcooper,
+                          pr_nrdconta => pr_nrdconta,
+                          pr_nrctremp => pr_nrctremp);
+          FETCH cr_crapepr
+            INTO rw_crapepr;
+          CLOSE cr_crapepr;
         
           OPEN cr_crapepr_lanjur(pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
@@ -759,6 +792,17 @@ DECLARE
             vr_diavtolt := rw_crapepr_lanjur.diarefju;
             vr_mesvtolt := rw_crapepr_lanjur.mesrefju;
             vr_anovtolt := rw_crapepr_lanjur.anorefju;
+          ELSIF NVL(rw_crapepr.cdfinemp, 0) = 57 THEN
+            OPEN cr_craplem_remu(pr_cdcooper => pr_cdcooper,
+                                 pr_nrdconta => pr_nrdconta,
+                                 pr_nrctremp => pr_nrctremp);
+            FETCH cr_craplem_remu
+              INTO rw_craplem_remu;
+            CLOSE cr_craplem_remu;
+            --Setar dia/mes/ano
+            vr_diavtolt := to_number(to_char(rw_craplem_remu.dtmvtolt, 'DD'));
+            vr_mesvtolt := to_number(to_char(rw_craplem_remu.dtmvtolt, 'MM'));
+            vr_anovtolt := to_number(to_char(rw_craplem_remu.dtmvtolt, 'YYYY'));
           ELSE
             --Setar dia/mes/ano
             vr_diavtolt := to_number(to_char(rw_crawepr.dtlibera, 'DD'));
@@ -1806,7 +1850,9 @@ BEGIN
 
   dbms_output.put_line('COOPERATIVA;PA;CONTA;CONTRATO;PRODUTO;VL MULTA;VL MORA;VL MORA59;VL MORA60;VL IOF ATRS;VL JUROS REM.;VL JUROS 59;VL JUROS 60;VL JUROS 60 ANTIGO;JUROS CORRECAO;JUROS CORRECAO59;JUROS CORRECAO60;JUROS +60;DIAS ATRASO');
 
-  FOR rw_contrato IN cr_contrato(pr_cdcooper => vr_cdcooper) LOOP
+  FOR rw_contrato IN cr_contrato(pr_cdcooper => vr_cdcooper,
+                                 pr_tpemprst => vr_tpemprst,
+                                 pr_cdconvivencia => vr_cdconvivencia) LOOP
   
     vr_jura60 := 'NAO';
   
@@ -1834,12 +1880,10 @@ BEGIN
                      pr_vliofcpl => vr_vliofcpl, 
                      pr_vljurmes => vr_vljurmes,
                      pr_vljurmes59 => vr_vljurmes59,
-                     pr_vljurmes60 => vr_vljurmes60,                    
+                     pr_vljurmes60 => vr_vljurmes60,
                      pr_vljurcor => pr_vljurcor,
                      pr_vljurcor59 => vr_vljurcor59,
-                     pr_vljurcor60 =>  vr_vljurcor60);
-                     
-                     
+                     pr_vljurcor60 => vr_vljurcor60);
   
     dbms_output.put_line(rw_contrato.cdcooper || ';' || 
                          rw_contrato.cdagenci || ';' ||
@@ -1847,7 +1891,7 @@ BEGIN
                          rw_contrato.nrctremp || ';' ||
                          rw_contrato.dsoperac || ';' || 
                          vr_vlmtapar || ';' ||
-                         vr_vlmrapar || ';' ||
+                         vr_vlmrapar || ';' || 
                          vr_vlmrapar59 || ';' ||
                          vr_vlmrapar60 || ';' || 
                          vr_vliofcpl || ';' ||
@@ -1855,7 +1899,7 @@ BEGIN
                          vr_vljurmes59 || ';' ||
                          vr_vljurmes60 || ';' || 
                          vr_jurantpp || ';' ||
-                         pr_vljurcor || ';' ||
+                         pr_vljurcor || ';' || 
                          vr_vljurcor59 || ';' ||
                          vr_vljurcor60 || ';' || 
                          vr_jura60 || ';' ||
