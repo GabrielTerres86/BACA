@@ -1,4 +1,11 @@
 begin
+  
+update cecred.tbconv_liberacao l
+  set l.flgautdb = 1
+where  l.cdcooper = 3
+  and  l.cdconven = 142
+  and  l.idseqconvelib = 5839;
+commit;  
 
 insert into cecred.tbconv_liberacao (TPARRECADACAO, CDCOOPER, CDEMPRES, CDCONVEN, FLGAUTDB)
 values (3, 3, '0', 212, 1);
