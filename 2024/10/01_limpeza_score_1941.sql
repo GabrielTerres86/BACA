@@ -2,7 +2,7 @@ DECLARE
   vr_registros NUMBER := 0;
 BEGIN
   LOOP 
-    DELETE /*+ parallel(20) */ gestaoderisco.tb_score_carga a WHERE a.idscore = 1941 AND rownum < 10000;
+    DELETE gestaoderisco.tb_score_carga a WHERE a.idscore = 1941 AND rownum < 10000;
     vr_registros := SQL%ROWCOUNT;
       
     COMMIT;
