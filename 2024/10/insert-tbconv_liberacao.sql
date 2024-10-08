@@ -1,9 +1,6 @@
 begin
 
 insert into cecred.tbconv_liberacao (TPARRECADACAO, CDCOOPER, CDEMPRES, CDCONVEN, FLGAUTDB)
-values (3, 3, '0', 142, 1);
-
-insert into cecred.tbconv_liberacao (TPARRECADACAO, CDCOOPER, CDEMPRES, CDCONVEN, FLGAUTDB)
 values (3, 3, '0', 212, 1);
 
 insert into cecred.tbconv_liberacao (TPARRECADACAO, CDCOOPER, CDEMPRES, CDCONVEN, FLGAUTDB)
