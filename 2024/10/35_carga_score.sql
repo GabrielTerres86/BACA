@@ -3,16 +3,16 @@ DECLARE
   
 begin
   
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00000005405017' WHERE idscore_carga = 14101297;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00027396908' WHERE idscore_carga = 14520380;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00027845990' WHERE idscore_carga = 14520381;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00050760050' WHERE idscore_carga = 15351200;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00000027396908' WHERE idscore_carga = 15437949;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00000050760050' WHERE idscore_carga = 15432541;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00000027845990' WHERE idscore_carga = 14596923;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00000039477932' WHERE idscore_carga = 15423708;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00005405017' WHERE idscore_carga = 14164591;
-  UPDATE tb_score_carga SET cdcpf_cnpj = '00039477932' WHERE idscore_carga = 14887270;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00000005405017' WHERE idscore_carga = 14101297;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00027396908' WHERE idscore_carga = 14520380;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00027845990' WHERE idscore_carga = 14520381;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00050760050' WHERE idscore_carga = 15351200;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00000027396908' WHERE idscore_carga = 15437949;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00000050760050' WHERE idscore_carga = 15432541;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00000027845990' WHERE idscore_carga = 14596923;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00000039477932' WHERE idscore_carga = 15423708;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00005405017' WHERE idscore_carga = 14164591;
+  UPDATE gestaoderisco.tb_score_carga SET cdcpf_cnpj = '00039477932' WHERE idscore_carga = 14887270;
   
   commit;
   
@@ -27,14 +27,14 @@ begin
   COMMIT;
   
   begin
-    UPDATE tbcrd_score c
+    UPDATE cecred.tbcrd_score c
        SET c.tppessoa = (SELECT MAX(ass.inpessoa) FROM crapass ass WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase)
      WHERE c.dtbase = to_date('01/09/2024', 'DD/MM/RRRR')
        AND c.cdmodelo = 3;
 
     commit;
     
-    update tbcrd_score_exclusao e
+    update cecred.tbcrd_score_exclusao e
        SET e.tppessoa = (SELECT MAX(ass.inpessoa) FROM crapass ass WHERE ass.nrcpfcnpj_base = e.nrcpfcnpjbase)
      WHERE e.dtbase = to_date('01/09/2024', 'DD/MM/RRRR')
        AND e.cdmodelo = 3;
