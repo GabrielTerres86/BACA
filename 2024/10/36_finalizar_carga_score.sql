@@ -46,7 +46,7 @@ BEGIN
              y.cdscore,
              y.obdetalhamento,
              y.cdsegmento_modelo
-        FROM tbcrd_score y
+        FROM cecred.tbcrd_score y
        WHERE y.cdcooper = rw_loop.cdcooper
          AND y.dtbase = rw_loop.dtbase
          AND y.nrcpfcnpjbase = rw_loop.nrcpfcnpjbase;
