@@ -4,9 +4,9 @@ DECLARE
   CURSOR cr_loop IS
     SELECT *
       FROM (SELECT c.*,
-                   (SELECT MAX(ass.inpessoa)
+                   nvl((SELECT MAX(ass.inpessoa)
                       FROM cecred.crapass ass
-                     WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase) tppessoa_novo
+                     WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase),c.tppessoa) tppessoa_novo
               FROM cecred.tbcrd_score_exclusao c
              WHERE c.dtbase = to_date('01/09/2024', 'DD/MM/RRRR')
                AND c.cdmodelo = 3
@@ -18,9 +18,9 @@ DECLARE
   CURSOR cr_loop2 IS
     SELECT *
       FROM (SELECT c.*,
-                   (SELECT MAX(ass.inpessoa)
+                   nvl((SELECT MAX(ass.inpessoa)
                       FROM cecred.crapass ass
-                     WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase) tppessoa_novo
+                     WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase),c.tppessoa) tppessoa_novo
               FROM cecred.tbcrd_score c
              WHERE c.dtbase = to_date('01/09/2024', 'DD/MM/RRRR')
                AND c.cdmodelo = 3
