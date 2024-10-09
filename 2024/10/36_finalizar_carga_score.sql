@@ -5,9 +5,9 @@ DECLARE
     SELECT *
       FROM (SELECT c.*,
                    (SELECT MAX(ass.inpessoa)
-                      FROM crapass ass
+                      FROM cecred.crapass ass
                      WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase) tppessoa_novo
-              FROM tbcrd_score_exclusao c
+              FROM cecred.tbcrd_score_exclusao c
              WHERE c.dtbase = to_date('01/09/2024', 'DD/MM/RRRR')
                AND c.cdmodelo = 3
                AND c.nrcpfcnpjbase NOT IN
@@ -19,9 +19,9 @@ DECLARE
     SELECT *
       FROM (SELECT c.*,
                    (SELECT MAX(ass.inpessoa)
-                      FROM crapass ass
+                      FROM cecred.crapass ass
                      WHERE ass.nrcpfcnpj_base = c.nrcpfcnpjbase) tppessoa_novo
-              FROM tbcrd_score c
+              FROM cecred.tbcrd_score c
              WHERE c.dtbase = to_date('01/09/2024', 'DD/MM/RRRR')
                AND c.cdmodelo = 3
                AND c.nrcpfcnpjbase NOT IN
@@ -33,7 +33,7 @@ BEGIN
 
   FOR rw_loop IN cr_loop LOOP
   
-    INSERT INTO tbcrd_score
+    INSERT INTO cecred.tbcrd_score
       SELECT y.cdcooper,
              y.cdmodelo,
              y.dtbase,
@@ -51,13 +51,13 @@ BEGIN
          AND y.dtbase = rw_loop.dtbase
          AND y.nrcpfcnpjbase = rw_loop.nrcpfcnpjbase;
   
-    UPDATE tbcrd_score_exclusao x
+    UPDATE cecred.tbcrd_score_exclusao x
        SET x.tppessoa = rw_loop.tppessoa_novo
      WHERE x.cdcooper = rw_loop.cdcooper
        AND x.dtbase = rw_loop.dtbase
        AND x.nrcpfcnpjbase = rw_loop.nrcpfcnpjbase;
   
-    DELETE tbcrd_score y
+    DELETE cecred.tbcrd_score y
      WHERE y.cdcooper = rw_loop.cdcooper
        AND y.dtbase = rw_loop.dtbase
        AND y.nrcpfcnpjbase = rw_loop.nrcpfcnpjbase
@@ -69,7 +69,7 @@ BEGIN
   COMMIT;
 
   FOR rw_loop2 IN cr_loop2 LOOP
-    UPDATE tbcrd_score x
+    UPDATE cecred.tbcrd_score x
        SET x.tppessoa = rw_loop2.tppessoa_novo
      WHERE x.cdcooper = rw_loop2.cdcooper
        AND x.dtbase = rw_loop2.dtbase
