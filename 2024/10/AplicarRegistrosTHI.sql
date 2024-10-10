@@ -6,3 +6,4 @@ BEGIN
   INSERT INTO crapthi(cdhistor,dsorigem,vltarifa,cdcooper) VALUES (4594,'AIMARO',0,1);
   COMMIT;
 END;
+  
