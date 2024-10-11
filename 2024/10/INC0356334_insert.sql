@@ -7,7 +7,7 @@ DECLARE
            b.nmprimtl      "Nome titular conta",
            c.TPCALCULADORA "Calculadora",
            c.TPCOOPERADO   "Tp cooperado"
-      FROM crapttl a, crapass b, tbcalris_tanque c
+      FROM cecred.crapttl a, cecred.crapass b, cecred.tbcalris_tanque c
      WHERE a.idseqttl > 1
        AND b.cdcooper = a.cdcooper
        AND b.nrdconta = a.nrdconta
@@ -15,12 +15,12 @@ DECLARE
        AND c.TPCALCULADORA IN (1, 2)
        AND EXISTS
      (SELECT 1
-              FROM tbcalris_tanque x
+              FROM cecred.tbcalris_tanque x
              WHERE x.tpcalculadora IN (1, 2)
                AND b.nrcpfcgc = x.nrcpfcgc)
        AND a.nrcpfcgc NOT IN
            (SELECT x.nrcpfcgc
-              FROM tbcalris_tanque x
+              FROM cecred.tbcalris_tanque x
              WHERE x.tpcalculadora IN (1, 2));
 
   v_cpf_titular  TBCALRIS_TANQUE.NRCPFCGC%TYPE;
@@ -33,7 +33,7 @@ BEGIN
     v_calculadora  := r."Calculadora";
     v_tp_cooperado := r."Tp cooperado";
   
-    INSERT INTO TBCALRIS_TANQUE
+    INSERT INTO CECRED.TBCALRIS_TANQUE
       (NRCPFCGC, TPCALCULADORA, Tpcooperado, DHINICIO)
     VALUES
       (v_cpf_titular, v_calculadora, v_tp_cooperado, sysdate);
