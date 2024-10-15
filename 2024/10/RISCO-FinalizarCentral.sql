@@ -13,7 +13,7 @@ BEGIN
      AND c.dtrefere = '14/10/2024'
      AND c.tpproduto = 3
      AND c.idcentral_carga = 55994;  
-
+commit;
   vr_idcarga := 56012;
     GESTAODERISCO.gravarFimCarga(pr_cdcooper    => 1
                                 ,pr_idcarga     => vr_idcarga
@@ -22,5 +22,6 @@ BEGIN
   IF TRIM(vr_dscritic) IS NOT NULL THEN
     RAISE vr_exc_erro;
   END IF;
+ commit;
 
 end;
