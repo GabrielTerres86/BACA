@@ -3,8 +3,6 @@ DECLARE
   vc_cdhistor_PF    CONSTANT NUMBER := 4595;
   vc_cdhistor_PJ    CONSTANT NUMBER := 4596;
   vc_cdhistor_caixa CONSTANT NUMBER := 4597;
-  vc_cdagenci       CONSTANT NUMBER := 1;
-  vc_nrdcaixa       CONSTANT NUMBER := 1;
   vc_cdoperad       CONSTANT VARCHAR2(20) := 'f0010002';
 
   CURSOR cd_cooperativa IS
@@ -52,14 +50,17 @@ DECLARE
                           AND ttl.cdsitcpf = 6);
 
   CURSOR cr_crapbcx(pr_cdcooper  NUMBER
-                   ,pr_dtmvtocd  DATE) IS
+                   ,pr_dtmvtocd  DATE
+                   ,pr_cdagenci  NUMBER
+                   ,pr_nrdcaixa  NUMBER
+                   ,pr_cdoperad  VARCHAR2) IS
     SELECT bcx.nrdmaqui
       FROM crapbcx bcx
      WHERE bcx.cdcooper = pr_cdcooper   
        AND bcx.dtmvtolt = pr_dtmvtocd     
-       AND bcx.cdagenci = vc_cdagenci       
-       AND bcx.nrdcaixa = vc_nrdcaixa  
-       AND bcx.cdopecxa = vc_cdoperad 
+       AND bcx.cdagenci = pr_cdagenci
+       AND bcx.nrdcaixa = pr_nrdcaixa  
+       AND bcx.cdopecxa = pr_cdoperad 
        AND bcx.cdsitbcx = 1;
   rw_crapbcx     cr_crapbcx%ROWTYPE;
   
@@ -79,7 +80,7 @@ BEGIN
     
     vr_vltotcop := 0;
     
-    OPEN  cr_crapbcx(coop.cdcooper, coop.dtmvtocd);
+    OPEN  cr_crapbcx(coop.cdcooper, coop.dtmvtocd, coop.cdagenci, coop.nrdcaixa, coop.cdoperad);
     FETCH cr_crapbcx INTO rw_crapbcx;
     
     IF cr_crapbcx%NOTFOUND THEN
@@ -122,7 +123,7 @@ BEGIN
       
       geralog(pr_cdcooper => reg.cdcooper
              ,pr_nrdconta => reg.nrdconta
-             ,pr_cdoperad => vc_cdoperad
+             ,pr_cdoperad => coop.cdoperad
              ,pr_dscritic => NULL
              ,pr_dsorigem => 'SCRIPT'
              ,pr_dstransa => 'Captação de Recursos Esquecidos para União conf. Lei 14973/23 arts. 45-47'
@@ -144,9 +145,9 @@ BEGIN
       BEGIN
           
         CXON0000.pc_grava_autenticacao(pr_cooper       => reg.cdcooper
-                                      ,pr_cod_agencia  => vc_cdagenci 
-                                      ,pr_nro_caixa    => vc_nrdcaixa
-                                      ,pr_cod_operador => vc_cdoperad
+                                      ,pr_cod_agencia  => coop.cdagenci 
+                                      ,pr_nro_caixa    => coop.nrdcaixa
+                                      ,pr_cod_operador => coop.cdoperad
                                       ,pr_valor        => reg.vldsaldo
                                       ,pr_docto        => vr_nrdocmto
                                       ,pr_operacao     => TRUE
@@ -193,16 +194,16 @@ BEGIN
                            ,nrautdoc
                            ,cdcooper
                            ,nrdconta)
-                    VALUES (vc_cdagenci
+                    VALUES (coop.cdagenci
                            ,reg.cdhistor
-                           ,vc_cdoperad
+                           ,coop.cdoperad
                            ,coop.dtmvtolt
-                           ,vc_nrdcaixa
+                           ,coop.nrdcaixa
                            ,rw_crapbcx.nrdmaqui
                            ,vr_nrdocmto
                            ,vr_nrseqdig
                            ,reg.vldsaldo
-                           ,'Agencia: ' || LPAD(vc_cdagenci,3,'0') || ' Conta/DV: ' || LPAD(reg.nrdconta,8,'0')
+                           ,'Agencia: ' || LPAD(coop.cdagenci,3,'0') || ' Conta/DV: ' || LPAD(reg.nrdconta,8,'0')
                            ,vr_sequencia
                            ,reg.cdcooper
                            ,reg.nrdconta);
@@ -219,9 +220,9 @@ BEGIN
     BEGIN
           
       CXON0000.pc_grava_autenticacao(pr_cooper       => coop.cdcooper
-                                    ,pr_cod_agencia  => vc_cdagenci 
-                                    ,pr_nro_caixa    => vc_nrdcaixa
-                                    ,pr_cod_operador => vc_cdoperad
+                                    ,pr_cod_agencia  => coop.cdagenci 
+                                    ,pr_nro_caixa    => coop.nrdcaixa
+                                    ,pr_cod_operador => coop.cdoperad
                                     ,pr_valor        => vr_vltotcop
                                     ,pr_docto        => vr_nrdocmto
                                     ,pr_operacao     => TRUE
@@ -267,11 +268,11 @@ BEGIN
                          ,nrautdoc
                          ,cdcooper
                          ,nrdconta)
-                  VALUES (vc_cdagenci
+                  VALUES (coop.cdagenci
                          ,vc_cdhistor_caixa
-                         ,vc_cdoperad
+                         ,coop.cdoperad
                          ,coop.dtmvtolt
-                         ,vc_nrdcaixa
+                         ,coop.nrdcaixa
                          ,rw_crapbcx.nrdmaqui
                          ,vr_nrdocmto
                          ,vr_nrseqdig
