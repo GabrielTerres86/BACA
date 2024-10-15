@@ -68,6 +68,6 @@ BEGIN
       dbms_output.put_line('Erro ao efetuar lançamento');
    end if;
 
-
+  commit;
 
 END;
