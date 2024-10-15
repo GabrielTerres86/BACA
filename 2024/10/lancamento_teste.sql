@@ -54,7 +54,7 @@ BEGIN
                                         ,pr_nrdctabb => n_nrdconta
                                         ,pr_nrdctitg => TO_CHAR(SISTEMA.formatarMascara(n_nrdconta,'99999999'))
                                         ,pr_nrdocmto => vr_nrdocmto
-                                        ,pr_cdhistor => 2137
+                                        ,pr_cdhistor => 4345
                                         ,pr_vllanmto => 100
                                         ,pr_nrseqdig => vr_nrseqdig
                                         ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
