@@ -6,7 +6,7 @@
                   ,ep.cdempres
               FROM cecred.crapepr ep
              WHERE ep.cdempres > 0
-               AND ep.cdempres_inclusao = 0) LOOP
+               AND ep.cdempres_inclusao = 0) loop
   
 BEGIN 
    UPDATE cecred.crapepr ep
@@ -20,7 +20,6 @@ BEGIN
   ROLLBACK;
 END;
 
-COMMIT;
 
 END LOOP;
 
