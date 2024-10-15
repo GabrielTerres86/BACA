@@ -7,7 +7,7 @@ declare
 
 BEGIN
 
-  UPDATE squad_riscos.tbrisco_central_carga c
+  UPDATE gestaoderisco.tbrisco_central_carga c
     SET c.CDSTATUS = 4
    WHERE c.cdcooper = 1
      AND c.dtrefere = '14/10/2024'
