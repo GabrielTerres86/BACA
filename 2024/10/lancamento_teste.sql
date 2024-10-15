@@ -10,6 +10,7 @@ DECLARE
  vr_cdcritic NUMBER(5);
  vr_dscritic VARCHAR2(4000);
  vr_busca    VARCHAR2(100);
+ dt_cooperativa date := to_date('20/10/2024','dd/mm/yyyy');
  
  cursor c_dados(p_cdcooper number, p_nrdconta number) IS
    select cdagenci 
@@ -32,7 +33,7 @@ BEGIN
  rw_crapdat  := SISTEMA.DatasCooperativa(n_cdcooper);
  
  vr_busca := TRIM(to_char(n_cdcooper)) || ';' ||
-             TRIM(to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR')) || ';' ||
+             TRIM(to_char(dt_cooperativa, 'DD/MM/RRRR')) || ';' ||
              TRIM(to_char(dconta.cdagenci)) || ';' || '100;' ||600038;
  
  vr_nrdocmto := SISTEMA.obterSequence('CRAPLCT', 'NRDOCMTO', vr_busca);
@@ -40,13 +41,13 @@ BEGIN
  vr_nrseqdig := SISTEMA.obterSequence('CRAPLOT'
                                       ,'NRSEQDIG'
                                       ,'' || n_cdcooper || ';' ||
-                                       to_char(rw_crapdat.dtmvtolt, 'DD/MM/RRRR') || ';' ||
+                                       to_char(dt_cooperativa, 'DD/MM/RRRR') || ';' ||
                                        dconta.cdagenci || ';100;' ||
                                        600038);
 
   CONTACORRENTE.registrarLancamentoConta(pr_cdcooper => n_cdcooper
-                                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                        ,pr_dtrefere => rw_crapdat.dtmvtolt
+                                        ,pr_dtmvtolt => dt_cooperativa
+                                        ,pr_dtrefere => dt_cooperativa
                                         ,pr_cdagenci => dconta.cdagenci
                                         ,pr_cdbccxlt => 100
                                         ,pr_nrdolote => 600038
