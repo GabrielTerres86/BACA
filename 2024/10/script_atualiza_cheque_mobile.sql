@@ -5,6 +5,3 @@ begin
    where m.insituacao = 1;
    commit;
 end;
-
-
---select * from tbchq_deposito_cheque_mob where insituacao = 1 for update
