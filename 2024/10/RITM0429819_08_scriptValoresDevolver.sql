@@ -21,7 +21,7 @@ DECLARE
                               , 9,  7, 10,  1, 11,  1
                               , 12,10, 13,  6, 14, 10, 16, 1) nrdcaixa
          , DECODE(cop.cdcooper, 1,vc_cdoperad, 2,vc_cdoperad, 3,vc_cdoperad, 4,vc_cdoperad
-                              , 5,vc_cdoperad, 6,vc_cdoperad, 7,vc_cdoperad, 8,vc_cdoperad
+                              , 5,vc_cdoperad, 6,vc_cdoperad, 7,vc_cdoperad, 8,'f0080040'
                               , 9,vc_cdoperad,10,vc_cdoperad,11,vc_cdoperad,12,vc_cdoperad
                               ,13,vc_cdoperad,14,vc_cdoperad,15,vc_cdoperad,16,vc_cdoperad
                               ,17,vc_cdoperad) cdoperad
