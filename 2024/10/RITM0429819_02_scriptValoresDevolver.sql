@@ -214,7 +214,7 @@ BEGIN
       END;
       
       BEGIN
-        INSERT INTO contacorrente.tbcc_controle_devolucoes
+        INSERT INTO contacorrente.tbcc_controle_devolucao
                          (cdcooper
                          ,nrdconta
                          ,dtcreant 
@@ -225,7 +225,7 @@ BEGIN
                          ,vr_arqvalor);
       EXCEPTION
         WHEN OTHERS THEN
-          raise_application_error(-20002,'Erro ao incluir tbcc_controle_devolucoes('||rw_valor.cdcooper||'/'||rw_valor.nrdconta||'): '||SQLERRM);
+          raise_application_error(-20002,'Erro ao incluir tbcc_controle_devolucao('||rw_valor.cdcooper||'/'||rw_valor.nrdconta||'): '||SQLERRM);
       END;
       
       geralog(pr_cdcooper => rw_valor.cdcooper
