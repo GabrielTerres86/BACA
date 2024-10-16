@@ -436,7 +436,7 @@ DECLARE
      
      BEGIN
        UPDATE cecred.crapass
-          SET crapass.cdsitdct = 1
+          SET crapass.cdsitdct = NVL(crapass.cdsitdct_original,1)
         WHERE crapass.cdcooper = rw_crapbdt.cdcooper
           AND crapass.nrdconta = rw_crapbdt.nrdconta;
           
