@@ -69,6 +69,8 @@ DECLARE
     vr_cdhistordsct_est_jur_mor         CONSTANT craphis.cdhistor%TYPE := 2779; 
     vr_cdhistordsct_est_abono           CONSTANT craphis.cdhistor%TYPE := 2690; 
     vr_cdhistordsct_est_preju           CONSTANT craphis.cdhistor%TYPE := 2877; 
+    vr_cdhistordsct_apropjurmra         CONSTANT craphis.cdhistor%TYPE := 2668; 
+    vr_cdhistordsct_apropjurmta         CONSTANT craphis.cdhistor%TYPE := 2669;
                                                                     
     CURSOR cr_crapbdt IS
       SELECT
@@ -136,8 +138,8 @@ DECLARE
                              vr_cdhistordsct_est_jur_mor,      
                              vr_cdhistordsct_est_abono,        
                              vr_cdhistordsct_est_preju,
-                             DSCT0003.vr_cdhistordsct_apropjurmta,
-                             DSCT0003.vr_cdhistordsct_apropjurmra);
+                             vr_cdhistordsct_apropjurmta,
+                             vr_cdhistordsct_apropjurmra);
       
     
      CURSOR cr_craptdb(pr_cdcooper craptdb.cdcooper%TYPE
@@ -195,41 +197,8 @@ DECLARE
        
                 
      BEGIN
-       DELETE cecred.tbdsct_lancamento_bordero a
-        WHERE a.cdcooper = rw_crapbdt.cdcooper
-          AND a.nrdconta = rw_crapbdt.nrdconta
-          AND a.nrborder = rw_crapbdt.nrborder
-          AND a.dtmvtolt = rw_crapbdt.dtprejuz
-          AND a.cdhistor IN (vr_cdhistordsct_principal,        
-                             vr_cdhistordsct_juros_60_rem,     
-                             vr_cdhistordsct_juros_60_mor,    
-                             vr_cdhistordsct_multa_atraso,     
-                             vr_cdhistordsct_juros_mora,       
-                             vr_cdhistordsct_juros_60_mul,     
-                             vr_cdhistordsct_aprop_tit,        
-                             vr_cdhistordsct_juros_atuali,     
-                             vr_cdhistordsct_rec_principal,    
-                             vr_cdhistordsct_rec_jur_60,       
-                             vr_cdhistordsct_rec_jur_atuali,   
-                             vr_cdhistordsct_rec_mult_atras,   
-                             vr_cdhistordsct_rec_jur_mora,     
-                             vr_cdhistordsct_rec_abono,        
-                             vr_cdhistordsct_rec_preju,        
-                             vr_cdhistordsct_recup_preju,      
-                             vr_cdhistordsct_recup_iof,        
-                             vr_cdhistordsct_est_rec_princi,   
-                             vr_cdhistordsct_est_principal,    
-                             vr_cdhistordsct_est_jur_60,       
-                             vr_cdhistordsct_est_jur_prej,    
-                             vr_cdhistordsct_est_mult_atras,   
-                             vr_cdhistordsct_est_jur_mor,      
-                             vr_cdhistordsct_est_abono,        
-                             vr_cdhistordsct_est_preju,
-                             DSCT0003.vr_cdhistordsct_apropjurmta,
-                             DSCT0003.vr_cdhistordsct_apropjurmra);
-                         
-      
-        FOR rw_lcto_border IN cr_lcto_border (pr_cdcooper => rw_crapbdt.cdcooper
+       
+       FOR rw_lcto_border IN cr_lcto_border (pr_cdcooper => rw_crapbdt.cdcooper
                                              ,pr_nrdconta => rw_crapbdt.nrdconta
                                              ,pr_nrborder => rw_crapbdt.nrborder
                                              ,pr_dtprejuz => rw_crapbdt.dtprejuz) LOOP
@@ -263,7 +232,41 @@ DECLARE
                                                                 ',' || rw_lcto_border.cdhistor ||
                                                                 ',' || rw_lcto_border.vllanmto ||
                                                           ';');
-        END LOOP;                                                       
+        END LOOP;
+        
+       DELETE cecred.tbdsct_lancamento_bordero a
+        WHERE a.cdcooper = rw_crapbdt.cdcooper
+          AND a.nrdconta = rw_crapbdt.nrdconta
+          AND a.nrborder = rw_crapbdt.nrborder
+          AND a.dtmvtolt = rw_crapbdt.dtprejuz
+          AND a.cdhistor IN (vr_cdhistordsct_principal,        
+                             vr_cdhistordsct_juros_60_rem,     
+                             vr_cdhistordsct_juros_60_mor,    
+                             vr_cdhistordsct_multa_atraso,     
+                             vr_cdhistordsct_juros_mora,       
+                             vr_cdhistordsct_juros_60_mul,     
+                             vr_cdhistordsct_aprop_tit,        
+                             vr_cdhistordsct_juros_atuali,     
+                             vr_cdhistordsct_rec_principal,    
+                             vr_cdhistordsct_rec_jur_60,       
+                             vr_cdhistordsct_rec_jur_atuali,   
+                             vr_cdhistordsct_rec_mult_atras,   
+                             vr_cdhistordsct_rec_jur_mora,     
+                             vr_cdhistordsct_rec_abono,        
+                             vr_cdhistordsct_rec_preju,        
+                             vr_cdhistordsct_recup_preju,      
+                             vr_cdhistordsct_recup_iof,        
+                             vr_cdhistordsct_est_rec_princi,   
+                             vr_cdhistordsct_est_principal,    
+                             vr_cdhistordsct_est_jur_60,       
+                             vr_cdhistordsct_est_jur_prej,    
+                             vr_cdhistordsct_est_mult_atras,   
+                             vr_cdhistordsct_est_jur_mor,      
+                             vr_cdhistordsct_est_abono,        
+                             vr_cdhistordsct_est_preju,
+                             DSCT0003.vr_cdhistordsct_apropjurmta,
+                             DSCT0003.vr_cdhistordsct_apropjurmra);
+                                                       
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao deletar cecred.tbdsct_lancamento_bordero: ' || SQLERRM;
