@@ -92,7 +92,7 @@ DECLARE
 
     CURSOR cr_craplim(pr_cdcooper craplim.cdcooper%TYPE
                      ,pr_nrdconta craplim.nrdconta%TYPE
-                     ,pr_dtprejuz crapbdt.dtprejuz) IS
+                     ,pr_dtprejuz crapbdt.dtprejuz%TYPE) IS
         SELECT l.*
           FROM cecred.craplim l
          WHERE l.tpctrlim = 3
