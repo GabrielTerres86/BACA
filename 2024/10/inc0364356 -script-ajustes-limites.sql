@@ -310,7 +310,7 @@ DECLARE
          AND tdb.cdcooper = cob.cdcooper
          AND cob.incobran = 0
          AND cob.dtdpagto IS NULL
-         AND tdb.dtdpagto = to_date('15/10/2024');
+         AND tdb.dtdpagto BETWEEN to_date('15/10/2024') AND to_date('16/10/2024');
 
     vr_cdcritic    NUMBER;
     vr_dscritic    VARCHAR2(1000);
@@ -326,7 +326,7 @@ DECLARE
                                          
                 IF rw_crapcob.incobran = 0 AND
                    rw_crapcob.dtdpagto_cob IS NULL AND
-                   rw_crapcob.dtdpagto = to_date('15/10/2024') THEN 
+                   rw_crapcob.dtdpagto BETWEEN to_date('15/10/2024') AND to_date('16/10/2024') THEN 
                                            
                    UPDATE cecred.craptdb
                       SET insittit = 4,
