@@ -1,0 +1,7 @@
+BEGIN
+  UPDATE CECRED.CRAPREL c
+     SET c.nmrelato = 'SEGUROS CANCELADOS REGRA 07 DIAS PJ'
+   WHERE c.cdrelato = 1004;
+   
+   COMMIT;   
+END;
