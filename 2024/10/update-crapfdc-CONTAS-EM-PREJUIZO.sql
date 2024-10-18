@@ -21,7 +21,7 @@ select c.progress_recid
 inner join crapass s on (s.cdcooper = c.cdcooper and s.nrdconta = c.nrdconta)  
 where  c.cdcooper = 9 
   and  s.cdsitdct in (2,8,3) 
-  and  c.nrdconta in (149322,444219)
+  and  c.nrdconta in (444219)
   and  c.incheque = 0
   and  c.dtretchq is null
   
