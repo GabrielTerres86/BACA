@@ -10,7 +10,7 @@ where progress_recid in
 inner join crapass s on (s.cdcooper = c.cdcooper and s.nrdconta = c.nrdconta)  
 where  c.cdcooper = 5 
   and  s.cdsitdct in (2,8,3) 
-  and  c.nrctachq = 340529
+  and  c.nrdconta = 340529
   and  c.incheque = 0
   and  c.dtretchq is null
   
@@ -21,7 +21,7 @@ select c.progress_recid
 inner join crapass s on (s.cdcooper = c.cdcooper and s.nrdconta = c.nrdconta)  
 where  c.cdcooper = 9 
   and  s.cdsitdct in (2,8,3) 
-  and  c.nrctachq in (149322,444219)
+  and  c.nrdconta in (149322,444219)
   and  c.incheque = 0
   and  c.dtretchq is null
   
@@ -31,7 +31,7 @@ select c.progress_recid
   from crapfdc c 
 inner join crapass s on (s.cdcooper = c.cdcooper and s.nrdconta = c.nrdconta)  
 where  c.cdcooper = 9 
-  and  c.nrctachq = 900702
+  and  c.nrdconta = 900702
   and  c.incheque = 8
   and  c.dtretchq is null);
  
