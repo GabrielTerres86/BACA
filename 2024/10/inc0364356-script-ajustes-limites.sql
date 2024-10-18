@@ -128,7 +128,7 @@ DECLARE
              AND a.nrdconta = pr_nrdconta
              AND a.nrborder = pr_nrborder
              AND a.dtmvtolt = to_date('16/10/2024')
-             AND a.cdhistor IN(2763,2876);
+             AND a.cdhistor IN(2763,2798,2770,2876);
 
       vr_cdcritic    NUMBER;
       vr_dscritic    VARCHAR2(1000);
