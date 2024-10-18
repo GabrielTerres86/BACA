@@ -32,7 +32,7 @@ select c.progress_recid
 inner join crapass s on (s.cdcooper = c.cdcooper and s.nrdconta = c.nrdconta)  
 where  c.cdcooper = 9 
   and  c.nrctachq = 900702
-  and  c.incheque = 0
+  and  c.incheque = 8
   and  c.dtretchq is null);
  
 
