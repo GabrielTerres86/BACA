@@ -62,5 +62,5 @@ Begin
     end;    
   end loop;
        
-   
+  COMMIT;
 END;  
