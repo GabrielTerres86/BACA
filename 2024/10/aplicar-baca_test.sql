@@ -91,13 +91,6 @@ BEGIN
     OPEN  cr_crapbcx(coop.cdcooper, coop.dtmvtocd, coop.cdagenci, coop.nrdcaixa, coop.cdoperad);
     FETCH cr_crapbcx INTO rw_crapbcx;
     
-    /*IF cr_crapbcx%NOTFOUND THEN
-      CLOSE cr_crapbcx;
-      vr_cdcritic := 698;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      raise_application_error(-20005,vr_cdcritic||' - '||vr_dscritic);
-    END IF;*/
-    
     CLOSE cr_crapbcx;
     
     gene0001.pc_abre_arquivo(pr_nmdireto => vc_diretorio
@@ -249,39 +242,6 @@ BEGIN
       vr_nrdocmto := gene0002.fn_busca_time;
       vr_vltotcop := NVL(vr_vltotcop,0) + vr_arqvalor;
       
-      /*BEGIN
-          
-        CXON0000.pc_grava_autenticacao(pr_cooper       => rw_valor.cdcooper
-                                      ,pr_cod_agencia  => coop.cdagenci 
-                                      ,pr_nro_caixa    => coop.nrdcaixa
-                                      ,pr_cod_operador => coop.cdoperad
-                                      ,pr_valor        => vr_arqvalor
-                                      ,pr_docto        => vr_nrdocmto
-                                      ,pr_operacao     => TRUE
-                                      ,pr_status       => 1
-                                      ,pr_estorno      => FALSE
-                                      ,pr_histor       => rw_valor.cdhistor
-                                      ,pr_data_off     => NULL
-                                      ,pr_sequen_off   => 0
-                                      ,pr_hora_off     => 0
-                                      ,pr_seq_aut_off  => 0
-                                      ,pr_literal      => vr_literal  
-                                      ,pr_sequencia    => vr_sequencia
-                                      ,pr_registro     => vr_registro 
-                                      ,pr_cdcritic     => vr_cdcritic 
-                                      ,pr_dscritic     => vr_dscritic );
-        
-        IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-          IF TRIM(vr_dscritic) IS NULL THEN
-            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          END IF;
-          raise_application_error(-20003,'Erro gravar autenticação('||rw_valor.cdcooper||'/'||rw_valor.nrdconta||'): '||vr_cdcritic||' - '||vr_dscritic);
-        END IF;
-      EXCEPTION
-        WHEN OTHERS THEN
-          raise_application_error(-20004,'Erro pc_grava_autenticacao('||rw_valor.cdcooper||'/'||rw_valor.nrdconta||'): '||SQLERRM);
-      END;*/
-      
       vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT'
                                 ,pr_nmdcampo => 'NRSEQDIG'
                                 ,pr_dsdchave => to_char(rw_valor.cdcooper)
@@ -299,7 +259,6 @@ BEGIN
                            ,nrseqdig
                            ,vldocmto
                            ,dsdcompl
-                           --,nrautdoc
                            ,cdcooper
                            ,nrdconta)
                     VALUES (coop.cdagenci
@@ -312,7 +271,6 @@ BEGIN
                            ,vr_nrseqdig
                            ,vr_arqvalor
                            ,'Agencia: ' || LPAD(coop.cdagenci,3,'0') || ' Conta/DV: ' || LPAD(rw_valor.nrdconta,8,'0')
-                           --,vr_sequencia
                            ,rw_valor.cdcooper
                            ,rw_valor.nrdconta);
                         
@@ -324,39 +282,6 @@ BEGIN
     END LOOP;
     
     vr_nrdocmto := gene0002.fn_busca_time;
-    
-    /*BEGIN
-          
-      CXON0000.pc_grava_autenticacao(pr_cooper       => coop.cdcooper
-                                    ,pr_cod_agencia  => coop.cdagenci 
-                                    ,pr_nro_caixa    => coop.nrdcaixa
-                                    ,pr_cod_operador => coop.cdoperad
-                                    ,pr_valor        => vr_vltotcop
-                                    ,pr_docto        => vr_nrdocmto
-                                    ,pr_operacao     => TRUE
-                                    ,pr_status       => 1
-                                    ,pr_estorno      => FALSE
-                                    ,pr_histor       => vc_cdhistor_caixa
-                                    ,pr_data_off     => NULL
-                                    ,pr_sequen_off   => 0
-                                    ,pr_hora_off     => 0
-                                    ,pr_seq_aut_off  => 0
-                                    ,pr_literal      => vr_literal  
-                                    ,pr_sequencia    => vr_sequencia
-                                    ,pr_registro     => vr_registro 
-                                    ,pr_cdcritic     => vr_cdcritic 
-                                    ,pr_dscritic     => vr_dscritic );
-        
-      IF NVL(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        IF TRIM(vr_dscritic) IS NULL THEN
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        END IF;
-        raise_application_error(-20007,'Erro gravar autenticação('||coop.cdcooper||'): '||vr_cdcritic||' - '||vr_dscritic);
-      END IF;
-    EXCEPTION
-      WHEN OTHERS THEN
-        raise_application_error(-20008,'Erro pc_grava_autenticacao('||coop.cdcooper||'): '||SQLERRM);
-    END;*/
     
     vr_nrseqdig := fn_sequence(pr_nmtabela => 'CRAPLOT'
                               ,pr_nmdcampo => 'NRSEQDIG'
@@ -374,7 +299,6 @@ BEGIN
                          ,nrseqdig
                          ,vldocmto
                          ,dsdcompl
-                         --,nrautdoc
                          ,cdcooper
                          ,nrdconta)
                   VALUES (coop.cdagenci
@@ -387,7 +311,6 @@ BEGIN
                          ,vr_nrseqdig
                          ,vr_vltotcop
                          ,'VALORES A DEVOLVER'
-                         --,vr_sequencia
                          ,coop.cdcooper
                          ,0);
                         
