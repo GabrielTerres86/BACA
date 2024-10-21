@@ -1,7 +1,7 @@
 DECLARE
 
  n_cdcooper number := 5;
- n_nrdconta number := 99968754;
+ n_nrdconta number := 99631997;
  rw_crapdat SISTEMA.DatasCooperativa;
  vr_nrseqdig  number;
  vr_nrdocmto  number;
@@ -10,7 +10,7 @@ DECLARE
  vr_cdcritic NUMBER(5);
  vr_dscritic VARCHAR2(4000);
  vr_busca    VARCHAR2(100);
- dt_cooperativa date := to_date('20/10/2024','dd/mm/yyyy');
+ dt_cooperativa date := to_date('28/10/2024','dd/mm/yyyy');
  
  cursor c_dados(p_cdcooper number, p_nrdconta number) IS
    select cdagenci 
@@ -56,7 +56,7 @@ BEGIN
                                         ,pr_nrdctitg => TO_CHAR(SISTEMA.formatarMascara(n_nrdconta,'99999999'))
                                         ,pr_nrdocmto => vr_nrdocmto
                                         ,pr_cdhistor => 4345
-                                        ,pr_vllanmto => 100
+                                        ,pr_vllanmto => 1000
                                         ,pr_nrseqdig => vr_nrseqdig
                                         ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS'))
                                         ,pr_tab_retorno => vr_tab_retorno
