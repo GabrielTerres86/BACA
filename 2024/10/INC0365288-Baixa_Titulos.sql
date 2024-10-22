@@ -98,11 +98,11 @@ BEGIN
 
    COMMIT;  
 
-    pagamento.montarjobremessaboaimaroctg(pr_cdcooper => 0
-                                         ,pr_nrdconta => 0
-                                         ,pr_dtmvtolt => to_date('21102024', 'ddmmyyyy')
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
+    pagamento.montarJobRemessaBoAimaro(pr_cdcooper => 0
+                                      ,pr_nrdconta => 0
+                                      ,pr_dtmvtolt => to_date('21102024', 'ddmmyyyy')
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
 EXCEPTION
   WHEN OTHERS THEN
     SISTEMA.excecaoInterna(pr_cdcooper => 3, pr_compleme => 'INC0365288');
