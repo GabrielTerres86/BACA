@@ -5,7 +5,7 @@ DECLARE
          , t.cdhistor
       FROM craphis t 
      WHERE t.cdcooper IN (8,16)
-       AND t.cdhistor >= 4590;
+       AND t.cdhistor >= 4580;
        
 BEGIN
   
