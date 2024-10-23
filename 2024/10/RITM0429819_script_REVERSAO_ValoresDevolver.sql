@@ -25,8 +25,8 @@ DECLARE
                               , 9,vc_cdoperad,10,vc_cdoperad,11,vc_cdoperad,12,vc_cdoperad
                               ,13,vc_cdoperad,14,vc_cdoperad,15,vc_cdoperad,16,vc_cdoperad
                               ,17,vc_cdoperad) cdoperad
-      FROM crapcop cop
-     INNER JOIN crapdat dat
+      FROM cecred.crapcop cop
+     INNER JOIN cecred.crapdat dat
         ON dat.cdcooper = cop.cdcooper
      WHERE cop.flgativo = 1
        AND cop.cdcooper <> 3
@@ -72,7 +72,7 @@ DECLARE
                    ,pr_nrdcaixa  NUMBER
                    ,pr_cdoperad  VARCHAR2) IS
     SELECT bcx.nrdmaqui
-      FROM crapbcx bcx
+      FROM cecred.crapbcx bcx
      WHERE bcx.cdcooper = pr_cdcooper
        AND bcx.dtmvtolt = pr_dtmvtocd
        AND bcx.cdagenci = pr_cdagenci
@@ -124,7 +124,7 @@ DECLARE
           ,crapaut.blvalrec
           ,crapaut.nrseqaut
           ,crapaut.ROWID
-    FROM crapaut
+    FROM cecred.crapaut
     WHERE crapaut.cdcooper = pr_cdcooper
     AND   crapaut.cdagenci = pr_cdagenci
     AND   crapaut.nrdcaixa = pr_nrdcaixa
@@ -150,7 +150,7 @@ DECLARE
           ,crapcop.cdagesic
           ,crapcop.nrctasic
           ,crapcop.cdcrdins
-      FROM crapcop
+      FROM cecred.crapcop
      WHERE crapcop.cdcooper = pr_cdcooper;
   rw_crapcop cr_crapcop%ROWTYPE;
 
@@ -165,7 +165,7 @@ DECLARE
       SELECT crapage.nmresage
             ,crapage.cdagenci
             ,crapage.qtddaglf
-      FROM crapage
+      FROM cecred.crapage
       WHERE crapage.cdcooper = pr_cdcooper
       AND   crapage.cdagenci = pr_cdagenci;
     rw_crapage cr_crapage%ROWTYPE;
@@ -185,20 +185,20 @@ DECLARE
             ,crapaut.nrseqaut
             ,crapaut.nrdocmto
             ,crapaut.ROWID
-      FROM crapaut
+      FROM cecred.crapaut
       WHERE ROWID = pr_rowid;
     rw_crapaut cr_crapaut%ROWTYPE;
 
     CURSOR cr_crapscn (pr_cdempres IN crapscn.cdempres%type) IS
       SELECT crapscn.cdempres
             ,crapscn.dssigemp
-      FROM crapscn
+      FROM cecred.crapscn
       WHERE crapscn.cdempres = pr_cdempres;
     rw_crapscn cr_crapscn%ROWTYPE;
 
     CURSOR cr_crapstn (pr_cdempres IN crapstn.cdempres%type) IS
       SELECT crapstn.cdtransa
-      FROM crapstn
+      FROM cecred.crapstn
       WHERE crapstn.cdempres = pr_cdempres
       AND   crapstn.tpmeiarr = 'C';
     rw_crapstn cr_crapstn%ROWTYPE;
@@ -417,7 +417,7 @@ DECLARE
             ,crapcbl.vlcompcr
             ,crapcbl.vlinicial
             ,crapcbl.rowid
-      FROM crapcbl
+      FROM cecred.crapcbl
       WHERE crapcbl.cdcooper = pr_cdcooper
       AND   crapcbl.cdagenci = pr_cdagenci
       AND   crapcbl.nrdcaixa = pr_nrdcaixa;
@@ -438,7 +438,7 @@ DECLARE
             ,crapaut.blvalrec
             ,crapaut.nrseqaut
             ,crapaut.ROWID
-      FROM crapaut
+      FROM cecred.crapaut
       WHERE crapaut.cdcooper = pr_cdcooper
       AND   crapaut.cdagenci = pr_cdagenci
       AND   crapaut.nrdcaixa = pr_nrdcaixa
@@ -464,7 +464,7 @@ DECLARE
             ,crapaut.blvalrec
             ,crapaut.nrseqaut
             ,crapaut.ROWID
-      FROM crapaut
+      FROM cecred.crapaut
       WHERE crapaut.cdcooper = pr_cdcooper
       AND   crapaut.cdagenci = pr_cdagenci
       AND   crapaut.nrdcaixa = pr_nrdcaixa
@@ -514,7 +514,7 @@ DECLARE
         CLOSE cr_crapcbl;
 
         BEGIN
-          INSERT INTO crapcbl
+          INSERT INTO cecred.crapcbl
           (crapcbl.cdcooper
           ,crapcbl.cdagenci
           ,crapcbl.nrdcaixa)
@@ -560,7 +560,7 @@ DECLARE
           END IF;
         END IF;
         BEGIN
-          UPDATE crapcbl SET crapcbl.vlcompdb = rw_crapcbl.vlcompdb
+          UPDATE cecred.crapcbl SET crapcbl.vlcompdb = rw_crapcbl.vlcompdb
                             ,crapcbl.vlcompcr = rw_crapcbl.vlcompcr
           WHERE crapcbl.ROWID = rw_crapcbl.ROWID;
         EXCEPTION
@@ -594,7 +594,7 @@ DECLARE
         END IF;
 
         BEGIN
-          INSERT INTO crapaut
+          INSERT INTO cecred.crapaut
             (crapaut.cdcooper
             ,crapaut.cdagenci
             ,crapaut.nrdcaixa
@@ -663,7 +663,7 @@ DECLARE
         END IF;
 
         BEGIN
-          INSERT INTO crapaut
+          INSERT INTO cecred.crapaut
             (crapaut.cdcooper
             ,crapaut.cdagenci
             ,crapaut.nrdcaixa
@@ -726,7 +726,7 @@ DECLARE
         END IF;
 
         BEGIN
-          INSERT INTO crapaut
+          INSERT INTO cecred.crapaut
             (crapaut.cdcooper
             ,crapaut.cdagenci
             ,crapaut.nrdcaixa
@@ -777,7 +777,7 @@ DECLARE
          pr_cod_agencia <> 91 THEN
       IF nvl(rw_crapcbl.blidenti, ' ') <> ' ' THEN
         BEGIN
-          UPDATE crapaut SET crapaut.blidenti = rw_crapcbl.blidenti
+          UPDATE cecred.crapaut SET crapaut.blidenti = rw_crapcbl.blidenti
                             ,crapaut.blsldini = rw_crapcbl.vlinicial
                             ,crapaut.bltotpag = rw_crapcbl.vlcompdb
                             ,crapaut.bltotrec = rw_crapcbl.vlcompcr
@@ -816,7 +816,7 @@ DECLARE
     pr_literal := vr_literal;
 
     BEGIN
-      UPDATE crapaut SET crapaut.dslitera = vr_literal
+      UPDATE cecred.crapaut SET crapaut.dslitera = vr_literal
       WHERE crapaut.ROWID = rw_crapaut.ROWID;
     EXCEPTION
       WHEN Others THEN
@@ -1019,7 +1019,7 @@ BEGIN
                               ,pr_dsdchave => to_char(coop.cdcooper)
                               ,pr_flgdecre => 'N');
     BEGIN
-      INSERT INTO craplcx(cdagenci
+      INSERT INTO cecred.craplcx(cdagenci
                          ,cdhistor
                          ,cdopecxa
                          ,dtmvtolt
@@ -1154,7 +1154,7 @@ BEGIN
                                 ,pr_flgdecre => 'N');
 
       BEGIN
-        INSERT INTO craplcx(cdagenci
+        INSERT INTO cecred.craplcx(cdagenci
                            ,cdhistor
                            ,cdopecxa
                            ,dtmvtolt
