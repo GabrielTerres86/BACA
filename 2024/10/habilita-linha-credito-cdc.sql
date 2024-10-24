@@ -1,0 +1,12 @@
+BEGIN
+  UPDATE CRAPLCR 
+        SET TPPESSOA = 0
+    WHERE UPPER(dslcremp) like '%C DC%'
+    AND cdcooper = 1;
+    
+  COMMIT;  
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR(-20000, 'ERRO: ' || SQLERRM);
+END;  
