@@ -1,5 +1,5 @@
 DECLARE
-	  pr_idsolblqanalitico CONSTANT VARCHAR2(100) := '2369A7FDD8A00852E0630A2935739C1D'; -- Valor do ID do Bloqueio
+	  pr_idsolblqanalitico CONSTANT VARCHAR2(100) := '2369A7FDD8A00852E0630A2935739C1D';
 	  pr_cdcritic crapcri.cdcritic%TYPE;
 	  pr_dscritic VARCHAR2(4000);
 	BEGIN
@@ -8,7 +8,7 @@ DECLARE
 		pr_cdcritic => pr_cdcritic,
 		pr_dscritic => pr_dscritic
 	  );
-	  -- Exibir os valores dos parâmetros de saída
+	 
 	  DBMS_OUTPUT.PUT_LINE('Crítica: ' || pr_cdcritic);
 	  DBMS_OUTPUT.PUT_LINE('Descrição da Crítica: ' || pr_dscritic);
 	EXCEPTION
