@@ -10,7 +10,7 @@ INSERT INTO crapbcx (
 SELECT 
   bcx.cdagenci, 
   bcx.cdopecxa, 
-  & pr_dtmvtolt, 
+  '24/10/2024', 
   1, 
   bcx.nrdcaixa, 
   bcx.nrdlacre, 
@@ -33,20 +33,20 @@ SELECT
 FROM 
   crapbcx bcx 
 WHERE 
-  cdcooper = & pr_cdcooper 
-  AND cdagenci = & pr_cdagenci 
-  AND cdopecxa = & pr_cdopecxa 
-  AND nrdcaixa = & pr_nrdcaixa 
+  cdcooper = 9 
+  AND cdagenci = 90 
+  AND cdopecxa = 996 
+  AND nrdcaixa = 900 
   AND dtmvtolt = (
     SELECT 
       MAX(dtmvtolt) 
     FROM 
       crapbcx 
     WHERE 
-      cdcooper = & pr_cdcooper 
-      AND cdagenci = & pr_cdagenci 
-      AND cdopecxa = & pr_cdopecxa 
-      AND nrdcaixa = & pr_nrdcaixa
+      cdcooper = 9 
+      AND cdagenci = 90 
+      AND cdopecxa = 996 
+      AND nrdcaixa = 900
   );
   COMMIT;
 END;
