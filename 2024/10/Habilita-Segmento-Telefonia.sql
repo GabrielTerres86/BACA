@@ -1,0 +1,13 @@
+BEGIN
+  UPDATE tbepr_cdc_segmento
+         SET FLGATIVO = 1
+  WHERE CDSEGMENTO = 11;  
+
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE_application_error(-20500, SQLERRM);
+END;
+
+
