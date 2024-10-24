@@ -8,7 +8,7 @@ DECLARE
 		pr_cdcritic => pr_cdcritic,
 		pr_dscritic => pr_dscritic
 	  );
-	 
+	 COMMIT;
 	  DBMS_OUTPUT.PUT_LINE('Crítica: ' || pr_cdcritic);
 	  DBMS_OUTPUT.PUT_LINE('Descrição da Crítica: ' || pr_dscritic);
 	EXCEPTION
