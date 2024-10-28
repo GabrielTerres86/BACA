@@ -3,7 +3,8 @@ DECLARE
   vr_nrdconta  VARCHAR2(30);
   vr_idseqttl  VARCHAR2(30);
   vr_vllimweb  VARCHAR2(30);
-
+  vr_vllimweb_nr  NUMBER(25,2);
+  
   vr_limwebrowid ROWID;
   vr_nrdrowid    ROWID;
   vr_dsdadant    craplgi.dsdadant%TYPE;
@@ -64,8 +65,8 @@ BEGIN
           END IF;
         END LOOP;
         
-        vr_vllimweb := SUBSTR(vr_dsdlinha, vr_pos + 1, LENGTH(vr_dsdlinha) - vr_pos);
-        
+        vr_vllimweb := SUBSTR(vr_dsdlinha, vr_pos + 1, LENGTH(vr_dsdlinha) - vr_pos - 1);
+        vr_vllimweb_nr:= to_number(REPLACE(vr_vllimweb, ',', '.'),'99999999990d00','NLS_NUMERIC_CHARACTERS = ''.,''');         
         BEGIN 
           SELECT snh.ROWID
                 ,snh.vllimweb
@@ -78,7 +79,7 @@ BEGIN
              AND snh.tpdsenha = 1;
              
           UPDATE crapsnh snh
-             SET snh.vllimweb = REPLACE(vr_vllimweb, ',', '.')
+             SET snh.vllimweb = vr_vllimweb_nr
            WHERE snh.ROWID = vr_limwebrowid;
            
           IF vr_qtlinhas = 1000 THEN
